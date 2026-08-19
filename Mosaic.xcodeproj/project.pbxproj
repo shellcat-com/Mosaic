@@ -1,0 +1,696 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0511B65A4D5C787CC35DBA19 /* Fraunces72ptSoft-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5D91C53CF130CB0A048AC239 /* Fraunces72ptSoft-Bold.ttf */; };
+		1317D0099444BEDCE8A8576C /* ArtworkSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88347E06EB18D8773DA096E2 /* ArtworkSceneView.swift */; };
+		1A0ECDC82A718869764F7007 /* RevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 418BD0EF6A9BF46BBFF9036B /* RevealView.swift */; };
+		1F3C928184B496818860CB5A /* AppStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3A577059105531A3863066 /* AppStoreTests.swift */; };
+		20403A6FEF825C6F72A8202E /* MosaicsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18C7418285D036BDDA480FE9 /* MosaicsView.swift */; };
+		20F88ED411B8CFF835035CB6 /* MosaicNetworkModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892B066AA2028EB2C2BE4E67 /* MosaicNetworkModels.swift */; };
+		2A1F3C6A6D0A2452D6AD2B1A /* TileFiringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA356EDE9DE21ADF6B01D2D /* TileFiringView.swift */; };
+		3122F9A49F6024D428D318A4 /* BackendModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11E7B29B0FE1C102BFC1076 /* BackendModelTests.swift */; };
+		3B0F33984E10911D2EF16D7A /* Fraunces-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 70E770537B35193A86ACA331 /* Fraunces-OFL.txt */; };
+		421B70432052949104E3E513 /* MissionLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E73D4A05F77059307686822 /* MissionLibraryView.swift */; };
+		4316C366CD33B1D09D443A58 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F804F7D8AD2F1EBC49F27B /* HomeView.swift */; };
+		455631E6FE69537636A3B5AC /* MosaicTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04ED67238A664D8D7CB82D90 /* MosaicTheme.swift */; };
+		46AFA50E019D396BB058E71C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 454381EB604C2E4CB2FC0290 /* Assets.xcassets */; };
+		510ECCAC740134DF7EDB413E /* Fraunces72ptSoft-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 023B90CDC0DE0C5E24E23E6C /* Fraunces72ptSoft-SemiBold.ttf */; };
+		57441B6D2DA3ABDD268621E6 /* DesignSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */; };
+		5A42DC2E41744E4C2DE6E3D2 /* PassTheTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA31E89E2919E67C940C26E /* PassTheTileView.swift */; };
+		5C5F177F9110C3D3B4CBEA9A /* MissionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB05442EA713D954898AE6EF /* MissionDetailView.swift */; };
+		5E67E533CB5AFC2B6C7D7AC3 /* MosaicModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C624BD96CD3ED7A2F602DBF6 /* MosaicModels.swift */; };
+		6087248C9C00C7109D30AE7F /* OrganizerDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40E80E7225D6D8507805ADED /* OrganizerDashboardView.swift */; };
+		6585B2043BD7E0EA75AC2668 /* PrivateMediaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A75F3413BDC841204B0DEA02 /* PrivateMediaPicker.swift */; };
+		6A65B92F50CDB468A838D8D2 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EF333B9A10C68D24935403 /* ProfileView.swift */; };
+		6BDB0E35166F104FC7DF9AC4 /* RepositoryStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D252027998D07CF9A07A1B /* RepositoryStateTests.swift */; };
+		72C817AFB19053F1AB065857 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8776E973B106B390304908DB /* OnboardingTests.swift */; };
+		83A9FE9C611E8B2F6C589242 /* MosaicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D84A50668044A6EBA903D3E /* MosaicApp.swift */; };
+		84F31F33A032FE75EB6DF978 /* Fraunces72ptSoft-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8F40BCDCFBC3B3E4C006FCBC /* Fraunces72ptSoft-Regular.ttf */; };
+		9C72222D4A3CCD37A842CA49 /* PrivacyReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE2EFEB8A1B3DB4CB43333B /* PrivacyReviewView.swift */; };
+		A691E76044542183F2360A60 /* CeramicTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCDD2D4C4F76AACDA8AD4ED0 /* CeramicTile.swift */; };
+		A924331D61F626BCE10C8BF9 /* MosaicRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F7D783985CDC2E9EBE944 /* MosaicRepository.swift */; };
+		B850F43EBFCA8CF8B5581BED /* OnboardingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36B42D102B1C28BB0C07E3E /* OnboardingModels.swift */; };
+		B9B16F0F2B198B64360EB33B /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BD2B7F04AB60B4945EC8D5E /* AppStore.swift */; };
+		BCF83F8D25D212CEAB37DE45 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 615230DFE2B2B119766440EE /* Supabase */; };
+		C2564E7257710C902A8E629F /* PlayfulComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F9425CEE0610EEA35AB39B /* PlayfulComponents.swift */; };
+		C2E199DDADBA2C337D58980F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498B2A791A07CAB2A8B99EA8 /* RootView.swift */; };
+		C5CD8831B566D26D7A80349B /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAB2A2ADCED67225C8A6387 /* WelcomeView.swift */; };
+		C77317F90CD27F411B22D182 /* MosaicBrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894EF8A36353EC40E6FE7B55 /* MosaicBrandMark.swift */; };
+		CB91826CA3093A54C3B17690 /* SupabaseMosaicRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848CD6C7B7A0F6CFC340EBF0 /* SupabaseMosaicRepository.swift */; };
+		CF610A17ACB570C285D3688A /* SupabaseConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29292EB4239F5D3E1146E594 /* SupabaseConfiguration.swift */; };
+		E94F5A27CFFFF53FE240A373 /* EvidenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 550B8F0070F4E2BBD32BA4A4 /* EvidenceView.swift */; };
+		F6742CF10D232E87B77D112D /* TilePlacementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 243CF128430E696132FD320A /* TilePlacementView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B079B547470315AD4DAAA791 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CFB5A8D7D5E9600E23EAA04E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CF261331CEC9474675E64FD3;
+			remoteInfo = Mosaic;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		023B90CDC0DE0C5E24E23E6C /* Fraunces72ptSoft-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fraunces72ptSoft-SemiBold.ttf"; sourceTree = "<group>"; };
+		04ED67238A664D8D7CB82D90 /* MosaicTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicTheme.swift; sourceTree = "<group>"; };
+		0F4F7D783985CDC2E9EBE944 /* MosaicRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicRepository.swift; sourceTree = "<group>"; };
+		10F9425CEE0610EEA35AB39B /* PlayfulComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayfulComponents.swift; sourceTree = "<group>"; };
+		18C7418285D036BDDA480FE9 /* MosaicsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicsView.swift; sourceTree = "<group>"; };
+		1E73D4A05F77059307686822 /* MissionLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionLibraryView.swift; sourceTree = "<group>"; };
+		1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystemTests.swift; sourceTree = "<group>"; };
+		243CF128430E696132FD320A /* TilePlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilePlacementView.swift; sourceTree = "<group>"; };
+		29292EB4239F5D3E1146E594 /* SupabaseConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfiguration.swift; sourceTree = "<group>"; };
+		2DA356EDE9DE21ADF6B01D2D /* TileFiringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileFiringView.swift; sourceTree = "<group>"; };
+		3EA31E89E2919E67C940C26E /* PassTheTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassTheTileView.swift; sourceTree = "<group>"; };
+		40E80E7225D6D8507805ADED /* OrganizerDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrganizerDashboardView.swift; sourceTree = "<group>"; };
+		418BD0EF6A9BF46BBFF9036B /* RevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealView.swift; sourceTree = "<group>"; };
+		454381EB604C2E4CB2FC0290 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		45F804F7D8AD2F1EBC49F27B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		46BE0753552E543A7768D0BB /* Mosaic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Mosaic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		498B2A791A07CAB2A8B99EA8 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		550B8F0070F4E2BBD32BA4A4 /* EvidenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceView.swift; sourceTree = "<group>"; };
+		5D84A50668044A6EBA903D3E /* MosaicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicApp.swift; sourceTree = "<group>"; };
+		5D91C53CF130CB0A048AC239 /* Fraunces72ptSoft-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fraunces72ptSoft-Bold.ttf"; sourceTree = "<group>"; };
+		5DE2EFEB8A1B3DB4CB43333B /* PrivacyReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyReviewView.swift; sourceTree = "<group>"; };
+		63D252027998D07CF9A07A1B /* RepositoryStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryStateTests.swift; sourceTree = "<group>"; };
+		70E770537B35193A86ACA331 /* Fraunces-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Fraunces-OFL.txt"; sourceTree = "<group>"; };
+		7409BD8E7A7B41B93948CFD9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7BD2B7F04AB60B4945EC8D5E /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		848CD6C7B7A0F6CFC340EBF0 /* SupabaseMosaicRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseMosaicRepository.swift; sourceTree = "<group>"; };
+		8776E973B106B390304908DB /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
+		88347E06EB18D8773DA096E2 /* ArtworkSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkSceneView.swift; sourceTree = "<group>"; };
+		892B066AA2028EB2C2BE4E67 /* MosaicNetworkModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicNetworkModels.swift; sourceTree = "<group>"; };
+		894EF8A36353EC40E6FE7B55 /* MosaicBrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicBrandMark.swift; sourceTree = "<group>"; };
+		8F40BCDCFBC3B3E4C006FCBC /* Fraunces72ptSoft-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fraunces72ptSoft-Regular.ttf"; sourceTree = "<group>"; };
+		9EAB2A2ADCED67225C8A6387 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		A75F3413BDC841204B0DEA02 /* PrivateMediaPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivateMediaPicker.swift; sourceTree = "<group>"; };
+		AF3A577059105531A3863066 /* AppStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreTests.swift; sourceTree = "<group>"; };
+		B36B42D102B1C28BB0C07E3E /* OnboardingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingModels.swift; sourceTree = "<group>"; };
+		BB05442EA713D954898AE6EF /* MissionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionDetailView.swift; sourceTree = "<group>"; };
+		C11E7B29B0FE1C102BFC1076 /* BackendModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendModelTests.swift; sourceTree = "<group>"; };
+		C4EF333B9A10C68D24935403 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		C624BD96CD3ED7A2F602DBF6 /* MosaicModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicModels.swift; sourceTree = "<group>"; };
+		E0E79457F900AAA9959C2B84 /* MosaicTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = MosaicTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCDD2D4C4F76AACDA8AD4ED0 /* CeramicTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CeramicTile.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		25CCF20385D50F8EFE4CDFCB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BCF83F8D25D212CEAB37DE45 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A62D66DFF015C6AB518CB5E /* Organizer */ = {
+			isa = PBXGroup;
+			children = (
+				40E80E7225D6D8507805ADED /* OrganizerDashboardView.swift */,
+			);
+			path = Organizer;
+			sourceTree = "<group>";
+		};
+		0E0388329668575CA3B631BC /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				F11BC19E8BAAA6F809337011 /* Home */,
+				8D793F81354507FEA65BA6B5 /* Missions */,
+				57BB77B1F41EBB598F35A64E /* Mosaics */,
+				0A62D66DFF015C6AB518CB5E /* Organizer */,
+				F10641F3778BACF997A418B7 /* Profile */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		1002BF061743A4E49BC0C339 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				46BE0753552E543A7768D0BB /* Mosaic.app */,
+				E0E79457F900AAA9959C2B84 /* MosaicTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2E3489A9F748357A0CBDC01C /* Mosaic */ = {
+			isa = PBXGroup;
+			children = (
+				99E556EA749249A049845B64 /* App */,
+				96BD0AB130D4F5CC2DA04F56 /* Components */,
+				3EB0108873D0FD5FB4E9E6ED /* DesignSystem */,
+				0E0388329668575CA3B631BC /* Features */,
+				4DF60178F043AC9F9F8B92E3 /* Models */,
+				5AB6E24832E003D3C14194F0 /* Resources */,
+				838A1FFB8BB11511B0E9009E /* Services */,
+			);
+			path = Mosaic;
+			sourceTree = "<group>";
+		};
+		3ACFBA0872450885085FB659 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				70E770537B35193A86ACA331 /* Fraunces-OFL.txt */,
+				5D91C53CF130CB0A048AC239 /* Fraunces72ptSoft-Bold.ttf */,
+				8F40BCDCFBC3B3E4C006FCBC /* Fraunces72ptSoft-Regular.ttf */,
+				023B90CDC0DE0C5E24E23E6C /* Fraunces72ptSoft-SemiBold.ttf */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		3EB0108873D0FD5FB4E9E6ED /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				04ED67238A664D8D7CB82D90 /* MosaicTheme.swift */,
+				10F9425CEE0610EEA35AB39B /* PlayfulComponents.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		4DF60178F043AC9F9F8B92E3 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				C624BD96CD3ED7A2F602DBF6 /* MosaicModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		57BB77B1F41EBB598F35A64E /* Mosaics */ = {
+			isa = PBXGroup;
+			children = (
+				18C7418285D036BDDA480FE9 /* MosaicsView.swift */,
+				418BD0EF6A9BF46BBFF9036B /* RevealView.swift */,
+			);
+			path = Mosaics;
+			sourceTree = "<group>";
+		};
+		5AB6E24832E003D3C14194F0 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				454381EB604C2E4CB2FC0290 /* Assets.xcassets */,
+				7409BD8E7A7B41B93948CFD9 /* Info.plist */,
+				3ACFBA0872450885085FB659 /* Fonts */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		838A1FFB8BB11511B0E9009E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				892B066AA2028EB2C2BE4E67 /* MosaicNetworkModels.swift */,
+				0F4F7D783985CDC2E9EBE944 /* MosaicRepository.swift */,
+				29292EB4239F5D3E1146E594 /* SupabaseConfiguration.swift */,
+				848CD6C7B7A0F6CFC340EBF0 /* SupabaseMosaicRepository.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		8D793F81354507FEA65BA6B5 /* Missions */ = {
+			isa = PBXGroup;
+			children = (
+				550B8F0070F4E2BBD32BA4A4 /* EvidenceView.swift */,
+				BB05442EA713D954898AE6EF /* MissionDetailView.swift */,
+				1E73D4A05F77059307686822 /* MissionLibraryView.swift */,
+				3EA31E89E2919E67C940C26E /* PassTheTileView.swift */,
+				5DE2EFEB8A1B3DB4CB43333B /* PrivacyReviewView.swift */,
+				A75F3413BDC841204B0DEA02 /* PrivateMediaPicker.swift */,
+				2DA356EDE9DE21ADF6B01D2D /* TileFiringView.swift */,
+				243CF128430E696132FD320A /* TilePlacementView.swift */,
+			);
+			path = Missions;
+			sourceTree = "<group>";
+		};
+		93EAD1979F5C8A4751D47B27 = {
+			isa = PBXGroup;
+			children = (
+				2E3489A9F748357A0CBDC01C /* Mosaic */,
+				AC262D6A2156F16B36C937E1 /* MosaicTests */,
+				1002BF061743A4E49BC0C339 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		96BD0AB130D4F5CC2DA04F56 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FCDD2D4C4F76AACDA8AD4ED0 /* CeramicTile.swift */,
+				894EF8A36353EC40E6FE7B55 /* MosaicBrandMark.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		99E556EA749249A049845B64 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				7BD2B7F04AB60B4945EC8D5E /* AppStore.swift */,
+				5D84A50668044A6EBA903D3E /* MosaicApp.swift */,
+				498B2A791A07CAB2A8B99EA8 /* RootView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		AC262D6A2156F16B36C937E1 /* MosaicTests */ = {
+			isa = PBXGroup;
+			children = (
+				AF3A577059105531A3863066 /* AppStoreTests.swift */,
+				C11E7B29B0FE1C102BFC1076 /* BackendModelTests.swift */,
+				1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */,
+				8776E973B106B390304908DB /* OnboardingTests.swift */,
+				63D252027998D07CF9A07A1B /* RepositoryStateTests.swift */,
+			);
+			path = MosaicTests;
+			sourceTree = "<group>";
+		};
+		F10641F3778BACF997A418B7 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				C4EF333B9A10C68D24935403 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		F11BC19E8BAAA6F809337011 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				88347E06EB18D8773DA096E2 /* ArtworkSceneView.swift */,
+				45F804F7D8AD2F1EBC49F27B /* HomeView.swift */,
+				B36B42D102B1C28BB0C07E3E /* OnboardingModels.swift */,
+				9EAB2A2ADCED67225C8A6387 /* WelcomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		85360A0EBD494CAD42FFE377 /* MosaicTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E778F38BA7D9B3F4ED0ADBC9 /* Build configuration list for PBXNativeTarget "MosaicTests" */;
+			buildPhases = (
+				8AE949DFB9FA00605B4D7F16 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7CCF0E3F66E15A42C25683F7 /* PBXTargetDependency */,
+			);
+			name = MosaicTests;
+			packageProductDependencies = (
+			);
+			productName = MosaicTests;
+			productReference = E0E79457F900AAA9959C2B84 /* MosaicTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CF261331CEC9474675E64FD3 /* Mosaic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 59E00CB493BF5131C0F562FA /* Build configuration list for PBXNativeTarget "Mosaic" */;
+			buildPhases = (
+				1F3804760200D11549EAE9EA /* Sources */,
+				F7DA43A39F8D7024AFA9F8AE /* Resources */,
+				25CCF20385D50F8EFE4CDFCB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Mosaic;
+			packageProductDependencies = (
+				615230DFE2B2B119766440EE /* Supabase */,
+			);
+			productName = Mosaic;
+			productReference = 46BE0753552E543A7768D0BB /* Mosaic.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CFB5A8D7D5E9600E23EAA04E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					85360A0EBD494CAD42FFE377 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					CF261331CEC9474675E64FD3 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 14EB83E4F6A2A6C086643429 /* Build configuration list for PBXProject "Mosaic" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 93EAD1979F5C8A4751D47B27;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				19CA073DCB0A9225B738BE92 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 1002BF061743A4E49BC0C339 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CF261331CEC9474675E64FD3 /* Mosaic */,
+				85360A0EBD494CAD42FFE377 /* MosaicTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F7DA43A39F8D7024AFA9F8AE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				46AFA50E019D396BB058E71C /* Assets.xcassets in Resources */,
+				3B0F33984E10911D2EF16D7A /* Fraunces-OFL.txt in Resources */,
+				0511B65A4D5C787CC35DBA19 /* Fraunces72ptSoft-Bold.ttf in Resources */,
+				84F31F33A032FE75EB6DF978 /* Fraunces72ptSoft-Regular.ttf in Resources */,
+				510ECCAC740134DF7EDB413E /* Fraunces72ptSoft-SemiBold.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1F3804760200D11549EAE9EA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9B16F0F2B198B64360EB33B /* AppStore.swift in Sources */,
+				1317D0099444BEDCE8A8576C /* ArtworkSceneView.swift in Sources */,
+				A691E76044542183F2360A60 /* CeramicTile.swift in Sources */,
+				E94F5A27CFFFF53FE240A373 /* EvidenceView.swift in Sources */,
+				4316C366CD33B1D09D443A58 /* HomeView.swift in Sources */,
+				5C5F177F9110C3D3B4CBEA9A /* MissionDetailView.swift in Sources */,
+				421B70432052949104E3E513 /* MissionLibraryView.swift in Sources */,
+				83A9FE9C611E8B2F6C589242 /* MosaicApp.swift in Sources */,
+				C77317F90CD27F411B22D182 /* MosaicBrandMark.swift in Sources */,
+				5E67E533CB5AFC2B6C7D7AC3 /* MosaicModels.swift in Sources */,
+				20F88ED411B8CFF835035CB6 /* MosaicNetworkModels.swift in Sources */,
+				A924331D61F626BCE10C8BF9 /* MosaicRepository.swift in Sources */,
+				455631E6FE69537636A3B5AC /* MosaicTheme.swift in Sources */,
+				20403A6FEF825C6F72A8202E /* MosaicsView.swift in Sources */,
+				B850F43EBFCA8CF8B5581BED /* OnboardingModels.swift in Sources */,
+				6087248C9C00C7109D30AE7F /* OrganizerDashboardView.swift in Sources */,
+				5A42DC2E41744E4C2DE6E3D2 /* PassTheTileView.swift in Sources */,
+				C2564E7257710C902A8E629F /* PlayfulComponents.swift in Sources */,
+				9C72222D4A3CCD37A842CA49 /* PrivacyReviewView.swift in Sources */,
+				6585B2043BD7E0EA75AC2668 /* PrivateMediaPicker.swift in Sources */,
+				6A65B92F50CDB468A838D8D2 /* ProfileView.swift in Sources */,
+				1A0ECDC82A718869764F7007 /* RevealView.swift in Sources */,
+				C2E199DDADBA2C337D58980F /* RootView.swift in Sources */,
+				CF610A17ACB570C285D3688A /* SupabaseConfiguration.swift in Sources */,
+				CB91826CA3093A54C3B17690 /* SupabaseMosaicRepository.swift in Sources */,
+				2A1F3C6A6D0A2452D6AD2B1A /* TileFiringView.swift in Sources */,
+				F6742CF10D232E87B77D112D /* TilePlacementView.swift in Sources */,
+				C5CD8831B566D26D7A80349B /* WelcomeView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8AE949DFB9FA00605B4D7F16 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1F3C928184B496818860CB5A /* AppStoreTests.swift in Sources */,
+				3122F9A49F6024D428D318A4 /* BackendModelTests.swift in Sources */,
+				57441B6D2DA3ABDD268621E6 /* DesignSystemTests.swift in Sources */,
+				72C817AFB19053F1AB065857 /* OnboardingTests.swift in Sources */,
+				6BDB0E35166F104FC7DF9AC4 /* RepositoryStateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7CCF0E3F66E15A42C25683F7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CF261331CEC9474675E64FD3 /* Mosaic */;
+			targetProxy = B079B547470315AD4DAAA791 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		37CDC2744CC2E8486334A675 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.MosaicTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mosaic.app/Mosaic";
+			};
+			name = Debug;
+		};
+		5768CC178F26CEA521607368 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPABASE_PUBLISHABLE_KEY = "";
+				SUPABASE_URL = "";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		87AC2EE949CA8D0601A483C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.MosaicTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mosaic.app/Mosaic";
+			};
+			name = Release;
+		};
+		909E60C63E5CA217FCF44F70 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Mosaic/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.kindness;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A5A5A2DE47512D2BA55506A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPABASE_PUBLISHABLE_KEY = "";
+				SUPABASE_URL = "";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		CB28C99CFF75D1AD991C04E3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Mosaic/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.kindness;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		14EB83E4F6A2A6C086643429 /* Build configuration list for PBXProject "Mosaic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A5A5A2DE47512D2BA55506A7 /* Debug */,
+				5768CC178F26CEA521607368 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		59E00CB493BF5131C0F562FA /* Build configuration list for PBXNativeTarget "Mosaic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB28C99CFF75D1AD991C04E3 /* Debug */,
+				909E60C63E5CA217FCF44F70 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E778F38BA7D9B3F4ED0ADBC9 /* Build configuration list for PBXNativeTarget "MosaicTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				37CDC2744CC2E8486334A675 /* Debug */,
+				87AC2EE949CA8D0601A483C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		19CA073DCB0A9225B738BE92 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.54.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		615230DFE2B2B119766440EE /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19CA073DCB0A9225B738BE92 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = CFB5A8D7D5E9600E23EAA04E /* Project object */;
+}

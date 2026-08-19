@@ -1,0 +1,64 @@
+name: Mosaic
+options:
+  bundleIdPrefix: com.mosaic
+  deploymentTarget:
+    iOS: "18.0"
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    SUPABASE_URL: ""
+    SUPABASE_PUBLISHABLE_KEY: ""
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    exactVersion: 2.54.1
+targets:
+  Mosaic:
+    type: application
+    platform: iOS
+    info:
+      path: Mosaic/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Mosaic
+        NSCameraUsageDescription: Mosaic uses the camera to privately verify your act of kindness.
+        NSMicrophoneUsageDescription: Mosaic uses the microphone only while recording a private evidence video.
+        NSPhotoLibraryUsageDescription: Choose a photo to privately verify your act of kindness.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        SupabaseURL: $(SUPABASE_URL)
+        SupabasePublishableKey: $(SUPABASE_PUBLISHABLE_KEY)
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIUserInterfaceStyle: Light
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIAppFonts:
+          - Fraunces72ptSoft-Regular.ttf
+          - Fraunces72ptSoft-SemiBold.ttf
+          - Fraunces72ptSoft-Bold.ttf
+    sources:
+      - path: Mosaic
+    dependencies:
+      - package: Supabase
+        product: Supabase
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mosaic.kindness
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    scheme:
+      testTargets:
+        - MosaicTests
+  MosaicTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MosaicTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Mosaic
