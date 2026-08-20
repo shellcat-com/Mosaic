@@ -34,11 +34,11 @@ Set `REVENUECAT_TEST_STORE_PUBLIC_KEY` for Debug and `REVENUECAT_APP_STORE_PUBLI
 1. Run `supabase db reset`, `supabase test db`, `supabase db lint --local`, and `supabase db advisors --local`.
 2. Use RevenueCat Test Store in Simulator for purchase/cancel/pending/restore UI states.
 3. Use hosted staging on a physical device for Sign in with Apple and anonymous identity linking.
-4. After the Reverie Hacks repository, video, documentation, and core acceptance tests are complete, test App Store Sandbox and optionally TestFlight, including restore on a second device and exactly-once PASS spend.
+4. Distribute the billing-disabled Reverie Hacks build through TestFlight and test its hosted Supabase flows on two devices. Test App Store Sandbox purchases, restore, and exactly-once PASS spend only for a later billing-enabled release.
 5. Confirm account deletion blocks sole owners and warns that deletion does not cancel an Apple subscription.
 
 ## Post-hackathon release
 
-RevenueCat products, production Apple authentication, App Store review, push delivery, and TestFlight are not required for the Reverie Hacks submission. The `Hackathon` configuration disables billing and Apple account-linking entry points and uses anonymous authentication with synthetic data.
+The Reverie Hacks submission uses TestFlight plus a zero-configuration Xcode fallback. The `Hackathon` configuration disables billing and remote push, uses anonymous authentication with synthetic data, and keeps native Sign in with Apple optional for permanent organizer accounts and guest identity linking. Reviewer access never depends on Apple authentication.
 
-Before a public App Store release, complete sandbox purchase and restore testing, add production dashboard credentials and review notes, verify account deletion, confirm that production builds use only the App Store RevenueCat public key, and re-audit the published [Privacy Policy](https://shellcat-com.github.io/Mosaic/privacy/) and [Terms](https://shellcat-com.github.io/Mosaic/terms/) against the final production data practices.
+Before a paid public App Store release, complete sandbox purchase and restore testing, add production RevenueCat and notification credentials, verify account deletion, confirm that production builds use only the App Store RevenueCat public key, and re-audit the published [Privacy Policy](https://shellcat-com.github.io/Mosaic/privacy/) and [Terms](https://shellcat-com.github.io/Mosaic/terms/) against the final production data practices.

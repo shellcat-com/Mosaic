@@ -77,6 +77,8 @@ open Mosaic.xcodeproj
 
 Select the shared **Mosaic Hackathon** scheme and run it on an iPhone Simulator. Choose **Explore Demo**. No Docker, Supabase CLI, environment variables, local server, or credentials are required. The committed public client configuration connects every build to the hosted judging project; if first-launch connectivity fails, Mosaic opens its clearly labeled bundled read-only showcase and retries the cloud when the app becomes active. For the exact three-minute judging path, follow [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
+TestFlight reviewers can use the ready-to-paste [`docs/TESTFLIGHT_REVIEW_NOTES.md`](docs/TESTFLIGHT_REVIEW_NOTES.md). The same hosted backend and synthetic judging data are used by TestFlight and the repository build.
+
 The stable showcase invitation code is **KIND42**. The convenience landing page is [shellcat-com.github.io/Mosaic/?join=KIND42](https://shellcat-com.github.io/Mosaic/?join=KIND42); the code remains the source of truth if a browser cannot open the custom app scheme.
 
 ### Backend development (maintainers only)
