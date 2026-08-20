@@ -1,0 +1,9 @@
+// Public client configuration for the disposable Reverie Hacks judge project.
+// Supabase publishable keys are safe in clients when paired with least-privilege
+// grants and Row Level Security. Never add secret/service-role keys here.
+
+SUPABASE_URL =
+SUPABASE_PUBLISHABLE_KEY =
+REVENUECAT_PUBLIC_SDK_KEY =
+MOSAIC_BILLING_ENABLED = NO
+MOSAIC_HACKATHON_BUILD = YES

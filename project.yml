@@ -1,0 +1,155 @@
+name: Mosaic
+options:
+  bundleIdPrefix: com.mosaic
+  deploymentTarget:
+    iOS: "18.0"
+configs:
+  Debug: debug
+  Hackathon: release
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    CODE_SIGN_STYLE: Automatic
+    SUPABASE_URL: ""
+    SUPABASE_PUBLISHABLE_KEY: ""
+    REVENUECAT_PUBLIC_SDK_KEY: ""
+    MOSAIC_BILLING_ENABLED: YES
+    MOSAIC_HACKATHON_BUILD: NO
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    exactVersion: 2.54.1
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios-spm.git
+    exactVersion: 5.82.0
+targets:
+  Mosaic:
+    type: application
+    platform: iOS
+    info:
+      path: Mosaic/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Mosaic
+        NSCameraUsageDescription: Mosaic uses the camera for private evidence and moments you explicitly seal into a group reveal.
+        NSMicrophoneUsageDescription: Mosaic uses the microphone only while recording a private evidence video.
+        NSPhotoLibraryUsageDescription: Choose a photo for private evidence or a moment you explicitly add to a group reveal.
+        NSPhotoLibraryAddUsageDescription: Save your finished Mosaic recap to Photos.
+        NSSupportsLiveActivities: true
+        UIBackgroundModes:
+          - remote-notification
+        CFBundleURLTypes:
+          - CFBundleURLName: com.biswaskhatiwada.mosaicapp
+            CFBundleURLSchemes:
+              - mosaic
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        SupabaseURL: $(SUPABASE_URL)
+        SupabasePublishableKey: $(SUPABASE_PUBLISHABLE_KEY)
+        RevenueCatPublicSDKKey: $(REVENUECAT_PUBLIC_SDK_KEY)
+        MosaicBillingEnabled: $(MOSAIC_BILLING_ENABLED)
+        MosaicHackathonBuild: $(MOSAIC_HACKATHON_BUILD)
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIUserInterfaceStyle: Light
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIAppFonts:
+          - Fraunces72ptSoft-Regular.ttf
+          - Fraunces72ptSoft-SemiBold.ttf
+          - Fraunces72ptSoft-Bold.ttf
+    sources:
+      - path: Mosaic
+        excludes:
+          - Resources/Fonts/Fraunces-OFL.txt
+    dependencies:
+      - package: Supabase
+        product: Supabase
+      - package: RevenueCat
+        product: RevenueCat
+      - package: RevenueCat
+        product: RevenueCatUI
+      - target: MosaicWidgets
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.biswaskhatiwada.mosaicapp
+        DEVELOPMENT_TEAM: KFH848D5D7
+        CODE_SIGN_ENTITLEMENTS: Mosaic/Resources/Mosaic.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      configs:
+        Debug:
+          REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
+        Hackathon:
+          REVENUECAT_PUBLIC_SDK_KEY: ""
+          MOSAIC_BILLING_ENABLED: NO
+          MOSAIC_HACKATHON_BUILD: YES
+        Release:
+          REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_APP_STORE_PUBLIC_KEY)
+    configFiles:
+      Hackathon: Config/Hackathon.xcconfig
+    attributes:
+      SystemCapabilities:
+        com.apple.AssociatedDomains:
+          enabled: 1
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
+        com.apple.InAppPurchase:
+          enabled: 1
+        com.apple.Push:
+          enabled: 1
+        com.apple.SignInWithApple:
+          enabled: 1
+    scheme:
+      testTargets:
+        - MosaicTests
+  MosaicTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MosaicTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Mosaic
+  MosaicWidgets:
+    type: app-extension
+    platform: iOS
+    info:
+      path: MosaicWidgets/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    sources:
+      - path: MosaicWidgets
+      - path: Mosaic/Shared/EventModels.swift
+      - path: Mosaic/Shared/MosaicActivityAttributes.swift
+      - path: Mosaic/Shared/MosaicEventCache.swift
+      - path: Mosaic/Features/Themes/KinderTheme.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.biswaskhatiwada.mosaicapp.widgets
+        DEVELOPMENT_TEAM: KFH848D5D7
+        CODE_SIGN_ENTITLEMENTS: MosaicWidgets/MosaicWidgets.entitlements
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1"
+    attributes:
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
+schemes:
+  Mosaic Hackathon:
+    build:
+      targets:
+        Mosaic: all
+    run:
+      config: Hackathon
+    archive:
+      config: Hackathon
+    profile:
+      config: Hackathon
+    analyze:
+      config: Hackathon

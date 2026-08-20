@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "verifiedAt": "2026-08-19T00:00:00Z",
+  "manifestChecksum": "sha256:85fc7c9fa30f3b707dc11b32059afa98756837c0d09a1689735d943c3181560c",
+  "notes": "All tracks require the bundled attribution to remain with exported and shared recaps. Beat timestamps and 96 waveform bins are deterministically expanded by RecapMusicCatalog from this verified tempo metadata.",
+  "tracks": [
+    {
+      "id": "spark",
+      "file": "spark.mp3",
+      "sha256": "82a9ade6a1e18b528789ed23d00fa344cba45f00979d56fb4c2710e7c55f8853",
+      "title": "Motivate Me",
+      "artist": "Mixaund",
+      "duration": 199.030150,
+      "bpm": 122,
+      "license": "CC BY 4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceURL": "https://www.free-stock-music.com/mixaund-motivate-me.html",
+      "attribution": "Motivate Me by Mixaund | https://mixaund.bandcamp.com\nRoyalty Free Music by https://www.free-stock-music.com"
+    },
+    {
+      "id": "fresh",
+      "file": "fresh.mp3",
+      "sha256": "668f7ffa0074f2cde6388ee305bf134fb811374ed0da6305611d5839628a65ab",
+      "title": "Fresh",
+      "artist": "Alex-Productions",
+      "duration": 116.349375,
+      "bpm": 90,
+      "license": "CC BY 3.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceURL": "https://www.free-stock-music.com/alex-productions-fresh.html",
+      "attribution": "Fresh by Alex-Productions | https://onsound.eu/\nRoyalty Free Music by https://www.free-stock-music.com\nCreative Commons / Attribution 3.0 Unported License (CC BY 3.0)"
+    },
+    {
+      "id": "summer",
+      "file": "summer.mp3",
+      "sha256": "ffb0a88ab43d4ddfbb48e72bf0b99f793a3891eac40649c3a140bb1bdd09d406",
+      "title": "Summer Car Ride",
+      "artist": "FSM Team featuring e s c p",
+      "duration": 135.379819,
+      "bpm": 104,
+      "license": "CC BY 4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceURL": "https://www.free-stock-music.com/fsm-team-escp-summer-car-ride.html",
+      "attribution": "Summer Car Ride by | e s c p | https://www.escp.space\nhttps://escp-music.bandcamp.com"
+    },
+    {
+      "id": "rise",
+      "file": "rise.mp3",
+      "sha256": "d470778fd15bf22b59d5d8f52a774a91d8dac2e4a288d23c8f5c2009918f438d",
+      "title": "Rise",
+      "artist": "Corporate Music Zone",
+      "duration": 165.942857,
+      "bpm": 132,
+      "license": "CC BY 4.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceURL": "https://www.free-stock-music.com/corporate-music-zone-rise.html",
+      "attribution": "Rise by Corporate Music Zone | https://corporate-music-zone.bandcamp.com\nRoyalty Free Music by https://www.free-stock-music.com"
+    },
+    {
+      "id": "zone",
+      "file": "zone.mp3",
+      "sha256": "30ff24d7e8dc678e517c69839b272b88095cc961d6a688a192903f91a5387ed2",
+      "title": "Summer Chill Reggaeton | ISLAND",
+      "artist": "Alex-Productions",
+      "duration": 128.339575,
+      "bpm": 100,
+      "license": "CC BY 3.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceURL": "https://www.free-stock-music.com/alex-productions-summer-chill-reggaeton-island.html",
+      "attribution": "Summer Chill Reggaeton | ISLAND by Alex-Productions | https://onsound.eu/\nRoyalty Free Music by https://www.free-stock-music.com\nCreative Commons / Attribution 3.0 Unported License (CC BY 3.0)"
+    },
+    {
+      "id": "anywhere",
+      "file": "anywhere.mp3",
+      "sha256": "08594e4f36055d4d3a2e2fc8b0d3192e5d51ec131a4bad86d97e942547f3a3cf",
+      "title": "We’ll Go Anywhere",
+      "artist": "Allerlei von Nicolai & Vivian Wong",
+      "duration": 219.431775,
+      "bpm": 128,
+      "license": "CC BY 3.0",
+      "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+      "sourceURL": "https://www.free-stock-music.com/allerlei-von-nicolai-vivian-wong-well-go-anywhere.html",
+      "attribution": "We’ll Go Anywhere by Allerlei von Nicolai & Vivian Wong | https://www.youtube.com/channel/UC_bcboyEwTxpEyM-fuCjLkA\nhttps://www.youtube.com/channel/UCSnf0j8H1OKdYqfXtfFt_oQ\nRoyalty Free Music by https://www.free-stock-music.com\nCreative Commons / Attribution 3.0 Unported License (CC BY 3.0)"
+    }
+  ]
+}
