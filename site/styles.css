@@ -34,6 +34,8 @@ a { color: var(--indigo); font-weight: 650; }
 nav { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 22px; }
 .meta { color: var(--muted); font-size: .94rem; }
 .callout { border-left: 5px solid var(--sage); }
+.invitation { border-left: 5px solid var(--gold); }
+.button { display: inline-block; color: white; background: var(--indigo); border-radius: 999px; padding: .7rem 1.1rem; text-decoration: none; }
 footer { text-align: center; color: var(--muted); font-size: .9rem; padding-top: 18px; }
 code { background: #eee8dc; border-radius: 5px; padding: .1rem .3rem; }
 

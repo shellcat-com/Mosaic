@@ -199,10 +199,12 @@ enum EventRoute: Equatable, Sendable {
 
 enum EventRouteParser {
     static func parse(_ url: URL) -> EventRoute? {
-        if url.scheme?.lowercased() == "https", url.host?.lowercased() == "mosaic.app" {
-            let components = url.pathComponents.filter { $0 != "/" }
-            guard components.count == 2, components[0].lowercased() == "join",
-                  let code = invitationCode(components[1]) else { return nil }
+        if url.scheme?.lowercased() == "https",
+           url.host?.lowercased() == "shellcat-com.github.io",
+           ["/Mosaic", "/Mosaic/"].contains(url.path),
+           let rawCode = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+               .queryItems?.first(where: { $0.name == "join" })?.value,
+           let code = invitationCode(rawCode) {
             return .join(code)
         }
 

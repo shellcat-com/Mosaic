@@ -9,11 +9,28 @@ struct AppStoreTests {
         #expect(MosaicLaunchTiming.reduceMotionHold == 0.35)
     }
 
-    @Test func guestJoinStoresPrivacyChoice() {
+    @Test func guestJoinStoresPrivacyChoice() async {
         let store = AppStore()
-        store.join(name: "  Maya  ", privacy: "First name")
+        let invitation = InvitationPreview(
+            challengeID: store.challenge.id,
+            code: store.challenge.invitationCode,
+            name: store.challenge.name,
+            groupName: store.challenge.groupName,
+            purpose: store.challenge.purpose,
+            goal: store.challenge.goal,
+            startAt: store.challenge.startDate,
+            revealAt: store.challenge.revealDate,
+            status: store.challenge.serverStatus
+        )
+        store.continueToJoin(invitation)
+        let joined = await store.joinInvitation(
+            invitation,
+            name: "  Maya  ",
+            privacy: .firstName
+        )
 
-        #expect(store.hasJoined)
+        #expect(joined)
+        #expect(store.entryState == .main)
         #expect(store.displayName == "Maya")
         #expect(store.privacyMode == "First name")
     }

@@ -6,7 +6,13 @@ final class SupabaseMosaicRepository: MosaicRepository {
     private let client: SupabaseClient
 
     init(configuration: SupabaseConfiguration) {
-        client = SupabaseClient(supabaseURL: configuration.url, supabaseKey: configuration.publishableKey)
+        client = SupabaseClient(
+            supabaseURL: configuration.url,
+            supabaseKey: configuration.publishableKey,
+            options: SupabaseClientOptions(
+                functions: .init(decoder: MosaicJSONDecoder.make())
+            )
+        )
     }
 
     init(client: SupabaseClient) {

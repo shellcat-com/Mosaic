@@ -63,7 +63,7 @@ supabase functions serve
 ./supabase/functions/tests/integration.sh
 ```
 
-Debug builds automatically use the local Supabase stack at `http://127.0.0.1:55321`.
+Local commands are maintainer-only tools. Debug, Hackathon, and Release builds default to the same hosted HTTPS judging project; maintainers must opt in explicitly if they want to test against a different hosted project.
 
 ## User guide
 

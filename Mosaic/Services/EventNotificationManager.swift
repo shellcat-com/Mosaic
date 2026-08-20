@@ -32,7 +32,9 @@ final class EventNotificationManager {
             state = allowed ? .allowed : .denied
         }
         guard state == .allowed else { return state }
-        UIApplication.shared.registerForRemoteNotifications()
+        if MosaicBuildConfiguration.remotePushEnabled {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
         try await schedule(summary: summary, preferences: preferences)
         return state
     }

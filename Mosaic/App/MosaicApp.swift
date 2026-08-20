@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct MosaicApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @UIApplicationDelegateAdaptor(MosaicAppDelegate.self) private var appDelegate
     @State private var store = AppStore()
 
@@ -26,8 +27,13 @@ struct MosaicApp: App {
                     await store.monitorPendingMomentUploads()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .mosaicRemoteDeviceToken)) { notification in
+                    guard MosaicBuildConfiguration.remotePushEnabled else { return }
                     guard let token = notification.object as? String else { return }
                     Task { await store.registerDeviceToken(token) }
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active, !store.backendState.isLive else { return }
+                    Task { await store.bootstrap() }
                 }
         }
     }

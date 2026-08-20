@@ -2,8 +2,10 @@
 // Supabase publishable keys are safe in clients when paired with least-privilege
 // grants and Row Level Security. Never add secret/service-role keys here.
 
-SUPABASE_URL =
-SUPABASE_PUBLISHABLE_KEY =
+SUPABASE_URL = https:/$()/lmemddtpwfbkawlkwthf.supabase.co
+SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU
 REVENUECAT_PUBLIC_SDK_KEY =
 MOSAIC_BILLING_ENABLED = NO
 MOSAIC_HACKATHON_BUILD = YES
+MOSAIC_REMOTE_PUSH_ENABLED = NO
+ENABLE_TESTABILITY = YES

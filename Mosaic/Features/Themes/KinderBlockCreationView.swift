@@ -396,7 +396,7 @@ struct KinderBlockCreationView: View {
             )
             KinderArtworkView(selection: challenge.theme, phase: .invitation, cornerRadius: 30, showsTitle: true)
                 .frame(height: 330)
-            ShareLink(item: "Join \(challenge.name) in Mosaic: https://mosaic.app/join/\(challenge.invitationCode)") {
+            ShareLink(item: MosaicBuildConfiguration.invitationShareText(challengeName: challenge.name, code: challenge.invitationCode)) {
                 Label("Share invitation", systemImage: "square.and.arrow.up")
             }
             .buttonStyle(PrimaryButtonStyle())
