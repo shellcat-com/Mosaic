@@ -55,7 +55,6 @@
 		55D894F70E2A5BB427203250 /* spark.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 762A0703AAEB32C34C979107 /* spark.mp3 */; };
 		55E9D8CA6C5B70D7E4EB8723 /* RecapBeatDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6792360A8E1E27AEECB1136F /* RecapBeatDetector.swift */; };
 		56984CBE59E199481BAB46A5 /* MosaicWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B5C4E837A676E294D4290FBD /* MosaicWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		57441B6D2DA3ABDD268621E6 /* DesignSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */; };
 		5A42DC2E41744E4C2DE6E3D2 /* PassTheTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA31E89E2919E67C940C26E /* PassTheTileView.swift */; };
 		5B5AF19AC6BB9A1C950949CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3048E641FE31B440A10989E7 /* PrivacyInfo.xcprivacy */; };
 		5C5F177F9110C3D3B4CBEA9A /* MissionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB05442EA713D954898AE6EF /* MissionDetailView.swift */; };
@@ -166,7 +165,6 @@
 		18C7418285D036BDDA480FE9 /* MosaicsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicsView.swift; sourceTree = "<group>"; };
 		1D3E2DA40B7E8D25192A3E49 /* RecapUserMusicStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapUserMusicStore.swift; sourceTree = "<group>"; };
 		1E73D4A05F77059307686822 /* MissionLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionLibraryView.swift; sourceTree = "<group>"; };
-		1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystemTests.swift; sourceTree = "<group>"; };
 		1F5F31B144EDABDA4719B358 /* EventModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventModels.swift; sourceTree = "<group>"; };
 		243CF128430E696132FD320A /* TilePlacementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilePlacementView.swift; sourceTree = "<group>"; };
 		276EF001110B727A554FD7FA /* SharedMomentServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedMomentServices.swift; sourceTree = "<group>"; };
@@ -215,7 +213,6 @@
 		6BEEED0B662DD71C6E1AFC5B /* RecapTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapTimeline.swift; sourceTree = "<group>"; };
 		6F0462970284B12C0E256EBF /* SharedRollCameraFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRollCameraFlow.swift; sourceTree = "<group>"; };
 		702C0A5C450C2E44D976461B /* MosaicAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicAppDelegate.swift; sourceTree = "<group>"; };
-		70E770537B35193A86ACA331 /* Fraunces-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Fraunces-OFL.txt"; sourceTree = "<group>"; };
 		7409BD8E7A7B41B93948CFD9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		762A0703AAEB32C34C979107 /* spark.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = spark.mp3; sourceTree = "<group>"; };
 		76DA8B557B34E229D174DC9F /* RecapMeta.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapMeta.swift; sourceTree = "<group>"; };
@@ -372,7 +369,6 @@
 		3ACFBA0872450885085FB659 /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
-				70E770537B35193A86ACA331 /* Fraunces-OFL.txt */,
 				5D91C53CF130CB0A048AC239 /* Fraunces72ptSoft-Bold.ttf */,
 				8F40BCDCFBC3B3E4C006FCBC /* Fraunces72ptSoft-Regular.ttf */,
 				023B90CDC0DE0C5E24E23E6C /* Fraunces72ptSoft-SemiBold.ttf */,
@@ -586,7 +582,6 @@
 				A2F116FC40E50DA7DA1D1F84 /* AccountAccessTests.swift */,
 				AF3A577059105531A3863066 /* AppStoreTests.swift */,
 				C11E7B29B0FE1C102BFC1076 /* BackendModelTests.swift */,
-				1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */,
 				627CB806C484DE9E74D405B6 /* EventLifecycleTests.swift */,
 				A616AC37884DD0946982A99A /* KinderThemeCatalogTests.swift */,
 				8776E973B106B390304908DB /* OnboardingTests.swift */,
@@ -748,7 +743,7 @@
 					CF261331CEC9474675E64FD3 = {
 						DevelopmentTeam = KFH848D5D7;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.InAppPurchase\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.SignInWithApple\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.AssociatedDomains\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.SignInWithApple\": [\"enabled\": 1], \"com.apple.InAppPurchase\": [\"enabled\": 1]]";
 					};
 					DFC1882226846FB2E51A158D = {
 						DevelopmentTeam = KFH848D5D7;
@@ -904,7 +899,6 @@
 				04589A458315C4E982692F96 /* AccountAccessTests.swift in Sources */,
 				1F3C928184B496818860CB5A /* AppStoreTests.swift in Sources */,
 				3122F9A49F6024D428D318A4 /* BackendModelTests.swift in Sources */,
-				57441B6D2DA3ABDD268621E6 /* DesignSystemTests.swift in Sources */,
 				E007DBA9C53E600371FD681D /* EventLifecycleTests.swift in Sources */,
 				382378B9AD796E323A99A4C7 /* KinderThemeCatalogTests.swift in Sources */,
 				72C817AFB19053F1AB065857 /* OnboardingTests.swift in Sources */,
@@ -1026,15 +1020,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MOSAIC_BILLING_ENABLED = YES;
+				MOSAIC_BILLING_ENABLED = NO;
 				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REVENUECAT_PUBLIC_SDK_KEY = "";
 				SDKROOT = iphoneos;
-				SUPABASE_PUBLISHABLE_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -1166,16 +1161,17 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MOSAIC_BILLING_ENABLED = YES;
+				MOSAIC_BILLING_ENABLED = NO;
 				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REVENUECAT_PUBLIC_SDK_KEY = "";
 				SDKROOT = iphoneos;
-				SUPABASE_PUBLISHABLE_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
@@ -1290,15 +1286,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MOSAIC_BILLING_ENABLED = YES;
+				MOSAIC_BILLING_ENABLED = NO;
 				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REVENUECAT_PUBLIC_SDK_KEY = "";
 				SDKROOT = iphoneos;
-				SUPABASE_PUBLISHABLE_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;

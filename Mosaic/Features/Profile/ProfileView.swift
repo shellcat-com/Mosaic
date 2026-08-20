@@ -71,18 +71,13 @@ struct ProfileView: View {
                             .foregroundStyle(MosaicTheme.muted)
                     }
                 }
-                if !store.sessionState.isAuthenticated && !MosaicBuildConfiguration.isHackathonBuild {
+                if !store.sessionState.isAuthenticated {
                     Divider().overlay(MosaicTheme.border)
                     Text("Save across devices")
                         .font(.headline)
                     Text("Keep your contributions and recover them on a new iPhone.")
                         .font(.footnote).foregroundStyle(MosaicTheme.muted)
                     MosaicAppleSignInButton(createWorkspace: false)
-                } else if !store.sessionState.isAuthenticated {
-                    Divider().overlay(MosaicTheme.border)
-                    Label("This judge build uses a private anonymous session.", systemImage: "person.crop.circle.badge.checkmark")
-                        .font(.footnote)
-                        .foregroundStyle(MosaicTheme.muted)
                 }
             }
         }

@@ -16,17 +16,11 @@ struct SupabaseConfiguration: Sendable {
            !configuredURL.contains("$("),
            !configuredKey.contains("$("),
            let url = URL(string: configuredURL),
-           !configuredKey.isEmpty {
+           url.scheme?.lowercased() == "https",
+           url.host?.lowercased().hasSuffix(".supabase.co") == true,
+           !configuredKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return SupabaseConfiguration(url: url, publishableKey: configuredKey)
         }
-
-#if DEBUG
-        return SupabaseConfiguration(
-            url: URL(string: "http://127.0.0.1:55321")!,
-            publishableKey: "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
-        )
-#else
         return nil
-#endif
     }
 }

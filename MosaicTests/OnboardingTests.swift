@@ -50,12 +50,14 @@ struct OnboardingTests {
         #expect(defaults.integer(forKey: OnboardingProgressStore.key) == OnboardingProgressStore.currentVersion)
     }
 
-    @Test func invitationRoutesNormalizeCustomAndUniversalLinks() {
+    @Test func invitationRoutesNormalizeCustomAndGitHubPagesLinks() {
         #expect(EventRouteParser.parse(URL(string: "mosaic://join/kind42")!) == .join("KIND42"))
-        #expect(EventRouteParser.parse(URL(string: "https://mosaic.app/join/a1b2c3")!) == .join("A1B2C3"))
+        #expect(EventRouteParser.parse(URL(string: "https://shellcat-com.github.io/Mosaic/?join=a1b2c3")!) == .join("A1B2C3"))
         #expect(EventRouteParser.parse(URL(string: "https://example.com/join/KIND42")!) == nil)
-        #expect(EventRouteParser.parse(URL(string: "https://mosaic.app/join/not-valid!")!) == nil)
-        #expect(EventRouteParser.parse(URL(string: "https://mosaic.app/join/KIND42/extra")!) == nil)
+        #expect(EventRouteParser.parse(URL(string: "https://mosaic.app/join/KIND42")!) == nil)
+        #expect(EventRouteParser.parse(URL(string: "https://shellcat-com.github.io/Mosaic/?join=not-valid!")!) == nil)
+        #expect(EventRouteParser.parse(URL(string: "https://shellcat-com.github.io/Other/?join=KIND42")!) == nil)
+        #expect(EventRouteParser.parse(URL(string: "https://shellcat-com.github.io/Other/Mosaic/?join=KIND42")!) == nil)
         #expect(EventRouteParser.parse(URL(string: "mosaic://unrelated/KIND42")!) == nil)
     }
 

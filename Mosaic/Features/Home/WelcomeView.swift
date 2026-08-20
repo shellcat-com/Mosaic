@@ -231,23 +231,21 @@ private struct OnboardingEntryChoiceView: View {
                         }
                     }
 
-                    if MosaicBuildConfiguration.isHackathonBuild {
-                        Button {
-                            Task { await store.exploreDemo() }
-                        } label: {
-                            Label("Explore the demo", systemImage: "sparkles")
-                        }
+                    Button("Create a Mosaic") { showCreate = true }
                         .buttonStyle(SecondaryButtonStyle())
-                        Text("The judge demo uses synthetic people, evidence, and challenge data.")
-                            .font(.footnote)
-                            .foregroundStyle(MosaicTheme.muted)
-                    } else {
-                        Button("Create a Mosaic") { showCreate = true }
-                            .buttonStyle(SecondaryButtonStyle())
-                        Text("Creating a Mosaic requires a recoverable Sign in with Apple identity.")
-                            .font(.footnote)
-                            .foregroundStyle(MosaicTheme.muted)
+                    Text("Creating a permanent Mosaic uses Sign in with Apple. Cancelling safely returns here.")
+                        .font(.footnote)
+                        .foregroundStyle(MosaicTheme.muted)
+
+                    Button {
+                        Task { await store.exploreDemo() }
+                    } label: {
+                        Label("Explore Demo", systemImage: "sparkles")
                     }
+                    .buttonStyle(SecondaryButtonStyle())
+                    Text("No credentials required. Opens the shared showcase and a private organizer sandbox; a bundled read-only showcase is available if the network is down.")
+                        .font(.footnote)
+                        .foregroundStyle(MosaicTheme.muted)
 
                     Button("How Mosaic works") { store.showIntro() }
                         .font(.subheadline.weight(.semibold))

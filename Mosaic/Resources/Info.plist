@@ -35,11 +35,8 @@
 	<string>$(MOSAIC_BILLING_ENABLED)</string>
 	<key>MosaicHackathonBuild</key>
 	<string>$(MOSAIC_HACKATHON_BUILD)</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
+	<key>MosaicRemotePushEnabled</key>
+	<string>$(MOSAIC_REMOTE_PUSH_ENABLED)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Mosaic uses the camera for private evidence and moments you explicitly seal into a group reveal.</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -67,10 +64,6 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

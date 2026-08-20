@@ -75,9 +75,11 @@ cd Mosaic
 open Mosaic.xcodeproj
 ```
 
-Select the **Mosaic** scheme and run it on an iPhone Simulator. No private credentials are required: without a reachable Supabase project, Mosaic opens its bundled read-only showcase so the complete visual journey remains usable. For the exact three-minute judging path, follow [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+Select the shared **Mosaic Hackathon** scheme and run it on an iPhone Simulator. Choose **Explore Demo**. No Docker, Supabase CLI, environment variables, local server, or credentials are required. The committed public client configuration connects every build to the hosted judging project; if first-launch connectivity fails, Mosaic opens its clearly labeled bundled read-only showcase and retries the cloud when the app becomes active. For the exact three-minute judging path, follow [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
-### Run the local collaborative backend
+The stable showcase invitation code is **KIND42**. The convenience landing page is [shellcat-com.github.io/Mosaic/?join=KIND42](https://shellcat-com.github.io/Mosaic/?join=KIND42); the code remains the source of truth if a browser cannot open the custom app scheme.
+
+### Backend development (maintainers only)
 
 Additional requirements: XcodeGen, Docker, Supabase CLI, `curl`, and `jq`.
 
@@ -87,7 +89,7 @@ supabase db reset
 supabase functions serve
 ```
 
-Debug builds automatically connect to `http://127.0.0.1:55321`. Anonymous authentication creates a persistent guest identity; the seeded showcase is read-only, while each installation receives an isolated synthetic organizer sandbox.
+Normal Debug, Hackathon, and Release builds always use the hosted judging backend. A maintainer may override the public URL/key at build time with another hosted HTTPS Supabase project; localhost and unresolved configuration are rejected by the app.
 
 Run the two-user lifecycle check in another terminal:
 
@@ -106,8 +108,6 @@ xcodebuild \
 
 supabase test db
 supabase db lint --local
-supabase db advisors --local
-supabase migration list --local
 ```
 
 After editing `project.yml`, regenerate the Xcode project with:
@@ -116,17 +116,17 @@ After editing `project.yml`, regenerate the Xcode project with:
 xcodegen generate
 ```
 
-## Hosted demo configuration
+## Hosted judging backend
 
-The app accepts a hosted project URL and publishable key through build settings. These are public client identifiers protected by explicit grants and RLS. Never add a secret key, service-role key, database password, or CLI token to the app or repository.
+The repository is preconfigured for `https://lmemddtpwfbkawlkwthf.supabase.co`. Its committed publishable key is a public client identifier protected by explicit grants and RLS. Never add a secret key, service-role key, database password, Apple credential, or CLI/access token to the app or repository.
 
 ```sh
 xcodebuild \
   -project Mosaic.xcodeproj \
   -scheme Mosaic \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  SUPABASE_URL='https://YOUR_PROJECT.supabase.co' \
-  SUPABASE_PUBLISHABLE_KEY='sb_publishable_YOUR_KEY'
+  SUPABASE_URL='https://YOUR_MAINTAINER_PROJECT.supabase.co' \
+  SUPABASE_PUBLISHABLE_KEY='sb_publishable_YOUR_PUBLIC_KEY'
 ```
 
 For contributor-only values, create `Config/Local.xcconfig`; that path is ignored by Git. Production push, Live Activity, RevenueCat, and Apple authentication setup are documented under [`docs/`](docs).
@@ -169,7 +169,8 @@ Partner confirmation is intentionally labeled as post-hackathon work and is not 
 
 ## Documentation
 
-- [`Mosaic-Reverie-Documentation.md`](Mosaic-Reverie-Documentation.md) — product guide, judging path, privacy model, and technical architecture.
+- [`PRODUCT_BLUEPRINT.md`](PRODUCT_BLUEPRINT.md) — product thesis, roles, lifecycle, privacy, and v1 boundary.
+- [`design/DESIGN_DIRECTION.md`](design/DESIGN_DIRECTION.md) — Living Kiln visual system and interaction principles.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — trust boundaries and data flow.
 - [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — three-minute Reverie Hacks judging walkthrough.
 - [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — Apple capabilities, Edge Function secrets, and scheduling.

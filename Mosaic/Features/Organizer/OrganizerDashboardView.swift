@@ -67,7 +67,7 @@ struct OrganizerDashboardView: View {
                     VStack(spacing: 0) {
                         row("Challenge code", trailing: store.challenge.invitationCode)
                         Divider().overlay(MosaicTheme.border)
-                        ShareLink(item: "Join \(store.challenge.name) in Mosaic: https://mosaic.app/join/\(store.challenge.invitationCode)") {
+                        ShareLink(item: MosaicBuildConfiguration.invitationShareText(challengeName: store.challenge.name, code: store.challenge.invitationCode)) {
                             actionRow("Share invitation", systemImage: "square.and.arrow.up")
                         }
                     }

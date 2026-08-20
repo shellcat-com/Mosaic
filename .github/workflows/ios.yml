@@ -1,0 +1,30 @@
+name: iOS cloud build and tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode 26
+        run: xcodebuild -version | grep 'Xcode 26'
+      - name: Resolve pinned Swift packages
+        run: xcodebuild -resolvePackageDependencies -project Mosaic.xcodeproj -scheme "Mosaic Hackathon"
+      - name: Build and test cloud-configured app
+        run: >-
+          xcodebuild
+          -project Mosaic.xcodeproj
+          -scheme "Mosaic Hackathon"
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+          -skipPackagePluginValidation
+          ONLY_ACTIVE_ARCH=YES
+          test

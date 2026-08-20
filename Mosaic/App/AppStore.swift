@@ -1,10 +1,16 @@
 import Foundation
 import Observation
+import OSLog
 import WidgetKit
 
 @MainActor
 @Observable
 final class AppStore {
+    @ObservationIgnored private static let logger = Logger(
+        subsystem: "com.biswaskhatiwada.mosaicapp",
+        category: "AppStore"
+    )
+
     var entryState: AppEntryState = .launching
     var displayName = ""
     var participantPrivacy: ParticipantPrivacy = .firstName
@@ -61,6 +67,7 @@ final class AppStore {
     @ObservationIgnored private var deferredInvitation: InvitationPreview?
     @ObservationIgnored private var invitationReturnState: AppEntryState = .entryChoice
     @ObservationIgnored private var hasRestoredMembership = false
+    @ObservationIgnored private var bootstrapTask: Task<Void, Never>?
     let localParticipantID: UUID
 
     var privacyMode: String { participantPrivacy.profileLabel }
@@ -401,7 +408,7 @@ final class AppStore {
     }
 
     func exploreDemo() async {
-        guard MosaicBuildConfiguration.isHackathonBuild else { return }
+        if let bootstrapTask { await bootstrapTask.value }
         onboardingMessage = nil
         backendState = .connecting
         await ensureSession()
@@ -427,10 +434,12 @@ final class AppStore {
             backendState = .live
             backendMessage = nil
         } catch {
-            onboardingMessage = "The demo could not be opened. Check your connection and try again."
+            Self.logger.error("Explore Demo failed: \(String(reflecting: error), privacy: .public)")
             backendMessage = error.localizedDescription
-            backendState = .cached(message: "The hosted demo is temporarily unavailable.")
-            entryState = .entryChoice
+            backendState = .cached(message: "Bundled showcase — read only. Cloud actions will retry when you reconnect.")
+            isOrganizer = false
+            hasRestoredMembership = true
+            entryState = .main
         }
     }
 
@@ -540,6 +549,20 @@ final class AppStore {
     }
 
     func bootstrap() async {
+        if let bootstrapTask {
+            await bootstrapTask.value
+            return
+        }
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.performBootstrap()
+        }
+        bootstrapTask = task
+        await task.value
+        bootstrapTask = nil
+    }
+
+    private func performBootstrap() async {
 #if DEBUG
         guard MarketingPreviewScene.current == nil else { return }
 #endif

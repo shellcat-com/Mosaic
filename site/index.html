@@ -23,7 +23,24 @@
     <h2>Reverie Hacks 2026</h2>
     <p>This site supports the synthetic judge build submitted to the App Development track. The public demonstration does not require real personal information.</p>
   </section>
+  <section id="invitation" class="invitation" hidden>
+    <div class="eyebrow">Private invitation</div>
+    <h2>Open this Mosaic</h2>
+    <p>Invitation code: <strong id="invitation-code"></strong></p>
+    <p><a id="open-app" class="button" href="#">Open in Mosaic</a></p>
+    <p class="meta">If Mosaic is not installed, copy the code and enter it under <strong>Join a Mosaic</strong> after installing the TestFlight build or running the repository in Xcode.</p>
+  </section>
   <footer>Questions? <a href="mailto:biswas06@iastate.edu">biswas06@iastate.edu</a></footer>
 </main>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code = (params.get("join") || "").trim().toUpperCase();
+  if (/^[A-Z0-9]{1,12}$/.test(code)) {
+    document.getElementById("invitation").hidden = false;
+    document.getElementById("invitation-code").textContent = code;
+    document.getElementById("open-app").href = `mosaic://join/${encodeURIComponent(code)}`;
+    document.title = `Join ${code} - Mosaic`;
+  }
+</script>
 </body>
 </html>
