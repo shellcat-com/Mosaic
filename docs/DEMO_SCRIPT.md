@@ -1,37 +1,40 @@
-# Three-minute demo script
+# Reverie Hacks demo script — 3:00 target
 
-## 0:00–0:25 — The problem
+## 0:00–0:20 — The disappearing-kindness problem
 
 Kind acts usually disappear into private moments. Mosaic gives a group a shared goal without turning kindness into a leaderboard: every verified contribution becomes one equal-size ceramic tile.
 
-## 0:25–0:50 — Instant private guest
+## 0:20–0:45 — Join instantly and privately
 
-Launch on Simulator A. Complete onboarding, choose a guest name, and select a private identity mode. Point out that anonymous Supabase Auth provides a durable identity without a sign-up form and that the public showcase cannot be edited.
+Open the seeded showcase, choose a guest name and privacy mode, and join through Supabase anonymous authentication. Point out that there is no account wall and that the synthetic showcase cannot be vandalized.
 
-## 0:50–1:25 — Evidence and consent
+## 0:45–1:15 — Submit evidence with consent
 
-Open the organizer sandbox and choose a mission. Submit one evidence path—reflection is fastest, while the picker demonstrates photo, short video, receipt, and organizer confirmation. On Privacy Review, vary memory inclusion, identity display, and export consent to show that these choices are independent.
+Open a mission and show reflection, photo, video, receipt, and organizer-approval choices. Submit the prepared reflection, then show the independent toggles for memory inclusion, identity display, and export consent. Mention the 10-second video validation and private Storage signed URLs.
 
-## 1:25–1:55 — Moderation
+## 1:15–1:45 — Moderate in an isolated sandbox
 
-Open the organizer dashboard. Approve evidence and decide on the memory separately. Mention that evidence is private, Realtime never carries it, and the mosaic table stores only abstract mission/emotion/method state.
+Switch to the organizer sandbox and open a pending synthetic submission. Approve the evidence, review the memory separately, and place the tile. Explain that evidence, identity, and memories live behind separate RLS policies and that every lifecycle transition is authorized server-side.
 
-## 1:55–2:20 — Live collaboration
+## 1:45–2:10 — Show live collaboration
 
-Copy the sandbox invite code. On Simulator B, join that code as another anonymous guest. Place the approved tile on Simulator A and show Simulator B refreshing from the private `challenge:<uuid>` notification.
+Join the sandbox invite code from a second iPhone Simulator. Place another prepared tile on one device and show the other device refresh through a private `challenge:<uuid>` Realtime invalidation. Emphasize that no evidence or owner record is broadcast.
 
-## 2:20–2:42 — Synchronized reveal
+## 2:10–2:35 — Reveal and Impact Receipt
 
-Trigger Reveal Now from the organizer dashboard. Show both devices entering the revealed state, then open the Impact Receipt. Emphasize equal tile weight, collective progress, and consent-aware memories.
+Trigger the synchronized reveal. Show the completed mosaic, consent-aware memories, and Impact Receipt/recap. Briefly mention that scheduled reveals are also activated by the minute-level database cron.
 
-## 2:42–3:00 — Why it scales
+## 2:35–3:00 — Architecture and close
 
-Close on the architecture: anonymous Auth, RLS on every exposed table, private Storage signed URLs, narrow Edge Function transitions, atomic placement, cron-based scheduled reveals, and canonical refetch after sanitized Realtime invalidations. Note VoiceOver labels, Dynamic Type, and Reduce Motion/Transparency support.
+Flash the repository's Supabase migrations, pgTAP policies, Edge Functions, and passing iPhone 17 Pro tests. Close with Mosaic's equal-weight design, anonymous participation, private evidence, accessibility support, cached read-only recovery, and a backend that scales by challenge membership instead of trusting the client.
 
 ## Recording checklist
 
 - Use synthetic names and media only.
-- Prewarm both Simulators and verify the hosted project before recording.
-- Keep the invite code visible long enough to follow.
-- Capture one recoverable-error or cached-state screen as backup B-roll.
-- End with repository URL, license, setup instructions, and the deferred-scope statement.
+- Record the primary journey on an iPhone Simulator; use two Simulators for Realtime.
+- Prewarm the hosted Supabase project and organizer sandbox before recording.
+- Keep text large enough to read in the final Devpost player.
+- Show VoiceOver labels, Dynamic Type, or Reduce Motion behavior in one short accessibility beat.
+- Keep invitation tokens synthetic and avoid showing dashboard identifiers.
+- Capture one cached or recoverable-error screen as optional B-roll.
+- Keep the final edit at or below three minutes, including title and end cards.

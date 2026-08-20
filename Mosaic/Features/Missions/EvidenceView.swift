@@ -13,6 +13,7 @@ struct EvidenceView: View {
     @State private var partnerName = ""
     @State private var proceed = false
     @State private var showingMediaPicker = false
+    @State private var showingMosaicCamera = false
     @State private var pickerSource: UIImagePickerController.SourceType = .camera
 
     init(mission: Mission) {
@@ -99,6 +100,13 @@ struct EvidenceView: View {
                 mediaError = message
             }
             .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $showingMosaicCamera) {
+            EvidenceCameraView(mission: mission) { data in
+                photoData = UIImage(data: data)?.jpegData(compressionQuality: 0.88)
+                videoDuration = nil
+                mediaError = nil
+            }
         }
         .task(id: selectedPhoto) {
             guard let selectedPhoto else {
@@ -203,7 +211,13 @@ struct EvidenceView: View {
                             .background(MosaicTheme.paper, in: Capsule())
                     }
                 }
-                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                if method == .photo {
+                    Button { showingMosaicCamera = true } label: {
+                        Label("Open Mosaic Camera", systemImage: "camera.fill")
+                            .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
+                            .background(MosaicTheme.indigo.opacity(0.12), in: Capsule())
+                    }
+                } else if UIImagePickerController.isSourceTypeAvailable(.camera) {
                     Button {
                         pickerSource = .camera
                         showingMediaPicker = true
@@ -214,6 +228,12 @@ struct EvidenceView: View {
                             .padding(.vertical, 15)
                             .background(MosaicTheme.indigo.opacity(0.1), in: Capsule())
                     }
+                }
+                if method == .photo {
+                    TextField("Add a short note (optional)", text: $reflection, axis: .vertical)
+                        .lineLimit(3).padding(14)
+                        .background(MosaicTheme.raisedPaper, in: OrganicPanelShape(variant: .softRectangle))
+                        .overlay { OrganicPanelShape(variant: .softRectangle).stroke(MosaicTheme.border, lineWidth: 1) }
                 }
                 if let videoDuration, method == .video, photoData != nil {
                     Label(String(format: "Selected video · %.1f seconds", videoDuration), systemImage: "checkmark.circle.fill")

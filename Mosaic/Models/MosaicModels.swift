@@ -72,6 +72,39 @@ enum ContributionStatus: String, Codable, Sendable {
     var canPlace: Bool { self == .selfAttested || self == .verified || self == .placed }
 }
 
+struct ContributionMemory: Hashable, Codable, Sendable {
+    enum Kind: String, Codable, Hashable, Sendable {
+        case photo, reflection, photoWithNote, tileOnly
+    }
+
+    let kind: Kind
+    let note: String?
+    let localAssetName: String?
+    let mediaVersion: Int
+    let consentVersion: Int
+    let recapConsent: Bool
+    let attributionAllowed: Bool
+
+    init(
+        kind: Kind,
+        note: String? = nil,
+        localAssetName: String? = nil,
+        mediaVersion: Int = 1,
+        consentVersion: Int = 1,
+        recapConsent: Bool,
+        attributionAllowed: Bool
+    ) {
+        let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.kind = kind
+        self.note = trimmed?.isEmpty == false ? trimmed : nil
+        self.localAssetName = localAssetName
+        self.mediaVersion = mediaVersion
+        self.consentVersion = consentVersion
+        self.recapConsent = recapConsent
+        self.attributionAllowed = attributionAllowed
+    }
+}
+
 struct Mission: Identifiable, Hashable, Codable, Sendable {
     let id: UUID
     let title: String
@@ -102,6 +135,12 @@ struct TileContribution: Identifiable, Hashable, Sendable {
     let isRevived: Bool
     let status: ContributionStatus
     let tilePosition: Int?
+    let participantID: UUID
+    let createdAt: Date
+    let memory: ContributionMemory?
+    let isDeleted: Bool
+    let isReported: Bool
+    let contributorIsBlocked: Bool
 
     init(
         id: UUID,
@@ -112,7 +151,13 @@ struct TileContribution: Identifiable, Hashable, Sendable {
         sharedMemory: Bool,
         isRevived: Bool,
         status: ContributionStatus = .placed,
-        tilePosition: Int? = nil
+        tilePosition: Int? = nil,
+        participantID: UUID? = nil,
+        createdAt: Date = .now,
+        memory: ContributionMemory? = nil,
+        isDeleted: Bool = false,
+        isReported: Bool = false,
+        contributorIsBlocked: Bool = false
     ) {
         self.id = id
         self.mission = mission
@@ -123,33 +168,94 @@ struct TileContribution: Identifiable, Hashable, Sendable {
         self.isRevived = isRevived
         self.status = status
         self.tilePosition = tilePosition
+        self.participantID = participantID ?? id
+        self.createdAt = createdAt
+        self.memory = memory
+        self.isDeleted = isDeleted
+        self.isReported = isReported
+        self.contributorIsBlocked = contributorIsBlocked
     }
 }
 
 struct KindnessChallenge: Identifiable, Sendable {
     let id: UUID
     var name: String
+    var groupName: String
     var purpose: String
     var goal: Int
+    var startDate: Date
     var revealDate: Date
+    var revealedAt: Date?
+    var serverStatus: String
+    var scheduleRevision: Int
+    var recapAvailability: RecapAvailability
+    var recapThumbnailFilename: String?
     var invitationCode: String
     var contributions: [TileContribution]
+    var theme: ThemeSelection
+    var cameraRollEnabled: Bool
+    var sharedMoments: [SharedMoment]
+    var mosaicVersion: Int
+    var impactReceiptVersion: Int
 
     init(
         id: UUID = UUID(),
         name: String,
+        groupName: String = "Mosaic Community",
         purpose: String,
         goal: Int,
+        startDate: Date = Calendar.current.date(byAdding: .day, value: -7, to: .now) ?? .now,
         revealDate: Date,
+        revealedAt: Date? = nil,
+        serverStatus: String = "active",
+        scheduleRevision: Int = 1,
+        recapAvailability: RecapAvailability = .unavailable,
+        recapThumbnailFilename: String? = nil,
         invitationCode: String,
-        contributions: [TileContribution]
+        contributions: [TileContribution],
+        theme: ThemeSelection = .fallback,
+        cameraRollEnabled: Bool = true,
+        sharedMoments: [SharedMoment] = [],
+        mosaicVersion: Int = 1,
+        impactReceiptVersion: Int = 1
     ) {
         self.id = id
         self.name = name
+        self.groupName = groupName
         self.purpose = purpose
         self.goal = goal
+        self.startDate = startDate
         self.revealDate = revealDate
+        self.revealedAt = revealedAt
+        self.serverStatus = serverStatus
+        self.scheduleRevision = scheduleRevision
+        self.recapAvailability = recapAvailability
+        self.recapThumbnailFilename = recapThumbnailFilename
         self.invitationCode = invitationCode
         self.contributions = contributions
+        self.theme = theme
+        self.cameraRollEnabled = cameraRollEnabled
+        self.sharedMoments = sharedMoments
+        self.mosaicVersion = mosaicVersion
+        self.impactReceiptVersion = impactReceiptVersion
+    }
+
+    var summary: ChallengeSummary {
+        ChallengeSummary(
+            id: id,
+            name: name,
+            groupName: groupName,
+            purpose: purpose,
+            startAt: startDate,
+            revealAt: revealDate,
+            revealedAt: revealedAt,
+            serverStatus: serverStatus,
+            scheduleRevision: scheduleRevision,
+            contributionCount: contributions.count,
+            goal: goal,
+            recapAvailability: recapAvailability,
+            recapThumbnailFilename: recapThumbnailFilename,
+            theme: theme
+        )
     }
 }

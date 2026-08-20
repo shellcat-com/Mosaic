@@ -5,6 +5,7 @@ struct RevealView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var phase = 0
+    @State private var showingRecapEditor = false
 
     var verifiedCount: Int { store.challenge.contributions.filter { $0.evidence != .reflection }.count }
     var selfAttestedCount: Int { store.challenge.contributions.filter { $0.evidence == .reflection }.count }
@@ -41,11 +42,20 @@ struct RevealView: View {
                         Circle()
                             .fill(MosaicTheme.gold.opacity(phase >= 1 ? 0.24 : 0.04))
                             .blur(radius: 18)
+                        KinderArtworkView(
+                            selection: store.challenge.theme,
+                            phase: .reveal,
+                            revealProgress: phase == 0 ? 0.08 : phase == 1 ? 0.72 : 1,
+                            cornerRadius: 165
+                        )
+                        .frame(width: 330, height: 330)
+                        .clipShape(Circle())
                         MosaicBoard(contributions: Array(store.challenge.contributions.prefix(25)), columns: 5, tileSize: 56)
                             .clipShape(Circle())
                             .overlay(Circle().stroke(MosaicTheme.gold.opacity(phase >= 2 ? 0.9 : 0.2), lineWidth: 3))
                             .shadow(color: MosaicTheme.gold.opacity(phase >= 1 ? 0.55 : 0), radius: 28)
-                            .saturation(phase >= 1 ? 1 : 0.05)
+                            .saturation(phase >= 1 ? 0.78 : 0.05)
+                            .opacity(phase >= 2 ? 0.5 : 0.88)
                             .blur(radius: phase >= 1 ? 0 : 9)
                         if phase >= 1 {
                             DoodleIcon(icon: .kintsugi, color: MosaicTheme.gold, lineWidth: 3)
@@ -63,10 +73,19 @@ struct RevealView: View {
                     }
 
                     if phase >= 2 {
-                        ShareLink(item: "Our community completed \(store.challenge.contributions.count) acts of kindness in \(store.challenge.name).") {
-                            Label("Share the impact", systemImage: "square.and.arrow.up")
+                        VStack(spacing: 12) {
+                            Button {
+                                showingRecapEditor = true
+                            } label: {
+                                Label("Create your recap", systemImage: "play.rectangle.on.rectangle.fill")
+                            }
+                            .buttonStyle(PrimaryButtonStyle(color: MosaicTheme.indigo))
+
+                            ShareLink(item: "Our community completed \(store.challenge.contributions.count) acts of kindness in \(store.challenge.name).") {
+                                Label("Share the impact", systemImage: "square.and.arrow.up")
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
                         }
-                        .buttonStyle(PrimaryButtonStyle(color: MosaicTheme.indigo))
                     }
                 }
                 .padding(20)
@@ -83,6 +102,9 @@ struct RevealView: View {
                 guard phase < 2 else { return }
                 withAnimation(.easeOut(duration: 0.7)) { phase = 2 }
             }
+        }
+        .fullScreenCover(isPresented: $showingRecapEditor) {
+            RecapEditorView(challenge: store.challenge)
         }
     }
 

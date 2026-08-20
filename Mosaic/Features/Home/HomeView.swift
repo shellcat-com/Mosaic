@@ -4,6 +4,10 @@ struct HomeView: View {
     @Environment(AppStore.self) private var store
     @State private var showMissions = false
     @State private var showOrganizer = false
+    @State private var presentedEvent: ChallengeSummary?
+    @State private var calendarEvent: ChallengeSummary?
+    @State private var reminderEvent: ChallengeSummary?
+    @State private var liveMessage: String?
 
     private var progress: Double {
         Double(store.challenge.contributions.count) / Double(store.challenge.goal)
@@ -13,6 +17,8 @@ struct HomeView: View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 26) {
                 header
+                nextUpCard
+                if store.challenge.cameraRollEnabled { developingRollCard }
                 mosaicHero
                 actionCard
                 momentum
@@ -25,11 +31,156 @@ struct HomeView: View {
         .sheet(isPresented: $showOrganizer) {
             NavigationStack { OrganizerDashboardView() }
         }
+        .sheet(item: $presentedEvent) { summary in
+            NavigationStack { EventDetailView(summary: summary) }
+        }
+        .sheet(item: $calendarEvent) { summary in
+            CalendarEventSheet(summary: summary)
+        }
+        .sheet(item: $reminderEvent) { summary in
+            ReminderPreferencesView(summary: summary) {
+                reminderEvent = nil
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(250))
+                    calendarEvent = summary
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
         .onChange(of: showOrganizer) { _, isPresented in
             if !isPresented { Task { await store.returnToShowcase() } }
         }
         .fullScreenCover(isPresented: Binding(get: { store.showReveal }, set: { store.showReveal = $0 })) {
             RevealView()
+        }
+    }
+
+    private var developingRollCard: some View {
+        let sealed = store.challenge.sharedMoments.filter { $0.lifecycle.isSealed }
+        let mine = sealed.filter { $0.creatorID == store.localParticipantID || $0.localAssetName != nil }.count
+        return OrganicPanel(variant: .leaningRight, tint: MosaicTheme.claySurface) {
+            VStack(alignment: .leading, spacing: 15) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("YOUR SHARED ROLL").font(MosaicTheme.caption(.bold)).tracking(1.1).foregroundStyle(MosaicTheme.indigo)
+                        Text("Your roll is developing")
+                            .font(MosaicTheme.display(28, weight: .semibold))
+                    }
+                    Spacer()
+                    Image(systemName: "envelope.fill").font(.title2).foregroundStyle(MosaicTheme.indigo)
+                }
+                Text("No previews before reveal—just the quiet promise of moments waiting together.")
+                    .font(.subheadline).foregroundStyle(MosaicTheme.muted)
+                HStack(spacing: 10) {
+                    MetricPill(icon: "camera.fill", text: "\(mine) yours")
+                    MetricPill(icon: "person.2.fill", text: "\(sealed.count) group")
+                    Spacer()
+                    Text(store.challenge.revealDate, style: .relative)
+                        .font(MosaicTheme.caption(.bold)).foregroundStyle(MosaicTheme.persimmon)
+                }
+                Button("Capture a moment") { store.openSharedCamera() }
+                    .buttonStyle(PrimaryButtonStyle())
+                Button("View your sealed roll") { store.showSealedRoll = true }
+                    .buttonStyle(.plain)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(MosaicTheme.indigo)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var nextUpCard: some View {
+        if let next = store.nextChallenge {
+            OrganicPanel(variant: .leaningRight, tint: MosaicTheme.sky.opacity(0.11)) {
+                VStack(alignment: .leading, spacing: 13) {
+                    Button { presentedEvent = next } label: {
+                        VStack(alignment: .leading, spacing: 13) {
+                            HStack {
+                                Label("NEXT UP", systemImage: "calendar.badge.clock")
+                                    .font(MosaicTheme.caption(.bold))
+                                    .tracking(0.8)
+                                    .foregroundStyle(MosaicTheme.indigo)
+                                Spacer()
+                                Text(next.revealAt, style: .relative)
+                                    .font(MosaicTheme.caption(.bold))
+                                    .foregroundStyle(MosaicTheme.persimmon)
+                            }
+                            Text(next.name)
+                                .font(MosaicTheme.display(27, weight: .semibold))
+                                .foregroundStyle(MosaicTheme.ink)
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(next.revealAt.formatted(date: .abbreviated, time: .shortened))
+                                        .font(.subheadline.weight(.semibold))
+                                    Text("\(TimeZone.current.identifier) · \(TimeZone.current.abbreviation(for: next.revealAt) ?? "Local time")")
+                                        .font(.caption)
+                                        .foregroundStyle(MosaicTheme.muted)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.headline)
+                                    .foregroundStyle(MosaicTheme.indigo)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Open event details")
+
+                    HStack(spacing: 8) {
+                        nextUpAction("Remind me", icon: "bell.badge") {
+                            reminderEvent = next
+                        }
+                        nextUpAction("Calendar", icon: "calendar.badge.plus") {
+                            calendarEvent = next
+                        }
+                        nextUpAction("Follow live", icon: "wave.3.right.circle") {
+                            Task { await followLive(next) }
+                        }
+                    }
+                    if let liveMessage {
+                        Text(liveMessage)
+                            .font(.caption)
+                            .foregroundStyle(MosaicTheme.muted)
+                    }
+                }
+            }
+        }
+    }
+
+    private func nextUpAction(
+        _ title: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: icon)
+                Text(title)
+                    .font(.caption2.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .background(MosaicTheme.paper.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+    }
+
+    @MainActor
+    private func followLive(_ summary: ChallengeSummary) async {
+        do {
+            let result = try await store.followLive(summary)
+            liveMessage = switch result {
+            case .started: "The reveal is now on your Lock Screen."
+            case .scheduled: "Live updates will begin 30 minutes before reveal."
+            case .unavailable: "Live Activities are disabled in Settings."
+            }
+        } catch {
+            liveMessage = "Live updates could not be enabled right now."
         }
     }
 
@@ -83,6 +234,9 @@ struct HomeView: View {
                         .frame(width: 30, height: 30)
                         .accessibilityLabel("Final mosaic sealed")
                 }
+
+                KinderArtworkView(selection: store.challenge.theme, phase: .sealed, cornerRadius: 24, showsTitle: true)
+                    .frame(height: 230)
 
                 MosaicBoard(contributions: Array(store.challenge.contributions.prefix(20)), columns: 5, tileSize: 50)
                     .frame(maxWidth: .infinity)

@@ -3,18 +3,111 @@ import Foundation
 struct ChallengeRecord: Codable, Sendable {
     let id: UUID
     let name: String
+    let groupName: String?
     let purpose: String
     let goal: Int
+    let startAt: Date?
     let revealAt: Date
+    let revealedAt: Date?
     let status: String
+    let scheduleRevision: Int?
+    let featuredRecapExportId: UUID?
     let invitationCode: String
     let isShowcase: Bool
+    let cameraRollEnabled: Bool?
+    let themeId: String?
+    let themePaletteId: KinderThemePaletteID?
+    let themeSeed: Int?
+    let themeRevision: Int?
+
+    init(
+        id: UUID,
+        name: String,
+        groupName: String? = nil,
+        purpose: String,
+        goal: Int,
+        startAt: Date? = nil,
+        revealAt: Date,
+        revealedAt: Date? = nil,
+        status: String,
+        scheduleRevision: Int? = nil,
+        featuredRecapExportId: UUID? = nil,
+        invitationCode: String,
+        isShowcase: Bool,
+        cameraRollEnabled: Bool? = nil,
+        themeId: String? = nil,
+        themePaletteId: KinderThemePaletteID? = nil,
+        themeSeed: Int? = nil,
+        themeRevision: Int? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.groupName = groupName
+        self.purpose = purpose
+        self.goal = goal
+        self.startAt = startAt
+        self.revealAt = revealAt
+        self.revealedAt = revealedAt
+        self.status = status
+        self.scheduleRevision = scheduleRevision
+        self.featuredRecapExportId = featuredRecapExportId
+        self.invitationCode = invitationCode
+        self.isShowcase = isShowcase
+        self.cameraRollEnabled = cameraRollEnabled
+        self.themeId = themeId
+        self.themePaletteId = themePaletteId
+        self.themeSeed = themeSeed
+        self.themeRevision = themeRevision
+    }
 
     enum CodingKeys: String, CodingKey {
         case id, name, purpose, goal, status
+        case groupName = "group_name"
+        case startAt = "start_at"
         case revealAt = "reveal_at"
+        case revealedAt = "revealed_at"
+        case scheduleRevision = "schedule_revision"
+        case featuredRecapExportId = "featured_recap_export_id"
         case invitationCode = "invitation_code"
         case isShowcase = "is_showcase"
+        case cameraRollEnabled = "camera_roll_enabled"
+        case themeId = "theme_id"
+        case themePaletteId = "theme_palette_id"
+        case themeSeed = "theme_seed"
+        case themeRevision = "theme_revision"
+    }
+
+    var effectiveStartAt: Date {
+        startAt ?? Calendar.current.date(byAdding: .day, value: -7, to: revealAt) ?? revealAt
+    }
+
+    var themeSelection: ThemeSelection {
+        guard let themeId else { return .fallback }
+        let theme = KinderThemeCatalog.theme(id: themeId)
+        return ThemeSelection(
+            themeID: theme.id,
+            paletteID: themePaletteId ?? .signature,
+            seed: themeSeed ?? theme.seed,
+            revision: themeRevision ?? KinderThemeCatalog.revision
+        )
+    }
+}
+
+struct ContributionChallengeRecord: Decodable, Sendable {
+    let challengeId: UUID
+    enum CodingKeys: String, CodingKey { case challengeId = "challenge_id" }
+}
+
+struct RecapListRecord: Decodable, Sendable {
+    let id: UUID
+    let challengeId: UUID
+    let status: String
+    let thumbnailPath: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, status
+        case challengeId = "challenge_id"
+        case thumbnailPath = "thumbnail_path"
     }
 }
 
@@ -63,7 +156,7 @@ struct ContributionRecord: Codable, Sendable {
 
 struct DemoBootstrapResponse: Codable, Sendable {
     let showcase: ChallengeRecord
-    let sandbox: ChallengeRecord
+    let sandbox: ChallengeRecord?
 }
 
 struct ChallengeResponse: Codable, Sendable {

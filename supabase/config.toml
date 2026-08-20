@@ -177,7 +177,7 @@ enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = true
 # Allow/disallow testing manual linking of accounts
-enable_manual_linking = false
+enable_manual_linking = true
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
 minimum_password_length = 6
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
@@ -500,3 +500,87 @@ entrypoint = "./functions/get-private-media-url/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/get-private-media-url/*.html" ]
+
+[functions.update-event-preferences]
+enabled = true
+verify_jwt = true
+import_map = "./functions/update-event-preferences/deno.json"
+entrypoint = "./functions/update-event-preferences/index.ts"
+
+[functions.register-notification-token]
+enabled = true
+verify_jwt = true
+import_map = "./functions/register-notification-token/deno.json"
+entrypoint = "./functions/register-notification-token/index.ts"
+
+[functions.dispatch-event-notifications]
+enabled = true
+verify_jwt = false
+import_map = "./functions/dispatch-event-notifications/deno.json"
+entrypoint = "./functions/dispatch-event-notifications/index.ts"
+
+[functions.configure-challenge]
+enabled = true
+verify_jwt = true
+import_map = "./functions/configure-challenge/deno.json"
+entrypoint = "./functions/configure-challenge/index.ts"
+
+[functions.accept-organization-invite]
+enabled = true
+verify_jwt = true
+import_map = "./functions/accept-organization-invite/deno.json"
+entrypoint = "./functions/accept-organization-invite/index.ts"
+
+[functions.create-organization-invite]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-organization-invite/deno.json"
+entrypoint = "./functions/create-organization-invite/index.ts"
+
+[functions.create-organization]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-organization/deno.json"
+entrypoint = "./functions/create-organization/index.ts"
+
+[functions.delete-account]
+enabled = true
+verify_jwt = true
+import_map = "./functions/delete-account/deno.json"
+entrypoint = "./functions/delete-account/index.ts"
+
+[functions.delete-organization]
+enabled = true
+verify_jwt = true
+import_map = "./functions/delete-organization/deno.json"
+entrypoint = "./functions/delete-organization/index.ts"
+
+[functions.merge-guest-account]
+enabled = true
+verify_jwt = false
+import_map = "./functions/merge-guest-account/deno.json"
+entrypoint = "./functions/merge-guest-account/index.ts"
+
+[functions.redeem-event-pass]
+enabled = true
+verify_jwt = true
+import_map = "./functions/redeem-event-pass/deno.json"
+entrypoint = "./functions/redeem-event-pass/index.ts"
+
+[functions.refresh-billing]
+enabled = true
+verify_jwt = true
+import_map = "./functions/refresh-billing/deno.json"
+entrypoint = "./functions/refresh-billing/index.ts"
+
+[functions.revenuecat-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/revenuecat-webhook/deno.json"
+entrypoint = "./functions/revenuecat-webhook/index.ts"
+
+[functions.transfer-organization-ownership]
+enabled = true
+verify_jwt = true
+import_map = "./functions/transfer-organization-ownership/deno.json"
+entrypoint = "./functions/transfer-organization-ownership/index.ts"

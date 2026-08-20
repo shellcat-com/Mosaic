@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         MosaicScreen {
@@ -35,22 +36,41 @@ struct ProfileView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .confirmationDialog(
+            "Delete Mosaic account?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete account", role: .destructive) { Task { await store.deleteAccount() } }
+        } message: {
+            Text("You must transfer or delete owned workspaces first. Account deletion does not cancel an App Store subscription.")
+        }
     }
 
     private var identityCard: some View {
         OrganicPanel(variant: .leaningRight, tint: MosaicTheme.sage.opacity(0.12)) {
-            HStack(spacing: 16) {
-                DoodleIcon(icon: .profile, color: MosaicTheme.sage, lineWidth: 2.5)
-                    .frame(width: 48, height: 48)
-                    .frame(width: 68, height: 68)
-                    .background(MosaicTheme.paper, in: Circle())
-                    .overlay(Circle().stroke(MosaicTheme.sage.opacity(0.5), lineWidth: 1.5))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(store.displayName.isEmpty ? "Guest participant" : store.displayName)
-                        .font(MosaicTheme.display(25, weight: .semibold))
-                    Text(store.privacyMode)
-                        .font(.subheadline)
-                        .foregroundStyle(MosaicTheme.muted)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 16) {
+                    DoodleIcon(icon: .profile, color: MosaicTheme.sage, lineWidth: 2.5)
+                        .frame(width: 48, height: 48)
+                        .frame(width: 68, height: 68)
+                        .background(MosaicTheme.paper, in: Circle())
+                        .overlay(Circle().stroke(MosaicTheme.sage.opacity(0.5), lineWidth: 1.5))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(store.displayName.isEmpty ? "Guest participant" : store.displayName)
+                            .font(MosaicTheme.display(25, weight: .semibold))
+                        Text(store.sessionState.isAuthenticated ? "Saved with Apple" : store.privacyMode)
+                            .font(.subheadline)
+                            .foregroundStyle(MosaicTheme.muted)
+                    }
+                }
+                if !store.sessionState.isAuthenticated {
+                    Divider().overlay(MosaicTheme.border)
+                    Text("Save across devices")
+                        .font(.headline)
+                    Text("Keep your contributions and recover them on a new iPhone.")
+                        .font(.footnote).foregroundStyle(MosaicTheme.muted)
+                    MosaicAppleSignInButton(createWorkspace: false)
                 }
             }
         }
@@ -103,11 +123,31 @@ struct ProfileView: View {
                     settingsRow("Privacy & consent", icon: .heart)
                 }
                 Divider().overlay(MosaicTheme.border)
-                settingsRow("Contribution recovery", icon: .chain)
-                Divider().overlay(MosaicTheme.border)
+                if store.sessionState.isAuthenticated && !store.organizations.isEmpty {
+                    NavigationLink { WorkspaceSettingsView() } label: {
+                        settingsRow("Organization & roles", icon: .people)
+                    }
+                    Divider().overlay(MosaicTheme.border)
+                    if store.selectedOrganization?.role.canManageBilling == true {
+                        NavigationLink { BillingManagementView() } label: {
+                            settingsRow("Billing & Mosaic Passes", icon: .kiln)
+                        }
+                        Divider().overlay(MosaicTheme.border)
+                    }
+                }
                 settingsRow("Accessibility", icon: .people)
                 Divider().overlay(MosaicTheme.border)
                 settingsRow("About Mosaic", icon: .mosaic)
+                if store.sessionState.isAuthenticated {
+                    Divider().overlay(MosaicTheme.border)
+                    Button { Task { await store.signOut() } } label: {
+                        settingsRow("Sign out", icon: .chain)
+                    }
+                    Divider().overlay(MosaicTheme.border)
+                    Button(role: .destructive) { showDeleteConfirmation = true } label: {
+                        settingsRow("Delete account", icon: .heart)
+                    }
+                }
             }
         }
     }

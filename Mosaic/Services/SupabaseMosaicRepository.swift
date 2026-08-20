@@ -9,6 +9,10 @@ final class SupabaseMosaicRepository: MosaicRepository {
         client = SupabaseClient(supabaseURL: configuration.url, supabaseKey: configuration.publishableKey)
     }
 
+    init(client: SupabaseClient) {
+        self.client = client
+    }
+
     func bootstrap(displayName: String?, privacy: String?) async throws -> DemoBootstrapResponse {
         if client.auth.currentSession == nil {
             _ = try await client.auth.signInAnonymously()
@@ -30,9 +34,42 @@ final class SupabaseMosaicRepository: MosaicRepository {
         return response.challenge
     }
 
+    func configureChallenge(_ draft: ChallengeDraft, challengeID: UUID) async throws -> ChallengeRecord {
+        struct Body: Encodable {
+            let challengeId: UUID
+            let name: String
+            let groupName: String
+            let purpose: String
+            let goal: Int
+            let startAt: Date
+            let revealAt: Date
+            let themeId: String
+            let themePaletteId: KinderThemePaletteID
+            let themeSeed: Int
+            let themeRevision: Int
+        }
+        let response: ChallengeResponse = try await client.functions.invoke(
+            "configure-challenge",
+            options: FunctionInvokeOptions(body: Body(
+                challengeId: challengeID,
+                name: draft.name,
+                groupName: draft.groupName,
+                purpose: draft.purpose,
+                goal: draft.goal,
+                startAt: draft.startDate,
+                revealAt: draft.revealDate,
+                themeId: draft.selection.themeID,
+                themePaletteId: draft.selection.paletteID,
+                themeSeed: draft.selection.seed,
+                themeRevision: draft.selection.revision
+            ))
+        )
+        return response.challenge
+    }
+
     func loadChallenge(id: UUID) async throws -> (KindnessChallenge, [Mission]) {
         let challenge: ChallengeRecord = try await client.from("challenges")
-            .select("id,name,purpose,goal,reveal_at,status,invitation_code,is_showcase")
+            .select(Self.challengeColumns)
             .eq("id", value: id.uuidString)
             .single()
             .execute()
@@ -66,16 +103,65 @@ final class SupabaseMosaicRepository: MosaicRepository {
                 tilePosition: record.tilePosition
             )
         }
+        let recaps = try await recapRecords()
+        let thumbnailFilename = await cachedThumbnailFilename(for: challenge, records: recaps)
         let value = KindnessChallenge(
             id: challenge.id,
             name: challenge.name,
+            groupName: challenge.groupName ?? "Mosaic Community",
             purpose: challenge.purpose,
             goal: challenge.goal,
+            startDate: challenge.effectiveStartAt,
             revealDate: challenge.revealAt,
+            revealedAt: challenge.revealedAt,
+            serverStatus: challenge.status,
+            scheduleRevision: challenge.scheduleRevision ?? 1,
+            recapAvailability: recapAvailability(for: challenge, records: recaps),
+            recapThumbnailFilename: thumbnailFilename,
             invitationCode: challenge.invitationCode,
-            contributions: contributions
+            contributions: contributions,
+            theme: challenge.themeSelection,
+            cameraRollEnabled: challenge.cameraRollEnabled ?? false
         )
         return (value, missions)
+    }
+
+    func listChallenges() async throws -> [ChallengeSummary] {
+        let challenges: [ChallengeRecord] = try await client.from("challenges")
+            .select(Self.challengeColumns)
+            .order("reveal_at")
+            .execute()
+            .value
+        let contributionRows: [ContributionChallengeRecord] = try await client.from("contributions")
+            .select("challenge_id")
+            .execute()
+            .value
+        let counts = Dictionary(grouping: contributionRows, by: \.challengeId).mapValues(\.count)
+        let recaps = try await recapRecords()
+        var thumbnailFilenames: [UUID: String] = [:]
+        for challenge in challenges {
+            if let filename = await cachedThumbnailFilename(for: challenge, records: recaps) {
+                thumbnailFilenames[challenge.id] = filename
+            }
+        }
+        return challenges.map { challenge in
+            ChallengeSummary(
+                id: challenge.id,
+                name: challenge.name,
+                groupName: challenge.groupName ?? "Mosaic Community",
+                purpose: challenge.purpose,
+                startAt: challenge.effectiveStartAt,
+                revealAt: challenge.revealAt,
+                revealedAt: challenge.revealedAt,
+                serverStatus: challenge.status,
+                scheduleRevision: challenge.scheduleRevision ?? 1,
+                contributionCount: counts[challenge.id, default: 0],
+                goal: challenge.goal,
+                recapAvailability: recapAvailability(for: challenge, records: recaps),
+                recapThumbnailFilename: thumbnailFilenames[challenge.id],
+                theme: challenge.themeSelection
+            )
+        }
     }
 
     func submit(_ draft: EvidenceDraft) async throws -> ContributionRecord {
@@ -169,6 +255,64 @@ final class SupabaseMosaicRepository: MosaicRepository {
         return response.challenge
     }
 
+    func updateNotificationPreferences(
+        challengeID: UUID,
+        preferences: NotificationPreferences
+    ) async throws {
+        struct Body: Encodable {
+            let challengeId: UUID
+            let challengeStart: Bool
+            let revealDayBefore: Bool
+            let revealHourBefore: Bool
+            let revealNow: Bool
+            let recapReady: Bool
+            let liveActivity: Bool
+        }
+        let _: EmptyResponse = try await client.functions.invoke(
+            "update-event-preferences",
+            options: FunctionInvokeOptions(body: Body(
+                challengeId: challengeID,
+                challengeStart: preferences.challengeStart,
+                revealDayBefore: preferences.revealDayBefore,
+                revealHourBefore: preferences.revealHourBefore,
+                revealNow: preferences.revealNow,
+                recapReady: preferences.recapReady,
+                liveActivity: preferences.liveActivity
+            ))
+        )
+    }
+
+    func registerDevice(token: String, environment: String) async throws {
+        struct Body: Encodable { let token: String; let environment: String }
+        let _: EmptyResponse = try await client.functions.invoke(
+            "register-notification-token",
+            options: FunctionInvokeOptions(body: Body(token: token, environment: environment))
+        )
+    }
+
+    func registerLiveActivityToken(token: String, challengeID: UUID, activityID: String) async throws {
+        struct Body: Encodable {
+            let token: String
+            let challengeId: UUID
+            let activityId: String
+            let environment: String
+        }
+#if DEBUG
+        let environment = "sandbox"
+#else
+        let environment = "production"
+#endif
+        let _: EmptyResponse = try await client.functions.invoke(
+            "register-notification-token",
+            options: FunctionInvokeOptions(body: Body(
+                token: token,
+                challengeId: challengeID,
+                activityId: activityID,
+                environment: environment
+            ))
+        )
+    }
+
     func changes(for challengeID: UUID) async throws -> AsyncStream<Void> {
         let channel = client.channel("challenge:\(challengeID.uuidString.lowercased())") { config in
             config.isPrivate = true
@@ -186,4 +330,56 @@ final class SupabaseMosaicRepository: MosaicRepository {
             }
         }
     }
+
+    private func recapRecords() async throws -> [RecapListRecord] {
+        try await client.from("recap_exports")
+            .select("id,challenge_id,status,thumbnail_path")
+            .eq("visibility", value: "challenge")
+            .execute()
+            .value
+    }
+
+    private func recapAvailability(
+        for challenge: ChallengeRecord,
+        records: [RecapListRecord]
+    ) -> RecapAvailability {
+        guard let featuredID = challenge.featuredRecapExportId,
+              let recap = records.first(where: { $0.id == featuredID })
+        else { return challenge.status == "revealed" ? .processing : .unavailable }
+        return recap.status == "completed_uploaded" ? .ready : .processing
+    }
+
+    private func recapThumbnailFilename(
+        for challenge: ChallengeRecord,
+        records: [RecapListRecord]
+    ) -> String? {
+        guard let featuredID = challenge.featuredRecapExportId else { return nil }
+        return records.first(where: { $0.id == featuredID })?.thumbnailPath
+    }
+
+    private func cachedThumbnailFilename(
+        for challenge: ChallengeRecord,
+        records: [RecapListRecord]
+    ) async -> String? {
+        guard let remotePath = recapThumbnailFilename(for: challenge, records: records) else { return nil }
+        let remoteName = URL(fileURLWithPath: remotePath).lastPathComponent
+        let filename = "recap-\(remoteName)"
+        if let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: MosaicEventCache.appGroupIdentifier
+        ), FileManager.default.fileExists(atPath: container.appendingPathComponent(filename).path) {
+            return filename
+        }
+        do {
+            let data = try await client.storage.from("recap-exports").download(path: remotePath)
+            return try MosaicEventCache.storeThumbnail(data, remotePath: remotePath)
+        } catch {
+            return nil
+        }
+    }
+
+    private static let challengeColumns = "id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,theme_id,theme_palette_id,theme_seed,theme_revision"
+}
+
+private struct EmptyResponse: Decodable, Sendable {
+    let ok: Bool?
 }

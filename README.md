@@ -15,21 +15,28 @@ No private credentials are required. Without a reachable Supabase project, the a
 supabase start
 ```
 
-The debug build automatically connects to `http://127.0.0.1:55321`. Anonymous authentication creates a persistent guest identity; the seeded showcase is read-only, while every installation receives an isolated organizer sandbox.
+The debug build automatically connects to `http://127.0.0.1:55321`. Anonymous authentication creates a persistent guest identity; the seeded showcase is read-only, while every installation receives one isolated synthetic organizer sandbox. Sign in with Apple is optional post-hackathon account recovery and preserves the same Supabase UUID.
 
 ## What is implemented
 
 - Anonymous guest onboarding with name and identity-privacy choices.
-- A synthetic, read-only showcase plus a per-installation organizer sandbox.
+- Native Sign in with Apple linking that preserves the anonymous Supabase UUID and contributions.
+- Owner/admin/reviewer workspaces, seven-day single-use collaborator invites, and organization switching.
+- RevenueCat Paywall V2 integration, Organizer Plus state, restore, and atomic non-expiring PASS redemption.
+- A synthetic, read-only showcase plus a deterministic per-installation organizer sandbox.
 - Reflection, photo, video, receipt, and organizer-approval evidence paths.
 - Private evidence and memory storage with signed upload/download access.
 - Independent memory inclusion, identity display, and export-consent controls.
 - Separate organizer decisions for evidence and memories.
 - Atomic tile placement, private Realtime invalidations, and synchronized manual or scheduled reveal.
+- A membership-scoped event agenda with upcoming, active, reveal, and retained recap states.
+- Exact reveal times, revision-aware local reminders, Apple Calendar event editing, and deep links.
+- App Group summary caching plus configurable Home Screen and Lock Screen widgets.
+- Privacy-safe recap thumbnails and opt-in ActivityKit/APNs delivery infrastructure.
 - Cached read-only recovery and retryable local drafts when writes fail.
 - RLS, explicit Data API grants, pgTAP policies, Edge Functions, seed data, and a minute-level reveal cron.
 
-Partner confirmation is intentionally labeled as post-hackathon work and is not required by any judged mission. Production login, billing, push notifications, and generated exports are also deferred.
+Partner confirmation is intentionally labeled as post-hackathon work and is not required by any judged mission. Push and Live Activity delivery are best-effort and require the Apple/Supabase production credentials described in `docs/NOTIFICATIONS.md`; the app, local reminders, Calendar editor, widgets, and cached recaps remain useful without them.
 
 ## Local backend
 
@@ -85,7 +92,9 @@ For a contributor-only override, create `Config/Local.xcconfig`; that path is ig
 - `supabase/functions/` — authenticated state-transition endpoints.
 - `supabase/tests/` — pgTAP isolation and lifecycle tests.
 - `docs/ARCHITECTURE.md` — trust boundaries and data flow.
-- `docs/DEMO_SCRIPT.md` — roughly three-minute judging walkthrough.
+- `docs/DEMO_SCRIPT.md` — three-minute Reverie Hacks judging walkthrough.
+- `docs/NOTIFICATIONS.md` — Apple capabilities, Edge Function secrets, and safe dispatch scheduling.
+- `docs/MONETIZATION_SETUP.md` — RevenueCat, App Store Connect, webhook, Apple auth, and judge-demo setup.
 - `SECURITY.md` — security model and reporting guidance.
 
 ## License and credits

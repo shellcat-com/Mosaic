@@ -109,7 +109,27 @@ struct PrivacyReviewView: View {
 
     @ViewBuilder
     private var preview: some View {
-        if let photoData, let image = UIImage(data: photoData) {
+        if pendingReviewSubmitted {
+            VStack(spacing: 14) {
+                ZStack {
+                    OrganicPanelShape(variant: .leaningLeft)
+                        .fill(MosaicTheme.claySurface)
+                        .frame(height: 160)
+                    Image(systemName: "envelope.badge.shield.half.filled")
+                        .font(.system(size: 54, weight: .semibold))
+                        .foregroundStyle(MosaicTheme.indigo)
+                    Circle().fill(MosaicTheme.persimmon).frame(width: 24, height: 24)
+                        .overlay(Image(systemName: "sparkles").font(.caption2.bold()).foregroundStyle(.white))
+                        .offset(x: 36, y: 25)
+                }
+                Text("Memory sealed until reveal")
+                    .font(MosaicTheme.display(25, weight: .semibold))
+                Text("Your private evidence is with the organizer. The community memory stays undeveloped until it is approved and the kiln opens.")
+                    .font(.footnote).foregroundStyle(MosaicTheme.muted).multilineTextAlignment(.center)
+            }
+            .padding(18).porcelainCard()
+            .transition(.scale(scale: 0.96).combined(with: .opacity))
+        } else if let photoData, let image = UIImage(data: photoData) {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
@@ -146,15 +166,31 @@ struct PrivacyReviewView: View {
     private func submit() async {
         guard !isSubmitting, !pendingReviewSubmitted else { return }
         isSubmitting = true
+        let id = UUID()
+        let localAssetName = photoData.flatMap { LocalMemoryStore.storeSanitizedJPEG($0, id: id) }
+        let trimmedReflection = reflection.trimmingCharacters(in: .whitespacesAndNewlines)
+        let memoryKind: ContributionMemory.Kind
+        if localAssetName != nil {
+            memoryKind = trimmedReflection.isEmpty ? .photo : .photoWithNote
+        } else {
+            memoryKind = trimmedReflection.isEmpty ? .tileOnly : .reflection
+        }
         let contribution = TileContribution(
-            id: UUID(),
+            id: id,
             mission: mission,
             emotion: emotion,
             evidence: method,
             contributor: showIdentity && !store.displayName.isEmpty ? store.displayName : nil,
             sharedMemory: includeMemory,
             isRevived: false,
-            status: method == .reflection ? .selfAttested : .pendingReview
+            status: method == .reflection ? .selfAttested : .pendingReview,
+            memory: ContributionMemory(
+                kind: memoryKind,
+                note: trimmedReflection,
+                localAssetName: localAssetName,
+                recapConsent: includeMemory && exportConsent,
+                attributionAllowed: showIdentity
+            )
         )
         let mimeType: String? = switch method {
         case .photo, .receipt: "image/jpeg"

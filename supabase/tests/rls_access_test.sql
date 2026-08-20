@@ -8,8 +8,15 @@ values
   ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'outsider@mosaic.test', '{}'),
   ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'other-member@mosaic.test', '{}');
 
-insert into public.challenges (id, organizer_id, name, purpose, goal, reveal_at, invitation_code)
-values ('44444444-4444-4444-8444-444444444444', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'RLS Test', 'Verify isolation', 5, now() + interval '1 day', 'RLST42');
+insert into public.organizations(id,name,created_by) values
+ ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','RLS workspace','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+insert into public.organization_members(organization_id,user_id,role) values
+ ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','owner');
+
+insert into public.challenges (id, organizer_id, organization_id, created_by, name, purpose, goal, reveal_at, invitation_code)
+values ('44444444-4444-4444-8444-444444444444', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        'RLS Test', 'Verify isolation', 5, now() + interval '1 day', 'RLST42');
 
 insert into public.challenge_members (challenge_id, user_id, role, display_name)
 values

@@ -14,7 +14,9 @@ flowchart LR
     H --> B
 ```
 
-`AppStore` remains the observable UI source of truth. `SupabaseMosaicRepository` handles anonymous session restoration, typed reads, Edge Function calls, uploads, and Realtime observation. When the backend is unavailable, the last successful snapshot remains readable and failed writes stay visible as retryable drafts; Supabase is authoritative whenever connectivity returns.
+`AppStore` remains the observable UI source of truth. `AppDependencies` owns one `SupabaseClient` shared by auth, challenges, shared moments, recaps, organizations, and billing. RevenueCat is configured only after a Supabase session exists and always uses that session's UUID. When the backend is unavailable, the last successful snapshot remains readable and failed writes stay visible as retryable drafts; Supabase is authoritative whenever connectivity returns.
+
+Organization authorization lives in `organization_members`, never auth metadata. Participants remain only in `challenge_members`. RevenueCat state is presentation data on-device; Edge Functions enforce plan limits from synchronized `billing_accounts` and `challenge_access_grants`.
 
 ## Data separation
 
@@ -25,7 +27,7 @@ flowchart LR
 | Reflection/media metadata | `evidence_submissions` | Owner and organizer |
 | Approved story | `memories` | Owner/organizer before reveal; members only after approval and reveal |
 | Evidence object | `evidence-private` | Signed access after owner/organizer authorization |
-| Approved memory object | `memory-private` | Signed access after memory authorization |
+| Approved recap memory object | `recap-memories` | Signed access after memory authorization |
 | Moderation history | `moderation_actions` | Organizers only; append-only from Edge Functions |
 
 Every exposed table has RLS. Membership checks include both `auth.uid()` and challenge identity; merely holding the `authenticated` role is insufficient.
@@ -60,6 +62,6 @@ Postgres sends sanitized change notifications to private topics named `challenge
 - Organizer approval: moderation request without media.
 - Partner confirmation: documented post-hackathon scope and excluded from missions.
 
-## Deferred production work
+## Remaining external release work
 
-Sign in with Apple, partner links, tracked Pass-the-Tile revival, push notifications, billing, generated recap/poster exports, production account recovery, and non-synthetic moderation operations are not part of the judged core.
+The code paths for Apple linking, RevenueCat purchases, webhooks, PASS redemption, and account deletion are implemented. Shipping still requires the Apple/RevenueCat dashboard values, hosted Edge Function secrets, store products, Paywall V2 design, privacy/terms URLs, sandbox testing, and App Review approval described in `MONETIZATION_SETUP.md`. Partner verification remains post-v1 scope.

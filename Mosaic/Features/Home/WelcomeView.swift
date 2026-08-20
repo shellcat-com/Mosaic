@@ -12,6 +12,7 @@ struct OnboardingView: View {
 
     @State private var selectedPage = 0
     @State private var showJoin = false
+    @State private var showCreate = false
     @State private var selectedArtwork: ArtworkAttribution?
 
     private let scenes = OnboardingScene.all
@@ -38,6 +39,9 @@ struct OnboardingView: View {
         .porcelainBackground()
         .sheet(isPresented: $showJoin) {
             InvitationJoinSheet()
+        }
+        .sheet(isPresented: $showCreate) {
+            OrganizerEntryView()
         }
         .sheet(item: $selectedArtwork) { artwork in
             ArtworkAttributionSheet(artwork: artwork)
@@ -97,6 +101,15 @@ struct OnboardingView: View {
             }
             .buttonStyle(EditorialButtonStyle())
             .accessibilityHint(selectedPage == scenes.count - 1 ? "Opens the guest join form" : "Moves to the next onboarding page")
+
+            if selectedPage == scenes.count - 1 {
+                Button("Create a Mosaic") { showCreate = true }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .accessibilityHint("Opens Sign in with Apple for organizers")
+                Text("Joining stays free and needs no account.")
+                    .font(.caption)
+                    .foregroundStyle(MosaicTheme.muted)
+            }
         }
         .padding(.horizontal, 22)
         .padding(.top, 10)

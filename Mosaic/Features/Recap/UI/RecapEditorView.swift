@@ -1,0 +1,341 @@
+import Observation
+import SwiftUI
+
+struct RecapEditorView: View {
+    let challenge: KindnessChallenge
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var model: RecapEditorModel
+    @State private var panel: Panel = .edits
+    @State private var showShare = false
+    @State private var showError = false
+    @State private var resumeAfterMusic = false
+    @State private var shareItems: [Any] = []
+
+    enum Panel: String, CaseIterable { case edits = "Edits", music = "Music", details = "Details" }
+
+    init(challenge: KindnessChallenge) {
+        self.challenge = challenge
+        _model = State(initialValue: RecapEditorModel(challenge: challenge))
+    }
+
+    var body: some View {
+        ZStack {
+            MosaicTheme.canvas.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 20) {
+                    header
+                    RecapPlayerView(request: model.renderRequest, currentTime: $model.currentTime,
+                                    isPlaying: model.isPlaying, onTogglePlayback: model.togglePlayback)
+                        .frame(maxHeight: 540)
+                        .padding(.horizontal, 30)
+
+                    if let timeline = model.timeline {
+                        Slider(value: $model.currentTime, in: 0...max(timeline.totalDuration, 0.1))
+                            .tint(MosaicTheme.indigo).padding(.horizontal, 24)
+                            .accessibilityLabel("Recap position")
+                    }
+
+                    Picker("Editor panel", selection: $panel) {
+                        ForEach(Panel.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented).padding(.horizontal, 20)
+                    .onChange(of: panel) { previous, next in
+                        if next == .music {
+                            resumeAfterMusic = model.isPlaying
+                            model.pause()
+                        } else if previous == .music, resumeAfterMusic {
+                            resumeAfterMusic = false
+                            model.play()
+                        }
+                    }
+
+                    panelContent.padding(.horizontal, 20)
+                    exportControls.padding(.horizontal, 20).padding(.bottom, 34)
+                }
+            }
+            if model.isExporting {
+                Color.black.opacity(0.22).ignoresSafeArea()
+                RecapExportProgressView(progress: model.exportProgress, status: model.exportStatus, cancel: model.cancelExport)
+            }
+        }
+        .task { await model.load(reduceMotion: reduceMotion) }
+        .onDisappear { model.stop() }
+        .sheet(isPresented: $showShare) {
+            RecapActivitySheet(items: shareItems)
+        }
+        .alert("Recap needs attention", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: { Text(model.errorMessage ?? "Please try again.") }
+        .onChange(of: model.errorMessage) { _, value in showError = value != nil }
+    }
+
+    private var header: some View {
+        HStack {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark").font(.headline).foregroundStyle(MosaicTheme.ink)
+                    .frame(width: 44, height: 44).background(MosaicTheme.paper, in: Circle())
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Mosaic Recap").font(MosaicTheme.display(30, weight: .semibold))
+                Text(model.preset.name).font(.caption.weight(.semibold)).foregroundStyle(MosaicTheme.muted)
+            }
+            Spacer()
+            MosaicSticker(kind: .sparkles, size: 50)
+        }
+        .padding(.horizontal, 20).padding(.top, 8)
+    }
+
+    @ViewBuilder private var panelContent: some View {
+        switch panel {
+        case .edits:
+            VStack(alignment: .leading, spacing: 12) {
+                MosaicSectionHeader(title: "Choose an edit", eyebrow: "One story, nine moods", icon: .memory)
+                RecapPresetPicker(selected: model.preset) { model.selectPreset($0) }
+            }
+        case .music:
+            VStack(alignment: .leading, spacing: 12) {
+                MosaicSectionHeader(title: "Find the rhythm", eyebrow: "Licensed and credited", icon: .spark)
+                RecapMusicPicker(selection: $model.audio, recapDuration: model.timeline?.totalDuration ?? 20)
+                    .onChange(of: model.audio) { _, _ in model.rebuildTimeline() }
+            }
+        case .details:
+            VStack(alignment: .leading, spacing: 14) {
+                MosaicSectionHeader(title: "Story details", eyebrow: "Keep it human", icon: .heart)
+                Picker("Reflection density", selection: $model.options.reflectionDensity) {
+                    ForEach(RecapDetailsOptions.ReflectionDensity.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
+                }.pickerStyle(.segmented)
+                Toggle("Show allowed names", isOn: $model.options.showAttribution)
+                Toggle("Show mission labels", isOn: $model.options.showMissionLabels)
+                Toggle("Include Impact Receipt", isOn: $model.options.showImpactReceipt)
+            }
+            .tint(MosaicTheme.indigo).porcelainCard()
+            .onChange(of: model.options) { _, _ in model.rebuildTimeline() }
+        }
+    }
+
+    private var exportControls: some View {
+        VStack(spacing: 12) {
+            Button(model.exportURL == nil ? "Share Recap" : "Share Again") {
+                if let url = model.exportURL {
+                    shareItems = RecapShareService.activityItems(videoURL: url, music: model.selectedMusic)
+                    showShare = true
+                } else {
+                    model.export {
+                        guard let url = model.exportURL else { return }
+                        shareItems = RecapShareService.activityItems(videoURL: url, music: model.selectedMusic)
+                        showShare = true
+                    }
+                }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            Menu {
+                Button("Final mosaic card") { shareCard(.finalMosaic) }
+                Button("Impact Receipt card") { shareCard(.impactReceipt) }
+            } label: {
+                Label("Share a static card", systemImage: "photo.on.rectangle.angled")
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            if model.exportURL != nil {
+                Button("Save to Photos") {
+                    Task {
+                        do { try await model.saveToPhotos() }
+                        catch { model.errorMessage = error.localizedDescription }
+                    }
+                }.buttonStyle(SecondaryButtonStyle())
+                Button(model.isPublished ? "Available to your group" : "Make available to group") {
+                    Task { await model.publishToGroup() }
+                }
+                .buttonStyle(SecondaryButtonStyle())
+                .disabled(model.isPublished || model.isPublishing)
+            }
+            Label("1080 × 1920 · H.264 · Your selected music credit is included", systemImage: "lock.shield.fill")
+                .font(.caption).foregroundStyle(MosaicTheme.muted).multilineTextAlignment(.center)
+        }
+    }
+
+    private func shareCard(_ kind: RecapShareService.StaticCardKind) {
+        do {
+            let url = try model.makeStaticCard(kind)
+            shareItems = [url, "Created with Mosaic · \(challenge.name)"]
+            showShare = true
+        } catch {
+            model.errorMessage = error.localizedDescription
+        }
+    }
+}
+
+@MainActor
+@Observable
+final class RecapEditorModel {
+    let challenge: KindnessChallenge
+    var meta: RecapMeta?
+    var sources: [RecapSource] = []
+    var preset = RecapPresetCatalog.recommended
+    var audio = RecapAudioSelection(trackID: RecapPresetCatalog.recommended.defaultMusicID, trimOffset: 0)
+    var options = RecapDetailsOptions()
+    var timeline: RecapTimeline?
+    var currentTime: TimeInterval = 0
+    var isPlaying = false
+    var isExporting = false
+    var exportProgress = 0.0
+    var exportStatus: RecapExportStatus = .queued
+    var exportURL: URL?
+    var errorMessage: String?
+    var isPublishing = false
+    var isPublished = false
+    private var reduceMotion = false
+    private var playbackTask: Task<Void, Never>?
+    private var exportTask: Task<Void, Never>?
+    private let composer = RecapComposer()
+    private let cloudAdapter: SupabaseRecapAdapter?
+
+    init(challenge: KindnessChallenge) {
+        self.challenge = challenge
+        if let sharedClient = AppDependencies.live?.client {
+            cloudAdapter = SupabaseRecapAdapter(client: sharedClient)
+        } else {
+            cloudAdapter = SupabaseConfiguration.current.map(SupabaseRecapAdapter.init(configuration:))
+        }
+    }
+
+    var selectedMusic: RecapMusicTrack? { RecapMusicCatalog.track(id: audio.trackID) }
+    var renderRequest: RecapRenderRequest? {
+        guard let meta, let timeline else { return nil }
+        return RecapRenderRequest(meta: meta, timeline: timeline, options: options, music: selectedMusic)
+    }
+
+    func load(reduceMotion: Bool) async {
+        self.reduceMotion = reduceMotion
+        do {
+            let loaded: (RecapMeta, [RecapSource])
+            if let cloudAdapter {
+                do {
+                    loaded = try await cloudAdapter.loadRecap(challengeID: challenge.id)
+                } catch {
+                    loaded = try await AppStoreRecapAdapter(challenge: challenge).loadRecap(challengeID: challenge.id)
+                }
+            } else {
+                loaded = try await AppStoreRecapAdapter(challenge: challenge).loadRecap(challengeID: challenge.id)
+            }
+            meta = loaded.0
+            sources = RecapCurator.curate(loaded.1)
+            rebuildTimeline()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func selectPreset(_ value: RecapPreset) {
+        preset = value
+        audio = RecapAudioSelection(trackID: value.defaultMusicID, trimOffset: 0)
+        currentTime = 0
+        rebuildTimeline()
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    func rebuildTimeline() {
+        let beats = selectedMusic?.beats ?? []
+        timeline = RecapTimeline.build(sources: sources, preset: preset, audio: audio, trackBeats: beats, options: options, reduceMotion: reduceMotion)
+        if let timeline { currentTime = min(currentTime, timeline.totalDuration) }
+    }
+
+    func togglePlayback() { isPlaying ? pause() : play() }
+
+    func play() {
+        guard let timeline else { return }
+        if currentTime >= timeline.totalDuration { currentTime = 0 }
+        isPlaying = true
+        playbackTask?.cancel()
+        playbackTask = Task { [weak self] in
+            var last = ContinuousClock.now
+            while let self, !Task.isCancelled, self.isPlaying {
+                try? await Task.sleep(for: .milliseconds(33))
+                let now = ContinuousClock.now
+                let elapsed = last.duration(to: now)
+                last = now
+                let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
+                self.currentTime += seconds
+                if self.currentTime >= timeline.totalDuration { self.currentTime = timeline.totalDuration; self.pause() }
+            }
+        }
+    }
+
+    func pause() { isPlaying = false; playbackTask?.cancel(); playbackTask = nil }
+    func stop() { pause(); exportTask?.cancel() }
+
+    func export(completion: @escaping @MainActor () -> Void) {
+        guard let request = exportRequest else { return }
+        pause()
+        isExporting = true
+        exportProgress = 0
+        exportStatus = .queued
+        errorMessage = nil
+        exportTask = Task {
+            do {
+                if let cached = await RecapExportCache.shared.cachedURL(for: request) {
+                    exportURL = cached
+                    isExporting = false
+                    try? await cloudAdapter?.record(.completedLocal, request: request, progress: 1,
+                                                    outputPath: cached.lastPathComponent, error: nil)
+                    completion()
+                    return
+                }
+                for try await event in await composer.export(request) {
+                    switch event {
+                    case let .progress(value, status):
+                        exportProgress = value; exportStatus = status
+                        try? await cloudAdapter?.record(status, request: request, progress: value, outputPath: nil, error: nil)
+                    case let .completed(url):
+                        exportURL = try await RecapExportCache.shared.store(url, for: request)
+                        try? await cloudAdapter?.record(.completedLocal, request: request, progress: 1,
+                                                        outputPath: exportURL?.lastPathComponent, error: nil)
+                    }
+                }
+                isExporting = false
+                if exportURL != nil { UINotificationFeedbackGenerator().notificationOccurred(.success); completion() }
+            } catch is CancellationError {
+                isExporting = false
+                exportStatus = .cancelled
+                try? await cloudAdapter?.record(.cancelled, request: request, progress: exportProgress,
+                                                outputPath: nil, error: nil)
+            } catch {
+                isExporting = false
+                exportStatus = .failed
+                errorMessage = error.localizedDescription
+                try? await cloudAdapter?.record(.failed, request: request, progress: exportProgress,
+                                                outputPath: nil, error: error.localizedDescription)
+                UINotificationFeedbackGenerator().notificationOccurred(.error)
+            }
+        }
+    }
+
+    func cancelExport() { exportTask?.cancel(); exportTask = nil; isExporting = false; exportStatus = .cancelled }
+    func saveToPhotos() async throws { guard let exportURL else { return }; try await RecapShareService.saveToPhotos(exportURL) }
+    func makeStaticCard(_ kind: RecapShareService.StaticCardKind) throws -> URL {
+        guard let renderRequest else { throw CocoaError(.fileNoSuchFile) }
+        return try RecapShareService.makeStaticCard(request: renderRequest, kind: kind)
+    }
+
+    func publishToGroup() async {
+        guard let cloudAdapter, let exportURL, let request = exportRequest else {
+            errorMessage = "Connect Mosaic to Supabase before sharing this recap with the group."
+            return
+        }
+        isPublishing = true
+        defer { isPublishing = false }
+        do {
+            _ = try await cloudAdapter.publish(file: exportURL, request: request)
+            isPublished = true
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private var exportRequest: RecapExportRequest? {
+        guard let meta else { return nil }
+        return RecapExportRequest(meta: meta, sources: sources, presetID: preset.id, audio: audio, options: options,
+                                  reduceMotion: reduceMotion, rendererVersion: RecapFrameRenderer.version)
+    }
+}

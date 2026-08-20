@@ -18,6 +18,17 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.mosaic.kindness</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mosaic</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSAppTransportSecurity</key>
@@ -26,11 +37,17 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Mosaic uses the camera to privately verify your act of kindness.</string>
+	<string>Mosaic uses the camera for private evidence and moments you explicitly seal into a group reveal.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mosaic uses the microphone only while recording a private evidence video.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save your finished Mosaic recap to Photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo to privately verify your act of kindness.</string>
+	<string>Choose a photo for private evidence or a moment you explicitly add to a group reveal.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>RevenueCatPublicSDKKey</key>
+	<string>$(REVENUECAT_PUBLIC_SDK_KEY)</string>
 	<key>SupabasePublishableKey</key>
 	<string>$(SUPABASE_PUBLISHABLE_KEY)</string>
 	<key>SupabaseURL</key>
@@ -46,6 +63,10 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
