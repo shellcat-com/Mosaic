@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520" role="img" aria-labelledby="title description">
+  <title id="title">Mosaic</title>
+  <desc id="description">Six colorful ceramic tiles form a sunrise above three community figures beside the Mosaic wordmark.</desc>
+  <rect width="1600" height="520" rx="52" fill="#FBF8F1"/>
+  <g transform="translate(80 65) scale(.38)" stroke="#5A47F2" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="132" y="236" width="238" height="252" rx="34" fill="#E4A6B4"/>
+    <rect x="393" y="196" width="238" height="292" rx="34" fill="#D6A937"/>
+    <rect x="654" y="236" width="238" height="252" rx="34" fill="#F56E3E"/>
+    <rect x="132" y="510" width="238" height="252" rx="34" fill="#7D9A83"/>
+    <rect x="393" y="510" width="238" height="252" rx="34" fill="#7EB7CD"/>
+    <rect x="654" y="510" width="238" height="252" rx="34" fill="#E4A6B4"/>
+    <path d="M286 497 A226 226 0 0 1 738 497" fill="#F5B934"/>
+    <path d="M512 252v54M414 278l27 48M610 278l-27 48M340 350l50 28M684 350l-50 28" fill="none"/>
+    <circle cx="251" cy="610" r="39" fill="none"/>
+    <path d="M181 748c3-70 31-106 70-106s67 36 70 106" fill="none"/>
+    <circle cx="512" cy="610" r="39" fill="none"/>
+    <path d="M442 748c3-70 31-106 70-106s67 36 70 106" fill="none"/>
+    <circle cx="773" cy="610" r="39" fill="none"/>
+    <path d="M703 748c3-70 31-106 70-106s67 36 70 106" fill="none"/>
+  </g>
+  <g fill="#25221F">
+    <text x="540" y="260" font-family="Fraunces, Georgia, serif" font-size="176" font-weight="650">Mosaic</text>
+    <text x="550" y="338" font-family="-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="8">SMALL ACTS. ONE SHARED STORY.</text>
+  </g>
+  <circle cx="1480" cy="92" r="18" fill="#F56E3E"/>
+  <circle cx="1530" cy="142" r="11" fill="#D6A937"/>
+</svg>
