@@ -53,7 +53,7 @@ Trustworthy collaboration depends on treating privacy, retries, authorization, a
 
 ## What's next
 
-After the hackathon we will complete production Sign in with Apple, RevenueCat/App Store products, sandbox purchase and restore testing, production push delivery, TestFlight, and App Review. We also plan to explore partner confirmation, richer organizer reporting, and additional accessible artwork systems while preserving equal-weight participation.
+After the hackathon we will complete the billing-enabled App Store release: RevenueCat products, sandbox purchase and restore testing, production push delivery, and full App Review. The hackathon build already supports optional native Sign in with Apple and is prepared for TestFlight distribution. We also plan to explore partner confirmation, richer organizer reporting, and additional accessible artwork systems while preserving equal-weight participation.
 
 ## Built with
 
