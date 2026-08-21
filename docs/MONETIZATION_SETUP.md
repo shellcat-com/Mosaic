@@ -33,6 +33,11 @@ Create a least-privilege RevenueCat secret API key with customer read, subscript
 
 Set `REVENUECAT_TEST_STORE_PUBLIC_KEY` in `Config/Local.xcconfig` for the Shipaton scheme and `REVENUECAT_APP_STORE_PUBLIC_KEY` for a future Release build. The Test Store SDK key is public client configuration; never place the secret API key in an xcconfig. Release builds reject keys beginning with `test_`.
 
+The shared `Mosaic Shipaton` scheme uses the Debug configuration for Run, Test,
+Profile, and Analyze so RevenueCat's Test Store support is compiled in. Archive
+uses Release and therefore requires a real platform public SDK key; never archive
+or distribute the Test Store build.
+
 ## Validation sequence
 
 1. Run `supabase db reset`, `supabase test db`, `supabase db lint --local`, and `supabase db advisors --local`.

@@ -1342,6 +1342,7 @@
 		};
 		CB28C99CFF75D1AD991C04E3 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -1353,6 +1354,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MOSAIC_BILLING_ENABLED = YES;
+				MOSAIC_HACKATHON_BUILD = YES;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
+				MOSAIC_SUBMISSION_NAME = "RevenueCat Shipaton 2026 judge build";
 				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp;
 				REVENUECAT_PUBLIC_SDK_KEY = "$(REVENUECAT_TEST_STORE_PUBLIC_KEY)";
 				SDKROOT = iphoneos;

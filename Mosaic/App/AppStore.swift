@@ -714,6 +714,35 @@ final class AppStore {
         }
     }
 
+    func purchaseEventPass() async {
+        guard sessionState.isAuthenticated else {
+            accountMessage = "Sign in with Apple before purchasing a Mosaic Pass so it can be restored across devices."
+            return
+        }
+        guard selectedOrganizationID != nil else {
+            accountMessage = "Create or select an organizer workspace before purchasing a Mosaic Pass."
+            isShowingOrganizerSetup = true
+            return
+        }
+        guard let purchaseService else { return }
+
+        do {
+            switch try await purchaseService.purchase(.eventPass) {
+            case .purchased:
+                await refreshBilling(expectPremium: true)
+                if accessSnapshot.passBalance > 0 {
+                    accountMessage = "Mosaic Pass added through RevenueCat."
+                }
+            case .cancelled:
+                accountMessage = "Mosaic Pass purchase cancelled."
+            case .pending:
+                accountMessage = "Mosaic Pass purchase is pending approval."
+            }
+        } catch {
+            accountMessage = error.localizedDescription
+        }
+    }
+
     func redeemEventPass() async {
         guard let purchaseService, let selectedOrganizationID else { return }
         do {

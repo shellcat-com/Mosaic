@@ -66,6 +66,7 @@ struct MosaicPaywallView: View {
 struct BillingManagementView: View {
     @Environment(AppStore.self) private var store
     @State private var isRestoring = false
+    @State private var isPurchasingPass = false
 
     var body: some View {
         MosaicScreen {
@@ -100,6 +101,16 @@ struct BillingManagementView: View {
                 }
                 .buttonStyle(SecondaryButtonStyle())
                 .disabled(isRestoring)
+
+                Button(isPurchasingPass ? "Purchasing…" : "Buy one Mosaic Pass") {
+                    isPurchasingPass = true
+                    Task {
+                        await store.purchaseEventPass()
+                        isPurchasingPass = false
+                    }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(isPurchasingPass)
 
                 Link(destination: URL(string: "https://apps.apple.com/account/subscriptions")!) {
                     Label("Manage Apple subscription", systemImage: "arrow.up.right.square")

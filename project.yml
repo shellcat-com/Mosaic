@@ -84,6 +84,10 @@ targets:
       configs:
         Debug:
           REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
+          MOSAIC_BILLING_ENABLED: YES
+          MOSAIC_HACKATHON_BUILD: YES
+          MOSAIC_REMOTE_PUSH_ENABLED: NO
+          MOSAIC_SUBMISSION_NAME: RevenueCat Shipaton 2026 judge build
         Hackathon:
           REVENUECAT_PUBLIC_SDK_KEY: ""
           MOSAIC_BILLING_ENABLED: NO
@@ -97,6 +101,7 @@ targets:
         Release:
           REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_APP_STORE_PUBLIC_KEY)
     configFiles:
+      Debug: Config/Shipaton.xcconfig
       Hackathon: Config/Hackathon.xcconfig
       Shipaton: Config/Shipaton.xcconfig
     attributes:
