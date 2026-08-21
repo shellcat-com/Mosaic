@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="topTiles">
+      <rect x="132" y="236" width="238" height="252" rx="34"/>
+      <rect x="393" y="196" width="238" height="292" rx="34"/>
+      <rect x="654" y="236" width="238" height="252" rx="34"/>
+    </clipPath>
+    <clipPath id="allTiles">
+      <rect x="132" y="236" width="238" height="252" rx="34"/>
+      <rect x="393" y="196" width="238" height="292" rx="34"/>
+      <rect x="654" y="236" width="238" height="252" rx="34"/>
+      <rect x="132" y="510" width="238" height="252" rx="34"/>
+      <rect x="393" y="510" width="238" height="252" rx="34"/>
+      <rect x="654" y="510" width="238" height="252" rx="34"/>
+    </clipPath>
+    <pattern id="grain" width="19" height="17" patternUnits="userSpaceOnUse" patternTransform="rotate(-13)">
+      <path d="M-3 4h9M9 4h5M2 12h12M17 12h4" fill="none" stroke="#fffdf8" stroke-width="2.2" stroke-linecap="round" opacity=".22"/>
+      <circle cx="7" cy="8" r="1.1" fill="#5140dc" opacity=".10"/>
+    </pattern>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#fbf8f1"/>
+
+  <g stroke="#5a47f2" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="132" y="236" width="238" height="252" rx="34" fill="#e4a6b4"/>
+    <rect x="393" y="196" width="238" height="292" rx="34" fill="#d6a937"/>
+    <rect x="654" y="236" width="238" height="252" rx="34" fill="#f56e3e"/>
+    <rect x="132" y="510" width="238" height="252" rx="34" fill="#7d9a83"/>
+    <rect x="393" y="510" width="238" height="252" rx="34" fill="#7eb7cd"/>
+    <rect x="654" y="510" width="238" height="252" rx="34" fill="#e4a6b4"/>
+  </g>
+
+  <rect x="120" y="184" width="784" height="590" fill="url(#grain)" clip-path="url(#allTiles)"/>
+
+  <g clip-path="url(#topTiles)" stroke="#5a47f2" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M286 497 A226 226 0 0 1 738 497" fill="#f5b934"/>
+    <path d="M286 497 A226 226 0 0 1 738 497" fill="none"/>
+    <path d="M512 252v54M414 278l27 48M610 278l-27 48M340 350l50 28M684 350l-50 28" fill="none"/>
+  </g>
+
+  <g fill="none" stroke="#5a47f2" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="251" cy="610" r="39"/>
+    <path d="M181 748c3-70 31-106 70-106s67 36 70 106"/>
+    <circle cx="512" cy="610" r="39"/>
+    <path d="M442 748c3-70 31-106 70-106s67 36 70 106"/>
+    <circle cx="773" cy="610" r="39"/>
+    <path d="M703 748c3-70 31-106 70-106s67 36 70 106"/>
+  </g>
+
+  <path d="M512 452C518 469 524 475 542 481C524 487 518 493 512 510C506 493 500 487 482 481C500 475 506 469 512 452Z"
+        fill="#fffdf8" stroke="#5a47f2" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="512" cy="481" r="5" fill="#f5b934"/>
+</svg>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shellcat-com.github.io/Mosaic/sitemap.xml

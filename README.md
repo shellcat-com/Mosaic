@@ -178,7 +178,9 @@ Partner confirmation is intentionally labeled as post-hackathon work and is not 
 - [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — Apple capabilities, Edge Function secrets, and scheduling.
 - [`docs/MONETIZATION_SETUP.md`](docs/MONETIZATION_SETUP.md) — RevenueCat, App Store Connect, webhooks, and Apple auth.
 
-Public policies: [Privacy](https://shellcat-com.github.io/Mosaic/privacy/) · [Terms](https://shellcat-com.github.io/Mosaic/terms/)
+Public launch pages: [Marketing](https://shellcat-com.github.io/Mosaic/) · [Support](https://shellcat-com.github.io/Mosaic/support/) · [Privacy](https://shellcat-com.github.io/Mosaic/privacy/) · [Terms](https://shellcat-com.github.io/Mosaic/terms/) · [Account deletion](https://shellcat-com.github.io/Mosaic/account-deletion/) · [Community guidelines](https://shellcat-com.github.io/Mosaic/community-guidelines/)
+
+The App Store URL mapping and final production review gates are documented in [`docs/APP_STORE_WEB_CHECKLIST.md`](docs/APP_STORE_WEB_CHECKLIST.md).
 
 ## License and credits
 
