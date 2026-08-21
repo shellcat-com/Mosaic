@@ -1,0 +1,56 @@
+name: iOS cloud build and tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme: ["Mosaic Hackathon", "Mosaic Shipaton"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Xcode 26
+        run: xcodebuild -version | grep 'Xcode 26'
+      - name: Validate Shipaton source media
+        if: matrix.scheme == 'Mosaic Shipaton'
+        run: ./scripts/validate_shipaton_submission.sh
+      - name: Resolve pinned Swift packages
+        run: xcodebuild -resolvePackageDependencies -project Mosaic.xcodeproj -scheme "${{ matrix.scheme }}"
+      - name: Build and test cloud-configured app
+        run: >-
+          xcodebuild
+          -project Mosaic.xcodeproj
+          -scheme "${{ matrix.scheme }}"
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+          -skipPackagePluginValidation
+          ONLY_ACTIVE_ARCH=YES
+          test
+
+  backend-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Test RevenueCat response contracts
+        run: deno test supabase/functions/_shared/revenuecat_test.ts
+      - name: Reject whitespace errors
+        run: git diff-tree --check --no-commit-id --root -r HEAD
+      - name: Verify repository documentation targets
+        run: >-
+          test -f PRODUCT_BLUEPRINT.md &&
+          test -f design/DESIGN_DIRECTION.md &&
+          test -f docs/SHIPATON_SUBMISSION.md &&
+          test -f docs/SHIPATON_DEMO_SCRIPT.md

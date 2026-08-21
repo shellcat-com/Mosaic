@@ -2,47 +2,48 @@ import SwiftUI
 
 struct ArtworkSceneView: View {
     let scene: OnboardingScene
-    let challenge: KindnessChallenge
     let onShowAttribution: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 14) {
-                Label(scene.eyebrow, systemImage: "sparkle")
-                    .font(MosaicTheme.caption())
-                    .foregroundStyle(MosaicTheme.ink.opacity(0.72))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(MosaicTheme.paper.opacity(0.94), in: Capsule())
-                    .overlay {
-                        Capsule().stroke(MosaicTheme.clay.opacity(0.35), lineWidth: 1)
-                    }
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 14) {
+                    Label(scene.eyebrow, systemImage: "sparkle")
+                        .font(MosaicTheme.caption())
+                        .foregroundStyle(MosaicTheme.ink.opacity(0.72))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(MosaicTheme.paper.opacity(0.94), in: Capsule())
+                        .overlay {
+                            Capsule().stroke(MosaicTheme.clay.opacity(0.35), lineWidth: 1)
+                        }
 
-                headline
-                    .font(MosaicTheme.display(36, weight: .medium))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 350)
-                    .minimumScaleFactor(0.82)
-                    .accessibilityAddTraits(.isHeader)
+                    headline
+                        .font(MosaicTheme.display(36, weight: .medium))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 350)
+                        .minimumScaleFactor(0.78)
+                        .accessibilityAddTraits(.isHeader)
 
-                Text(scene.supportingCopy)
-                    .font(.subheadline)
-                    .foregroundStyle(MosaicTheme.ink.opacity(0.64))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 340)
+                    Text(scene.supportingCopy)
+                        .font(.subheadline)
+                        .foregroundStyle(MosaicTheme.ink.opacity(0.64))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 340)
 
-                ArtworkPanel(
-                    scene: scene,
-                    challenge: challenge,
-                    onShowAttribution: onShowAttribution
-                )
-                .padding(.top, 4)
+                    ArtworkPanel(
+                        scene: scene,
+                        height: min(350, max(250, geometry.size.height * 0.48)),
+                        onShowAttribution: onShowAttribution
+                    )
+                    .padding(.top, 4)
+                }
+                .padding(.horizontal, 22)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
     }
 
     private var headline: Text {
@@ -56,7 +57,7 @@ struct ArtworkSceneView: View {
 
 private struct ArtworkPanel: View {
     let scene: OnboardingScene
-    let challenge: KindnessChallenge
+    let height: CGFloat
     let onShowAttribution: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -69,7 +70,7 @@ private struct ArtworkPanel: View {
                 Image(scene.artwork.assetName)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: geometry.size.width, height: 350)
+                    .frame(width: geometry.size.width, height: height, alignment: scene.imageAlignment)
                     .scaleEffect(artworkScale ? 1.035 : 1)
                     .clipped()
 
@@ -83,16 +84,16 @@ private struct ArtworkPanel: View {
                 overlay
                     .padding(14)
             }
-            .frame(width: geometry.size.width, height: 350)
+            .frame(width: geometry.size.width, height: height)
         }
-        .frame(height: 350)
+        .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: MosaicTheme.artworkCornerRadius, style: .continuous))
         .overlay(alignment: .topTrailing) {
             Button(action: onShowAttribution) {
                 Image(systemName: "info.circle.fill")
                     .font(.title3)
                     .foregroundStyle(MosaicTheme.ink.opacity(0.8))
-                    .padding(8)
+                    .frame(width: MosaicTheme.minimumHitTarget, height: MosaicTheme.minimumHitTarget)
                     .background(cardFill, in: Circle())
             }
             .accessibilityLabel("Artwork details for \(scene.artwork.title)")
@@ -117,13 +118,11 @@ private struct ArtworkPanel: View {
     private var overlay: some View {
         switch scene.overlay {
         case .equalContribution:
-            ContributionStoryStrip()
-        case .ceramicGrid:
             CeramicGridOverlay()
-        case .passTheTile:
-            PassTheTileOverlay()
-        case .invitation:
-            InvitationArtworkCard(challenge: challenge)
+        case .privacyChoice:
+            PrivacyArtworkOverlay()
+        case .sharedReveal:
+            SharedRevealOverlay()
         }
     }
 
@@ -132,81 +131,89 @@ private struct ArtworkPanel: View {
     }
 }
 
-private struct ContributionStoryStrip: View {
+private struct PrivacyArtworkOverlay: View {
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
-        HStack(spacing: 0) {
-            StoryStat(value: "18", caption: "acts of care", tint: MosaicTheme.persimmon, motif: .heart)
-            divider
-            StoryStat(value: "equal", caption: "space for all", tint: MosaicTheme.sage, motif: .people)
-            divider
-            StoryStat(value: "5", caption: "days together", tint: MosaicTheme.indigo, motif: .sun)
+        VStack(spacing: 9) {
+            privacyRow(
+                icon: "lock.shield.fill",
+                title: "Evidence",
+                value: "Organizer only",
+                tint: MosaicTheme.indigo
+            )
+            privacyRow(
+                icon: "heart.text.square.fill",
+                title: "Memory + name",
+                value: "Your choice",
+                tint: MosaicTheme.sage
+            )
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 5)
-        .background(reduceTransparency ? MosaicTheme.paper : MosaicTheme.paper.opacity(0.92), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(13)
+        .background(
+            reduceTransparency ? MosaicTheme.paper : MosaicTheme.paper.opacity(0.93),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+        )
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(MosaicTheme.ink.opacity(0.16), lineWidth: 1)
-            RoundedRectangle(cornerRadius: 19, style: .continuous)
-                .stroke(Color.white.opacity(0.62), lineWidth: 1)
-                .padding(3)
+                .stroke(Color.white.opacity(0.72), lineWidth: 1)
         }
-        .shadow(color: MosaicTheme.ink.opacity(0.12), radius: 10, y: 5)
+        .shadow(color: MosaicTheme.ink.opacity(0.14), radius: 10, y: 5)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("Evidence is visible only to organizers. Sharing a memory and name is your choice.")
     }
 
-    private var divider: some View {
-        Rectangle()
-            .fill(MosaicTheme.clay.opacity(0.24))
-            .frame(width: 1, height: 48)
+    private func privacyRow(icon: String, title: String, value: String, tint: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundStyle(tint)
+                .frame(width: 24)
+            Text(title).font(.subheadline.weight(.semibold))
+            Spacer()
+            Text(value).font(.footnote.weight(.semibold)).foregroundStyle(MosaicTheme.muted)
+        }
     }
 }
 
-private struct StoryStat: View {
-    enum Motif { case heart, people, sun }
-    let value: String
-    let caption: String
-    let tint: Color
-    let motif: Motif
+private struct SharedRevealOverlay: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 5) {
-                motifView
-                Text(value)
-                    .font(MosaicTheme.display(value == "equal" ? 17 : 22, weight: .semibold))
+        HStack(spacing: 12) {
+            HStack(spacing: 4) {
+                ForEach(0..<3, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill([MosaicTheme.persimmon, MosaicTheme.sage, MosaicTheme.indigo][index])
+                        .frame(width: 29, height: 29)
+                        .rotationEffect(.degrees(Double(index - 1) * 4))
+                }
             }
-            .foregroundStyle(MosaicTheme.ink)
-
-            Text(caption.uppercased())
-                .font(.system(size: 8, weight: .bold, design: .rounded))
-                .tracking(0.65)
-                .foregroundStyle(MosaicTheme.ink.opacity(0.52))
+            Image(systemName: "arrow.right")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(MosaicTheme.indigo)
+            VStack(alignment: .leading, spacing: 2) {
+                Label("SHARED REVEAL", systemImage: "sparkles")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .tracking(1.1)
+                    .foregroundStyle(MosaicTheme.persimmon)
+                Text("Every verified tile belongs")
+                    .font(MosaicTheme.display(17, weight: .semibold))
+            }
         }
+        .padding(.vertical, 15)
+        .padding(.horizontal, 17)
         .frame(maxWidth: .infinity)
-    }
-
-    @ViewBuilder private var motifView: some View {
-        switch motif {
-        case .heart:
-            Image(systemName: "heart.fill")
-                .font(.system(size: 12))
-                .foregroundStyle(tint)
-                .rotationEffect(.degrees(-7))
-        case .people:
-            ZStack {
-                Circle().fill(tint).frame(width: 8, height: 8).offset(x: -3, y: -3)
-                Circle().fill(tint.opacity(0.68)).frame(width: 8, height: 8).offset(x: 4, y: 2)
-            }
-            .frame(width: 15, height: 15)
-        case .sun:
-            Circle()
-                .fill(tint)
-                .frame(width: 11, height: 11)
-                .overlay(Circle().stroke(MosaicTheme.paper, lineWidth: 2).padding(3))
+        .background(
+            reduceTransparency ? MosaicTheme.paper : MosaicTheme.paper.opacity(0.93),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.white.opacity(0.72), lineWidth: 1)
         }
+        .shadow(color: MosaicTheme.ink.opacity(0.14), radius: 10, y: 5)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Verified equal tiles open together into the shared reveal")
     }
 }
 
@@ -238,7 +245,7 @@ private struct CeramicGridOverlay: View {
                 .position(x: geometry.size.width * 0.5, y: geometry.size.height * 0.5)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 322)
+        .frame(maxHeight: .infinity)
         .background(MosaicTheme.ink.opacity(0.025), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("The painting divided into nine equal ceramic tile positions")
@@ -269,94 +276,6 @@ private struct KindnessSeal: View {
                 .foregroundStyle(.white)
                 .shadow(color: MosaicTheme.ink.opacity(0.7), radius: 2)
         }
-    }
-}
-
-private struct PassTheTileOverlay: View {
-    var body: some View {
-        GeometryReader { geometry in
-            Canvas { context, size in
-                let points = [
-                    CGPoint(x: size.width * 0.17, y: size.height * 0.24),
-                    CGPoint(x: size.width * 0.48, y: size.height * 0.50),
-                    CGPoint(x: size.width * 0.83, y: size.height * 0.76)
-                ]
-                var path = Path()
-                path.move(to: points[0])
-                path.addCurve(to: points[1], control1: CGPoint(x: size.width * 0.27, y: size.height * 0.17), control2: CGPoint(x: size.width * 0.34, y: size.height * 0.58))
-                path.addCurve(to: points[2], control1: CGPoint(x: size.width * 0.61, y: size.height * 0.40), control2: CGPoint(x: size.width * 0.72, y: size.height * 0.82))
-                context.stroke(path, with: .color(.white.opacity(0.76)), style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                context.stroke(path, with: .color(MosaicTheme.indigo.opacity(0.94)), style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [3, 7]))
-            }
-
-            ForEach(Array([0.17, 0.48, 0.83].enumerated()), id: \.offset) { index, x in
-                Text("\(index + 1)")
-                    .font(MosaicTheme.display(18, weight: .bold))
-                    .foregroundStyle(index == 2 ? .white : MosaicTheme.ink)
-                    .frame(width: 42, height: 42)
-                    .background(index == 2 ? MosaicTheme.indigo : MosaicTheme.paper.opacity(0.94), in: Circle())
-                    .overlay(Circle().stroke(.white.opacity(0.9), lineWidth: 2))
-                    .overlay(Circle().stroke(MosaicTheme.indigo.opacity(0.7), lineWidth: 1).padding(-3))
-                    .shadow(color: MosaicTheme.ink.opacity(0.18), radius: 7, y: 4)
-                    .position(
-                        x: geometry.size.width * x,
-                        y: geometry.size.height * [0.24, 0.50, 0.76][index]
-                    )
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 310)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Three equal tiles connected by an indigo Pass the Tile path")
-    }
-}
-
-private struct InvitationArtworkCard: View {
-    let challenge: KindnessChallenge
-
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    var body: some View {
-        VStack(spacing: 10) {
-            Text("A MOSAIC INVITATION")
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-                .tracking(1.7)
-                .foregroundStyle(MosaicTheme.persimmon)
-
-            Text(challenge.purpose)
-                .font(MosaicTheme.display(19, weight: .medium))
-                .foregroundStyle(MosaicTheme.ink)
-                .multilineTextAlignment(.center)
-
-            HStack(spacing: 4) {
-                ForEach(0..<7, id: \.self) { index in
-                    Circle()
-                        .fill(index == 3 ? MosaicTheme.persimmon : MosaicTheme.clay.opacity(0.32))
-                        .frame(width: index == 3 ? 4 : 2.5, height: index == 3 ? 4 : 2.5)
-                }
-            }
-
-            HStack(spacing: 6) {
-                Text("PRIVATE CIRCLE")
-                Text("·")
-                Text("REVEALS \(challenge.revealDate.formatted(.dateTime.month(.abbreviated).day()).uppercased())")
-            }
-            .font(.system(size: 8, weight: .bold, design: .rounded))
-            .tracking(0.8)
-            .foregroundStyle(MosaicTheme.ink.opacity(0.68))
-        }
-        .padding(.vertical, 18)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity)
-        .background(reduceTransparency ? MosaicTheme.paper : MosaicTheme.paper.opacity(0.94), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(MosaicTheme.ink.opacity(0.18), lineWidth: 1)
-            RoundedRectangle(cornerRadius: 19, style: .continuous)
-                .stroke(Color.white.opacity(0.72), lineWidth: 1)
-                .padding(3)
-        }
-        .shadow(color: MosaicTheme.ink.opacity(0.15), radius: 12, y: 6)
     }
 }
 

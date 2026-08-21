@@ -2,8 +2,9 @@ import Foundation
 
 @MainActor
 protocol MosaicRepository: AnyObject {
-    func bootstrap(displayName: String?, privacy: String?) async throws -> DemoBootstrapResponse
-    func join(code: String, displayName: String, privacy: String) async throws -> ChallengeRecord
+    func prepareDemo(displayName: String?, privacy: ParticipantPrivacy) async throws -> DemoBootstrapResponse
+    func resolveInvitation(code: String) async throws -> InvitationPreview
+    func join(code: String, displayName: String?, privacy: ParticipantPrivacy) async throws -> ChallengeRecord
     func configureChallenge(_ draft: ChallengeDraft, challengeID: UUID) async throws -> ChallengeRecord
     func loadChallenge(id: UUID) async throws -> (KindnessChallenge, [Mission])
     func listChallenges() async throws -> [ChallengeSummary]
@@ -18,6 +19,9 @@ protocol MosaicRepository: AnyObject {
 }
 
 extension MosaicRepository {
+    func resolveInvitation(code: String) async throws -> InvitationPreview {
+        throw MosaicRepositoryCapabilityError.unsupported
+    }
     func configureChallenge(_ draft: ChallengeDraft, challengeID: UUID) async throws -> ChallengeRecord {
         throw MosaicRepositoryCapabilityError.unsupported
     }

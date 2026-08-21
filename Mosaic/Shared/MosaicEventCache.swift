@@ -1,7 +1,7 @@
 import Foundation
 
 enum MosaicEventCache {
-    static let appGroupIdentifier = "group.com.mosaic.kindness"
+    static let appGroupIdentifier = "group.com.biswaskhatiwada.mosaicapp"
     private static let summariesKey = "event-summaries-v1"
     private static let preferencesKey = "event-notification-preferences-v1"
     private static let preferredWidgetKey = "preferred-widget-challenge-v1"

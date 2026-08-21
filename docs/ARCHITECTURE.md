@@ -62,6 +62,8 @@ Postgres sends sanitized change notifications to private topics named `challenge
 - Organizer approval: moderation request without media.
 - Partner confirmation: documented post-hackathon scope and excluded from missions.
 
-## Remaining external release work
+## Submission configurations and release boundary
 
-The code paths for Apple linking, RevenueCat purchases, webhooks, PASS redemption, and account deletion are implemented. Shipping still requires the Apple/RevenueCat dashboard values, hosted Edge Function secrets, store products, Paywall V2 design, privacy/terms URLs, sandbox testing, and App Review approval described in `MONETIZATION_SETUP.md`. Partner verification remains post-v1 scope.
+Both judging configurations use the hosted Supabase project, anonymous authentication, synthetic seed data, committed public client identifiers, and an offline showcase fallback. Guest access is immediate. Native Sign in with Apple remains available for permanent organizer accounts and guest identity linking, but it never blocks the participant showcase.
+
+The archived `Mosaic Hackathon` scheme keeps billing and remote push disabled for the original Reverie reproduction. The `Mosaic Shipaton` scheme enables RevenueCat Test Store billing while leaving remote push disabled. A purchase is available only to a permanent organizer with a selected workspace; the app uses the organizer's Supabase UUID as the RevenueCat customer ID, then refreshes opaque entitlement, subscription, and virtual-currency state through authenticated Edge Functions. A public App Store release still requires production RevenueCat values, notification credentials, App Store products, sandbox purchase testing, and App Review. Partner verification remains post-v1 scope.

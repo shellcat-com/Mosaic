@@ -1,13 +1,21 @@
 import Foundation
 import Observation
+import OSLog
 import WidgetKit
 
 @MainActor
 @Observable
 final class AppStore {
-    var hasJoined = false
+    @ObservationIgnored private static let logger = Logger(
+        subsystem: "com.biswaskhatiwada.mosaicapp",
+        category: "AppStore"
+    )
+
+    var entryState: AppEntryState = .launching
     var displayName = ""
-    var privacyMode = "First name"
+    var participantPrivacy: ParticipantPrivacy = .firstName
+    var onboardingMessage: String?
+    var isJoiningInvitation = false
     var selectedMission: Mission?
     var pendingContribution: TileContribution?
     var isOrganizer = false
@@ -55,10 +63,23 @@ final class AppStore {
     @ObservationIgnored private let authService: AuthServicing?
     @ObservationIgnored private let purchaseService: PurchaseServicing?
     @ObservationIgnored private let workspaceService: WorkspaceServicing?
+    @ObservationIgnored private let onboardingProgress: OnboardingProgressStore
+    @ObservationIgnored private var deferredInvitation: InvitationPreview?
+    @ObservationIgnored private var invitationReturnState: AppEntryState = .entryChoice
+    @ObservationIgnored private var hasRestoredMembership = false
+    @ObservationIgnored private var bootstrapTask: Task<Void, Never>?
     let localParticipantID: UUID
 
-    init(repository: MosaicRepository? = nil) {
+    var privacyMode: String { participantPrivacy.profileLabel }
+
+    init(repository: MosaicRepository? = nil, onboardingDefaults: UserDefaults = .standard) {
+#if DEBUG
+        let isMarketingPreview = MarketingPreviewScene.current != nil
+#else
+        let isMarketingPreview = false
+#endif
         self.localParticipantID = Self.persistedParticipantID()
+        self.onboardingProgress = OnboardingProgressStore(defaults: onboardingDefaults)
         if let repository {
             self.repository = repository
             self.sharedMomentRepository = LocalSharedMomentRepository()
@@ -66,6 +87,7 @@ final class AppStore {
             self.authService = nil
             self.purchaseService = nil
             self.workspaceService = nil
+            self.sessionState = .guest(userID: self.localParticipantID)
         } else if NSClassFromString("XCTestCase") == nil, let configuration = SupabaseConfiguration.current {
             let dependencies = AppDependencies(configuration: configuration)
             self.repository = dependencies.repository
@@ -156,26 +178,269 @@ final class AppStore {
             upcoming.id: upcoming,
             completed.id: completed
         ]
-        let cached = MosaicEventCache.loadSummaries()
-        challengeLibrary = cached.isEmpty
-            ? localChallenges.values.map(\.summary).sorted { $0.revealAt < $1.revealAt }
-            : cached
-        persistEventCache()
-
+        let cached = isMarketingPreview ? [] : MosaicEventCache.loadSummaries()
+        if self.repository != nil {
+            challengeLibrary = cached
+            hasRestoredMembership = !cached.isEmpty
+            if let cachedChallenge = preferredInitialChallenge(from: cached) {
+                challenge = Self.offlineChallenge(from: cachedChallenge)
+            }
+        } else {
+            challengeLibrary = localChallenges.values.map(\.summary).sorted { $0.revealAt < $1.revealAt }
+        }
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-preview-joined") {
-            hasJoined = true
+        if isMarketingPreview {
+            configureMarketingFixture()
+        } else if ProcessInfo.processInfo.arguments.contains("-preview-joined") {
+            entryState = .main
             displayName = "Biswas"
-            privacyMode = "First name"
+            participantPrivacy = .firstName
         }
 #endif
     }
 
-    func join(name: String, privacy: String) {
-        displayName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        privacyMode = privacy
-        hasJoined = true
-        Task { await joinRemote() }
+#if DEBUG
+    private func configureMarketingFixture() {
+        let fixedStart = Date(timeIntervalSince1970: 1_799_539_200)
+        let fixedReveal = Date(timeIntervalSince1970: 1_800_144_000)
+        missions = [
+            Mission(
+                id: UUID(uuidString: "30000000-0000-4000-8000-000000000001")!,
+                title: "Leave a kind note",
+                detail: "Brighten someone’s day with a few kind words.",
+                category: .encouragement,
+                minutes: 5,
+                effort: "Easy",
+                evidence: [.reflection, .photo]
+            ),
+            Mission(
+                id: UUID(uuidString: "30000000-0000-4000-8000-000000000002")!,
+                title: "Clean a shared space",
+                detail: "Leave one small corner of your community better than you found it.",
+                category: .community,
+                minutes: 20,
+                effort: "Hands-on",
+                evidence: [.photo, .video, .organizer]
+            ),
+            Mission(
+                id: UUID(uuidString: "30000000-0000-4000-8000-000000000003")!,
+                title: "Donate a useful item",
+                detail: "Give something in good condition to a neighbor or local organization.",
+                category: .giving,
+                minutes: 15,
+                effort: "Easy",
+                evidence: [.photo, .receipt]
+            ),
+            Mission(
+                id: UUID(uuidString: "30000000-0000-4000-8000-000000000004")!,
+                title: "Check in with someone",
+                detail: "Reach out and make room for a genuine conversation.",
+                category: .connection,
+                minutes: 10,
+                effort: "Quiet",
+                evidence: [.reflection, .organizer]
+            )
+        ]
+
+        let names = ["Maya", "Jon", "Sam", "Noor"]
+        let contributions = (0..<24).map { index in
+            let mission = missions[index % missions.count]
+            let contributor = index.isMultiple(of: 3) ? nil : names[index % names.count]
+            return TileContribution(
+                id: UUID(uuidString: String(format: "31000000-0000-4000-8000-%012d", index + 1))!,
+                mission: mission,
+                emotion: Emotion.allCases[index % Emotion.allCases.count],
+                evidence: mission.evidence[index % mission.evidence.count],
+                contributor: contributor,
+                sharedMemory: index.isMultiple(of: 4),
+                isRevived: index == 7 || index == 18,
+                status: MarketingPreviewScene.current == .organizer && index == 0 ? .pendingReview : .placed,
+                tilePosition: MarketingPreviewScene.current == .organizer && index == 0 ? nil : index,
+                participantID: UUID(uuidString: String(format: "32000000-0000-4000-8000-%012d", (index % 4) + 1))!,
+                createdAt: fixedStart.addingTimeInterval(Double(index) * 3_600),
+                memory: index.isMultiple(of: 4) ? ContributionMemory(
+                    kind: .reflection,
+                    note: [
+                        "A small note changed the tone of the whole afternoon.",
+                        "We left the shared garden brighter than we found it.",
+                        "Passing something useful along felt quietly hopeful.",
+                        "Making time to listen mattered more than advice."
+                    ][index % 4],
+                    recapConsent: true,
+                    attributionAllowed: contributor != nil
+                ) : nil
+            )
+        }
+
+        challenge = KindnessChallenge(
+            id: UUID(uuidString: "33000000-0000-4000-8000-000000000001")!,
+            name: "A Kinder Block",
+            groupName: "West Ridge Neighbors",
+            purpose: "Small acts that help our neighborhood feel closer.",
+            goal: 40,
+            startDate: fixedStart,
+            revealDate: fixedReveal,
+            serverStatus: "active",
+            invitationCode: "KIND42",
+            contributions: contributions,
+            theme: .fallback,
+            cameraRollEnabled: false
+        )
+        entryState = .main
+        displayName = "Maya"
+        participantPrivacy = .firstName
+        backendState = .localPreview
+        backendMessage = nil
+        challengeLibrary = []
+        notificationPreferences = [:]
+        pendingContribution = nil
+        isOrganizer = MarketingPreviewScene.current == .organizer
+        showReveal = false
+        localChallenges = [challenge.id: challenge]
+        sessionState = .guest(userID: localParticipantID)
+    }
+#endif
+
+    func showEntryChoice() {
+        onboardingProgress.markIntroCompleted()
+        deferredInvitation = nil
+        onboardingMessage = nil
+        entryState = .entryChoice
+    }
+
+    func showIntro(returningTo invitation: InvitationPreview? = nil) {
+        deferredInvitation = invitation
+        onboardingMessage = nil
+        entryState = .intro
+    }
+
+    func completeIntro() {
+        onboardingProgress.markIntroCompleted()
+        onboardingMessage = nil
+        if let deferredInvitation {
+            self.deferredInvitation = nil
+            entryState = .invitationPreview(deferredInvitation)
+        } else {
+            entryState = .entryChoice
+        }
+    }
+
+    func resolveInvitation(code rawCode: String) async {
+        let code = Self.normalizedInvitationCode(rawCode)
+        guard Self.isValidInvitationCode(code) else {
+            onboardingMessage = "Enter a valid invitation code."
+            entryState = .entryChoice
+            return
+        }
+
+        invitationReturnState = entryState == .main ? .main : .entryChoice
+        onboardingMessage = nil
+        entryState = .resolvingInvitation(code)
+        await ensureSession()
+
+        do {
+            let preview: InvitationPreview
+            if let repository {
+                preview = try await repository.resolveInvitation(code: code)
+            } else if code == challenge.invitationCode.uppercased() {
+                preview = challenge.invitationPreview
+            } else {
+                throw InvitationFlowError.notFound
+            }
+            entryState = .invitationPreview(preview)
+        } catch {
+            onboardingMessage = Self.invitationMessage(for: error)
+            entryState = .entryChoice
+        }
+    }
+
+    func continueToJoin(_ invitation: InvitationPreview) {
+        onboardingMessage = nil
+        entryState = .joining(invitation)
+    }
+
+    func leaveInvitationFlow() {
+        onboardingMessage = nil
+        entryState = invitationReturnState
+    }
+
+    @discardableResult
+    func joinInvitation(
+        _ invitation: InvitationPreview,
+        name: String,
+        privacy: ParticipantPrivacy
+    ) async -> Bool {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard privacy != .firstName || !trimmedName.isEmpty else {
+            onboardingMessage = "Enter your first name or choose Join anonymously."
+            return false
+        }
+
+        isJoiningInvitation = true
+        onboardingMessage = nil
+        defer { isJoiningInvitation = false }
+
+        do {
+            if let repository {
+                let record = try await repository.join(
+                    code: invitation.code,
+                    displayName: privacy == .firstName ? trimmedName : nil,
+                    privacy: privacy
+                )
+                try await loadChallenge(record.id, organizer: false)
+                await refreshLibrary()
+            } else {
+                guard invitation.code == challenge.invitationCode.uppercased() else {
+                    throw InvitationFlowError.notFound
+                }
+            }
+            displayName = privacy == .firstName ? trimmedName : ""
+            participantPrivacy = privacy
+            hasRestoredMembership = true
+            entryState = .main
+            backendMessage = nil
+            return true
+        } catch {
+            onboardingMessage = Self.invitationMessage(for: error)
+            entryState = .joining(invitation)
+            return false
+        }
+    }
+
+    func exploreDemo() async {
+        if let bootstrapTask { await bootstrapTask.value }
+        onboardingMessage = nil
+        backendState = .connecting
+        await ensureSession()
+
+        guard let repository else {
+            entryState = .main
+            backendState = .localPreview
+            return
+        }
+
+        do {
+            let result = try await repository.prepareDemo(
+                displayName: displayName.isEmpty ? nil : displayName,
+                privacy: participantPrivacy
+            )
+            showcaseChallengeID = result.showcase.id
+            sandboxChallengeID = result.sandbox?.id
+            try await loadChallenge(result.showcase.id, organizer: false)
+            await refreshLibrary()
+            await refreshOrganizations()
+            hasRestoredMembership = true
+            entryState = .main
+            backendState = .live
+            backendMessage = nil
+        } catch {
+            Self.logger.error("Explore Demo failed: \(String(reflecting: error), privacy: .public)")
+            backendMessage = error.localizedDescription
+            backendState = .cached(message: "Bundled showcase — read only. Cloud actions will retry when you reconnect.")
+            isOrganizer = false
+            hasRestoredMembership = true
+            entryState = .main
+        }
     }
 
     func addContribution(_ contribution: TileContribution) {
@@ -284,37 +549,51 @@ final class AppStore {
     }
 
     func bootstrap() async {
-        if let authService {
-            do {
-                sessionState = try await authService.restoreOrCreateGuest()
-                if let userID = sessionState.userID {
-                    try? await purchaseService?.configure(customerID: userID)
-                }
-            } catch {
-                sessionState = .failed(message: error.localizedDescription)
-                accountMessage = error.localizedDescription
-            }
+        if let bootstrapTask {
+            await bootstrapTask.value
+            return
         }
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.performBootstrap()
+        }
+        bootstrapTask = task
+        await task.value
+        bootstrapTask = nil
+    }
+
+    private func performBootstrap() async {
+#if DEBUG
+        guard MarketingPreviewScene.current == nil else { return }
+#endif
+        await ensureSession()
         guard let repository else {
             challenge.sharedMoments = (try? await sharedMomentRepository.moments(challengeID: challenge.id)) ?? []
+            if entryState == .launching { entryState = initialOnboardingState }
             return
         }
         backendState = .connecting
         do {
-            let result = try await repository.bootstrap(
-                displayName: displayName.isEmpty ? nil : displayName,
-                privacy: Self.databasePrivacy(privacyMode)
-            )
-            showcaseChallengeID = result.showcase.id
-            sandboxChallengeID = result.sandbox?.id
-            try await loadChallenge(result.showcase.id, organizer: false)
-            await refreshLibrary()
+            let loaded = try await repository.listChallenges()
+            challengeLibrary = loaded
+            hasRestoredMembership = !loaded.isEmpty
+            persistEventCache()
             await refreshOrganizations()
             backendState = .live
             backendMessage = nil
+
+            if !isHandlingInvitation, let initial = preferredInitialChallenge(from: loaded) {
+                try await loadChallenge(initial.id, organizer: false)
+                entryState = .main
+            } else if entryState == .launching {
+                entryState = initialOnboardingState
+            }
         } catch {
-            backendState = .cached(message: "Using the built-in showcase. Start the local Supabase stack to enable live collaboration.")
+            backendState = .cached(message: "Mosaic is offline. You can still enter an invitation code and retry.")
             backendMessage = error.localizedDescription
+            if entryState == .launching {
+                entryState = hasRestoredMembership ? .main : initialOnboardingState
+            }
         }
     }
 
@@ -343,7 +622,7 @@ final class AppStore {
             try await loadChallenge(challengeRecord.id, organizer: true)
             accessSnapshot = try await workspaceService.accessSnapshot(organizationID: organization.id, challengeID: challengeRecord.id)
             isShowingOrganizerSetup = false
-            hasJoined = true
+            entryState = .main
             accountMessage = nil
             return true
         } catch {
@@ -381,22 +660,45 @@ final class AppStore {
     }
 
     func requestPremium(_ feature: PremiumFeature) {
+        guard MosaicBuildConfiguration.billingEnabled else { return }
         guard !accessSnapshot.allows(feature) else { return }
+        guard sessionState.isAuthenticated else {
+            accountMessage = "Sign in with Apple before purchasing Organizer Plus so Mosaic can restore access across devices."
+            return
+        }
+        guard selectedOrganizationID != nil else {
+            accountMessage = "Create or select an organizer workspace before purchasing Organizer Plus."
+            isShowingOrganizerSetup = true
+            return
+        }
         paywallContext = feature
         isShowingPaywall = true
     }
 
-    func refreshBilling() async {
+    func refreshBilling(expectPremium: Bool = false) async {
         guard let purchaseService else { return }
-        do {
-            accessSnapshot = try await purchaseService.refreshAccess(
-                organizationID: selectedOrganizationID,
-                challengeID: challenge.id
-            )
-            accountMessage = nil
-        } catch {
-            accountMessage = error.localizedDescription
+        let maximumAttempts = expectPremium ? 3 : 1
+        for attempt in 0..<maximumAttempts {
+            do {
+                accessSnapshot = try await purchaseService.refreshAccess(
+                    organizationID: selectedOrganizationID,
+                    challengeID: challenge.id
+                )
+                if !expectPremium || accessSnapshot.plusActive || accessSnapshot.passBalance > 0 {
+                    accountMessage = accessSnapshot.plusActive
+                        ? "Organizer Plus unlocked through RevenueCat."
+                        : nil
+                    return
+                }
+            } catch {
+                if attempt == maximumAttempts - 1 {
+                    accountMessage = error.localizedDescription
+                    return
+                }
+            }
+            try? await Task.sleep(for: .seconds(1))
         }
+        accountMessage = "Purchase completed. RevenueCat is still synchronizing access; use Restore Purchases if it does not appear shortly."
     }
 
     func restorePurchases() async {
@@ -461,6 +763,7 @@ final class AppStore {
             selectedOrganizationID = nil
             accessSnapshot = .free
             isOrganizer = false
+            entryState = .launching
             await bootstrap()
         } catch {
             accountMessage = error.localizedDescription
@@ -476,6 +779,7 @@ final class AppStore {
             selectedOrganizationID = nil
             accessSnapshot = .free
             isOrganizer = false
+            entryState = .launching
             await bootstrap()
         } catch {
             accountMessage = error.localizedDescription
@@ -785,6 +1089,10 @@ final class AppStore {
             return
         }
         guard let route = EventRouteParser.parse(url) else { return }
+        if case .join(let code) = route {
+            Task { await resolveInvitation(code: code) }
+            return
+        }
         pendingRoute = route
     }
 
@@ -835,20 +1143,6 @@ final class AppStore {
                     realtimeTasks.removeValue(forKey: id)?.cancel()
                 }
             }
-        } catch {
-            backendMessage = error.localizedDescription
-        }
-    }
-
-    private func joinRemote() async {
-        guard let repository else { return }
-        do {
-            _ = try await repository.join(
-                code: challenge.invitationCode,
-                displayName: displayName,
-                privacy: Self.databasePrivacy(privacyMode)
-            )
-            await bootstrap()
         } catch {
             backendMessage = error.localizedDescription
         }
@@ -927,12 +1221,78 @@ final class AppStore {
         }
     }
 
-    private static func databasePrivacy(_ value: String) -> String {
-        switch value {
-        case "Anonymous": "anonymous"
-        case "Quiet participant": "quiet"
-        default: "first_name"
+    private var initialOnboardingState: AppEntryState {
+        onboardingProgress.hasCompletedCurrentIntro ? .entryChoice : .intro
+    }
+
+    private var isHandlingInvitation: Bool {
+        switch entryState {
+        case .resolvingInvitation, .invitationPreview, .joining: true
+        default: false
         }
+    }
+
+    private func ensureSession() async {
+        guard sessionState.userID == nil, let authService else { return }
+        do {
+            sessionState = try await authService.restoreOrCreateGuest()
+            if let userID = sessionState.userID {
+                try? await purchaseService?.configure(customerID: userID)
+            }
+        } catch {
+            sessionState = .failed(message: error.localizedDescription)
+            accountMessage = error.localizedDescription
+        }
+    }
+
+    private func preferredInitialChallenge(from summaries: [ChallengeSummary]) -> ChallengeSummary? {
+        summaries.first { $0.phase() == .active }
+            ?? summaries.first { $0.phase() == .upcoming }
+            ?? summaries.first
+    }
+
+    private static func offlineChallenge(from summary: ChallengeSummary) -> KindnessChallenge {
+        KindnessChallenge(
+            id: summary.id,
+            name: summary.name,
+            groupName: summary.groupName,
+            purpose: summary.purpose,
+            goal: summary.goal,
+            startDate: summary.startAt,
+            revealDate: summary.revealAt,
+            revealedAt: summary.revealedAt,
+            serverStatus: summary.serverStatus,
+            recapAvailability: summary.recapAvailability,
+            invitationCode: "",
+            contributions: []
+        )
+    }
+
+    static func normalizedInvitationCode(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    }
+
+    static func isValidInvitationCode(_ code: String) -> Bool {
+        !code.isEmpty
+            && code.count <= 12
+            && code.unicodeScalars.allSatisfy(CharacterSet.alphanumerics.contains)
+    }
+
+    private static func invitationMessage(for error: Error) -> String {
+        let message = error.localizedDescription.lowercased()
+        if error is InvitationFlowError || message.contains("not found") {
+            return "We couldn’t find that invitation. Check the code and try again."
+        }
+        if message.contains("not accepting") || message.contains("inactive") || message.contains("revealed") {
+            return "This Mosaic is no longer accepting participants."
+        }
+        if message.contains("limit") || message.contains("full") || message.contains("capacity") {
+            return "This Mosaic has reached its participant limit."
+        }
+        if message.contains("network") || message.contains("offline") || message.contains("connection") {
+            return "Mosaic couldn’t connect. Check your connection and try again."
+        }
+        return "The invitation couldn’t be opened. Please try again."
     }
 
     private static func persistedParticipantID() -> UUID {
@@ -947,6 +1307,29 @@ final class AppStore {
         let letters = name.uppercased().filter(\.isLetter).prefix(4)
         let number = abs(name.hashValue % 9_000) + 1_000
         return "\(letters.isEmpty ? "KIND" : String(letters))\(number)"
+    }
+}
+
+private enum InvitationFlowError: LocalizedError {
+    case notFound
+
+    var errorDescription: String? { "Challenge code not found" }
+}
+
+extension KindnessChallenge {
+    var invitationPreview: InvitationPreview {
+        InvitationPreview(
+            challengeID: id,
+            code: invitationCode.uppercased(),
+            name: name,
+            groupName: groupName,
+            purpose: purpose,
+            goal: goal,
+            startAt: startDate,
+            revealAt: revealDate,
+            status: serverStatus,
+            theme: theme
+        )
     }
 }
 

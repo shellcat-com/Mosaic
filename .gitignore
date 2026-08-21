@@ -3,6 +3,9 @@ DerivedData/
 build/
 *.xcuserstate
 xcuserdata/
+*.icloud-backup
+__pycache__/
+*.pyc
 
 supabase/.temp/
 supabase/.branches/
@@ -11,3 +14,15 @@ supabase/.branches/
 .env.*
 !.env.example
 Config/Local.xcconfig
+design/node_modules/
+
+# Reproducible submission build intermediates and local QA frames.
+tmp/
+output/video/work/
+output/video/qa/
+output/video/Mosaic-Reverie-Demo-uncaptioned.mp4
+
+# Generated submission binaries and local capture work. Final source images,
+# scripts, captions, and written submission materials are committed explicitly.
+output/
+submission/*.mp4

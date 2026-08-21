@@ -79,9 +79,10 @@ final class SupabaseAuthService: AuthServicing {
 
     private func updateCapturedName(_ displayName: String?) async throws {
         guard let displayName else { return }
-        struct Body: Encodable { let displayName: String; let privacy = "first_name" }
-        let _: DemoBootstrapResponse = try await client.functions.invoke(
-            "bootstrap-demo", options: FunctionInvokeOptions(body: Body(displayName: displayName))
+        struct Body: Encodable { let displayName: String }
+        struct Updated: Decodable { let ok: Bool }
+        let _: Updated = try await client.functions.invoke(
+            "update-profile", options: FunctionInvokeOptions(body: Body(displayName: displayName))
         )
     }
 

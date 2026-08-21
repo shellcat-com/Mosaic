@@ -35,7 +35,13 @@ struct MissionDetailView: View {
                         detailRow(icon: "clock", title: "Fits your day", detail: "About \(mission.minutes) minutes · \(mission.effort)")
                         detailRow(icon: "checkmark.shield", title: "Verify your way", detail: mission.evidence.map(\.title).joined(separator: ", "))
                         detailRow(icon: "eye.slash", title: "Private by default", detail: "Evidence is only seen by the organizer.")
+#if DEBUG
+                        if MarketingPreviewScene.current != .mission {
+                            detailRow(icon: "person.badge.clock", title: "Partner confirmation", detail: "Planned after the hackathon; not required for this mission.")
+                        }
+#else
                         detailRow(icon: "person.badge.clock", title: "Partner confirmation", detail: "Planned after the hackathon; not required for this mission.")
+#endif
                     }
                 }
             }

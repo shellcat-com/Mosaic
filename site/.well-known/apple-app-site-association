@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "KFH848D5D7.com.biswaskhatiwada.mosaicapp"
+        ],
+        "components": [
+          {
+            "/": "/join/*",
+            "comment": "Mosaic participant invitation links"
+          }
+        ]
+      }
+    ]
+  }
+}

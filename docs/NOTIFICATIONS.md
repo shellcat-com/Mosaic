@@ -13,7 +13,7 @@ supabase secrets set \
   APNS_KEY_ID='YOUR_KEY_ID' \
   APNS_TEAM_ID='YOUR_TEAM_ID' \
   APNS_PRIVATE_KEY='-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----' \
-  APNS_BUNDLE_ID='com.mosaic.kindness' \
+  APNS_BUNDLE_ID='com.biswaskhatiwada.mosaicapp' \
   MOSAIC_NOTIFICATION_DISPATCH_SECRET='A_LONG_RANDOM_VALUE'
 ```
 

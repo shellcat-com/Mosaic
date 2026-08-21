@@ -28,11 +28,11 @@
 		28594E2E68DF0B0644D3E5F7 /* EventNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 156ED49C491E8718A7CE4D17 /* EventNotificationManager.swift */; };
 		2A1F3C6A6D0A2452D6AD2B1A /* TileFiringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA356EDE9DE21ADF6B01D2D /* TileFiringView.swift */; };
 		3122F9A49F6024D428D318A4 /* BackendModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11E7B29B0FE1C102BFC1076 /* BackendModelTests.swift */; };
+		33AF030563A05B61328864BA /* MosaicBuildConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 547643CEB067AF723A5399AB /* MosaicBuildConfiguration.swift */; };
 		354E938A8DC75C6B623E1DF8 /* RecapMusic.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8A332545261708A3C4EEA69 /* RecapMusic.swift */; };
 		382378B9AD796E323A99A4C7 /* KinderThemeCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616AC37884DD0946982A99A /* KinderThemeCatalogTests.swift */; };
 		3977214B491F113D3D9A86B6 /* RecapShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3807F1917EFBBDE488F5B429 /* RecapShareService.swift */; };
 		3A9378D2C08227857BF5B581 /* MosaicBillingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81869316440803B4D3C004BA /* MosaicBillingViews.swift */; };
-		3B0F33984E10911D2EF16D7A /* Fraunces-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 70E770537B35193A86ACA331 /* Fraunces-OFL.txt */; };
 		40AB586E0396189B109BE15B /* RecapMusicPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99DD4603D08EC0E15514896B /* RecapMusicPicker.swift */; };
 		421B70432052949104E3E513 /* MissionLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E73D4A05F77059307686822 /* MissionLibraryView.swift */; };
 		4316C366CD33B1D09D443A58 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F804F7D8AD2F1EBC49F27B /* HomeView.swift */; };
@@ -57,6 +57,7 @@
 		56984CBE59E199481BAB46A5 /* MosaicWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B5C4E837A676E294D4290FBD /* MosaicWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		57441B6D2DA3ABDD268621E6 /* DesignSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F063B8BBAD4F5ED229500CB /* DesignSystemTests.swift */; };
 		5A42DC2E41744E4C2DE6E3D2 /* PassTheTileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA31E89E2919E67C940C26E /* PassTheTileView.swift */; };
+		5B5AF19AC6BB9A1C950949CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3048E641FE31B440A10989E7 /* PrivacyInfo.xcprivacy */; };
 		5C5F177F9110C3D3B4CBEA9A /* MissionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB05442EA713D954898AE6EF /* MissionDetailView.swift */; };
 		5E67E533CB5AFC2B6C7D7AC3 /* MosaicModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C624BD96CD3ED7A2F602DBF6 /* MosaicModels.swift */; };
 		5F3B085470B025C7D90D61D9 /* RecapMusicCreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3441C3D51C8000986FBC8374 /* RecapMusicCreditsView.swift */; };
@@ -68,6 +69,7 @@
 		6BDB0E35166F104FC7DF9AC4 /* RepositoryStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D252027998D07CF9A07A1B /* RepositoryStateTests.swift */; };
 		72C817AFB19053F1AB065857 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8776E973B106B390304908DB /* OnboardingTests.swift */; };
 		7EA824F633AA178639FE6FBB /* SharedRollCameraFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F0462970284B12C0E256EBF /* SharedRollCameraFlow.swift */; };
+		8006075B3ED6C5E8AB7E4E60 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0DA09A01AE841A4811D2AA4F /* PrivacyInfo.xcprivacy */; };
 		818C5F7630BBD32E39568582 /* EventModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5F31B144EDABDA4719B358 /* EventModels.swift */; };
 		83A9FE9C611E8B2F6C589242 /* MosaicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D84A50668044A6EBA903D3E /* MosaicApp.swift */; };
 		84F31F33A032FE75EB6DF978 /* Fraunces72ptSoft-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8F40BCDCFBC3B3E4C006FCBC /* Fraunces72ptSoft-Regular.ttf */; };
@@ -156,6 +158,8 @@
 		04ED67238A664D8D7CB82D90 /* MosaicTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicTheme.swift; sourceTree = "<group>"; };
 		0719A359642EA63E911FF100 /* summer.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = summer.mp3; sourceTree = "<group>"; };
 		0BE5DFED64DD242A7A28DC96 /* RecapPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapPreset.swift; sourceTree = "<group>"; };
+		0DA09A01AE841A4811D2AA4F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shipaton.xcconfig; sourceTree = "<group>"; };
 		0F4F7D783985CDC2E9EBE944 /* MosaicRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicRepository.swift; sourceTree = "<group>"; };
 		10F9425CEE0610EEA35AB39B /* PlayfulComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayfulComponents.swift; sourceTree = "<group>"; };
 		14E77324AC7C544444B14442 /* RecapFrameRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapFrameRenderer.swift; sourceTree = "<group>"; };
@@ -173,6 +177,7 @@
 		2DA356EDE9DE21ADF6B01D2D /* TileFiringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileFiringView.swift; sourceTree = "<group>"; };
 		2E1A37863E920D0045C62A0E /* RevenueCatPurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatPurchaseService.swift; sourceTree = "<group>"; };
 		2FF79D06C8EA2FFC6EE6C347 /* SupabaseWorkspaceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseWorkspaceService.swift; sourceTree = "<group>"; };
+		3048E641FE31B440A10989E7 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		319DA8DBCC4AD81BF84A5F3D /* RecapComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapComposer.swift; sourceTree = "<group>"; };
 		33AF1B1CCFCA78577010A0A1 /* RecapPresetPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapPresetPicker.swift; sourceTree = "<group>"; };
 		3441C3D51C8000986FBC8374 /* RecapMusicCreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapMusicCreditsView.swift; sourceTree = "<group>"; };
@@ -180,6 +185,7 @@
 		37EA17C95B6B6C5EE5C20BA7 /* AppleAuthenticationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleAuthenticationViews.swift; sourceTree = "<group>"; };
 		3807F1917EFBBDE488F5B429 /* RecapShareService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapShareService.swift; sourceTree = "<group>"; };
 		3A9500AADAC745B576398F83 /* MosaicLiveActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicLiveActivityWidget.swift; sourceTree = "<group>"; };
+		3E53AE634C4C26F656EAB096 /* Hackathon.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Hackathon.xcconfig; sourceTree = "<group>"; };
 		3EA31E89E2919E67C940C26E /* PassTheTileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassTheTileView.swift; sourceTree = "<group>"; };
 		3F1ABE9BE5CD41DC46B9F2DF /* MosaicWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicWidgets.swift; sourceTree = "<group>"; };
 		3FE1E365C15C288F25A219C6 /* MosaicWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicWidgetBundle.swift; sourceTree = "<group>"; };
@@ -192,6 +198,7 @@
 		4A0B8D8259457560363F8295 /* MusicManifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = MusicManifest.json; sourceTree = "<group>"; };
 		4E08B2217C829827340A682E /* RecapAdapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapAdapters.swift; sourceTree = "<group>"; };
 		516ED5E63E5D2885BED6FA32 /* RecapExportCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapExportCache.swift; sourceTree = "<group>"; };
+		547643CEB067AF723A5399AB /* MosaicBuildConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicBuildConfiguration.swift; sourceTree = "<group>"; };
 		550B8F0070F4E2BBD32BA4A4 /* EvidenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvidenceView.swift; sourceTree = "<group>"; };
 		57C0F276BDF37DE052F46CD6 /* LocalMemoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMemoryStore.swift; sourceTree = "<group>"; };
 		5C186328C667352EF316E2ED /* SealedRollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SealedRollView.swift; sourceTree = "<group>"; };
@@ -209,7 +216,6 @@
 		6BEEED0B662DD71C6E1AFC5B /* RecapTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapTimeline.swift; sourceTree = "<group>"; };
 		6F0462970284B12C0E256EBF /* SharedRollCameraFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRollCameraFlow.swift; sourceTree = "<group>"; };
 		702C0A5C450C2E44D976461B /* MosaicAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicAppDelegate.swift; sourceTree = "<group>"; };
-		70E770537B35193A86ACA331 /* Fraunces-OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Fraunces-OFL.txt"; sourceTree = "<group>"; };
 		7409BD8E7A7B41B93948CFD9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		762A0703AAEB32C34C979107 /* spark.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = spark.mp3; sourceTree = "<group>"; };
 		76DA8B557B34E229D174DC9F /* RecapMeta.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecapMeta.swift; sourceTree = "<group>"; };
@@ -366,7 +372,6 @@
 		3ACFBA0872450885085FB659 /* Fonts */ = {
 			isa = PBXGroup;
 			children = (
-				70E770537B35193A86ACA331 /* Fraunces-OFL.txt */,
 				5D91C53CF130CB0A048AC239 /* Fraunces72ptSoft-Bold.ttf */,
 				8F40BCDCFBC3B3E4C006FCBC /* Fraunces72ptSoft-Regular.ttf */,
 				023B90CDC0DE0C5E24E23E6C /* Fraunces72ptSoft-SemiBold.ttf */,
@@ -407,6 +412,15 @@
 			path = Export;
 			sourceTree = "<group>";
 		};
+		4CF4A1E6EEABF87B10E0271B /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				3E53AE634C4C26F656EAB096 /* Hackathon.xcconfig */,
+				0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		4DF60178F043AC9F9F8B92E3 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -438,6 +452,7 @@
 				454381EB604C2E4CB2FC0290 /* Assets.xcassets */,
 				7409BD8E7A7B41B93948CFD9 /* Info.plist */,
 				D7A7467796524CE10DD194FF /* Mosaic.entitlements */,
+				0DA09A01AE841A4811D2AA4F /* PrivacyInfo.xcprivacy */,
 				3ACFBA0872450885085FB659 /* Fonts */,
 				439DD75CDDE9214AB6AA3AAE /* Music */,
 			);
@@ -479,6 +494,7 @@
 				3701931CDB08ECB17703E1F3 /* CalendarEventSheet.swift */,
 				156ED49C491E8718A7CE4D17 /* EventNotificationManager.swift */,
 				57C0F276BDF37DE052F46CD6 /* LocalMemoryStore.swift */,
+				547643CEB067AF723A5399AB /* MosaicBuildConfiguration.swift */,
 				D8FB2030448110A233641B82 /* MosaicLiveActivityManager.swift */,
 				892B066AA2028EB2C2BE4E67 /* MosaicNetworkModels.swift */,
 				0F4F7D783985CDC2E9EBE944 /* MosaicRepository.swift */,
@@ -517,6 +533,7 @@
 				3FE1E365C15C288F25A219C6 /* MosaicWidgetBundle.swift */,
 				BE005E60AD1171DF863E5217 /* MosaicWidgets.entitlements */,
 				3F1ABE9BE5CD41DC46B9F2DF /* MosaicWidgets.swift */,
+				3048E641FE31B440A10989E7 /* PrivacyInfo.xcprivacy */,
 			);
 			path = MosaicWidgets;
 			sourceTree = "<group>";
@@ -524,6 +541,7 @@
 		93EAD1979F5C8A4751D47B27 = {
 			isa = PBXGroup;
 			children = (
+				4CF4A1E6EEABF87B10E0271B /* Config */,
 				2E3489A9F748357A0CBDC01C /* Mosaic */,
 				AC262D6A2156F16B36C937E1 /* MosaicTests */,
 				9286B8C23839E0DEBEA423EC /* MosaicWidgets */,
@@ -702,6 +720,7 @@
 			buildConfigurationList = 9220F2E48153B997B2F06627 /* Build configuration list for PBXNativeTarget "MosaicWidgets" */;
 			buildPhases = (
 				B9C95A04E9F1C7A8AA625654 /* Sources */,
+				B1A3211F4C419535F6205A96 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -724,16 +743,15 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					85360A0EBD494CAD42FFE377 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					CF261331CEC9474675E64FD3 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = KFH848D5D7;
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.InAppPurchase\": [\"enabled\": 1], \"com.apple.Push\": [\"enabled\": 1], \"com.apple.SignInWithApple\": [\"enabled\": 1]]";
+						SystemCapabilities = "[\"com.apple.SignInWithApple\": [\"enabled\": 1], \"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1], \"com.apple.InAppPurchase\": [\"enabled\": 1]]";
 					};
 					DFC1882226846FB2E51A158D = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = KFH848D5D7;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = "[\"com.apple.ApplicationGroups.iOS\": [\"enabled\": 1]]";
 					};
@@ -765,16 +783,24 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B1A3211F4C419535F6205A96 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B5AF19AC6BB9A1C950949CD /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F7DA43A39F8D7024AFA9F8AE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				46AFA50E019D396BB058E71C /* Assets.xcassets in Resources */,
-				3B0F33984E10911D2EF16D7A /* Fraunces-OFL.txt in Resources */,
 				0511B65A4D5C787CC35DBA19 /* Fraunces72ptSoft-Bold.ttf in Resources */,
 				84F31F33A032FE75EB6DF978 /* Fraunces72ptSoft-Regular.ttf in Resources */,
 				510ECCAC740134DF7EDB413E /* Fraunces72ptSoft-SemiBold.ttf in Resources */,
 				8ED5B6C47010489AF4972872 /* MusicManifest.json in Resources */,
+				8006075B3ED6C5E8AB7E4E60 /* PrivacyInfo.xcprivacy in Resources */,
 				512775ACF40BD19BE4FFCF87 /* anywhere.mp3 in Resources */,
 				093D8F9EC75072E16FE57A37 /* fresh.mp3 in Resources */,
 				09BC5E44912E58D6CEF5AAC3 /* rise.mp3 in Resources */,
@@ -816,6 +842,7 @@
 				51720B80361915CE5C1B362B /* MosaicAppDelegate.swift in Sources */,
 				3A9378D2C08227857BF5B581 /* MosaicBillingViews.swift in Sources */,
 				C77317F90CD27F411B22D182 /* MosaicBrandMark.swift in Sources */,
+				33AF030563A05B61328864BA /* MosaicBuildConfiguration.swift in Sources */,
 				D1411A6E258BA5A894576496 /* MosaicEventCache.swift in Sources */,
 				46C5BD44E4ACE224EF9AED48 /* MosaicLiveActivityManager.swift in Sources */,
 				5E67E533CB5AFC2B6C7D7AC3 /* MosaicModels.swift in Sources */,
@@ -934,6 +961,24 @@
 			};
 			name = Debug;
 		};
+		4D8B4736092D4F1AA08869F5 /* Hackathon */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MosaicWidgets/MosaicWidgets.entitlements;
+				DEVELOPMENT_TEAM = KFH848D5D7;
+				INFOPLIST_FILE = MosaicWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Hackathon;
+		};
 		5768CC178F26CEA521607368 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -970,7 +1015,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -982,13 +1026,17 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MOSAIC_BILLING_ENABLED = NO;
+				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
+				MOSAIC_SUBMISSION_NAME = "";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REVENUECAT_PUBLIC_SDK_KEY = "";
 				SDKROOT = iphoneos;
-				SUPABASE_PUBLISHABLE_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -999,18 +1047,43 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = MosaicWidgets/MosaicWidgets.entitlements;
+				DEVELOPMENT_TEAM = KFH848D5D7;
 				INFOPLIST_FILE = MosaicWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.kindness.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp.widgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
+		};
+		5BB195926EFE3CC180B4DDF5 /* Shipaton */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Mosaic/Resources/Mosaic.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = KFH848D5D7;
+				INFOPLIST_FILE = Mosaic/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MOSAIC_BILLING_ENABLED = YES;
+				MOSAIC_HACKATHON_BUILD = YES;
+				MOSAIC_SUBMISSION_NAME = "RevenueCat Shipaton 2026 judge build";
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp;
+				REVENUECAT_PUBLIC_SDK_KEY = "$(REVENUECAT_TEST_STORE_PUBLIC_KEY)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Shipaton;
 		};
 		87AC2EE949CA8D0601A483C8 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1036,17 +1109,35 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Mosaic/Resources/Mosaic.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = KFH848D5D7;
 				INFOPLIST_FILE = Mosaic/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.kindness;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp;
 				REVENUECAT_PUBLIC_SDK_KEY = "$(REVENUECAT_APP_STORE_PUBLIC_KEY)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
+		};
+		94EE11B2E04B6F2B50D58C9B /* Hackathon */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.MosaicTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mosaic.app/Mosaic";
+			};
+			name = Hackathon;
 		};
 		A5A5A2DE47512D2BA55506A7 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1084,7 +1175,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1102,36 +1192,153 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MOSAIC_BILLING_ENABLED = NO;
+				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
+				MOSAIC_SUBMISSION_NAME = "";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REVENUECAT_PUBLIC_SDK_KEY = "";
 				SDKROOT = iphoneos;
-				SUPABASE_PUBLISHABLE_KEY = "";
-				SUPABASE_URL = "";
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
+		AF85ED3C3EE36142DBFFEEDA /* Shipaton */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.MosaicTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mosaic.app/Mosaic";
+			};
+			name = Shipaton;
+		};
+		B6B117778774A21FB3B1D843 /* Shipaton */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MOSAIC_BILLING_ENABLED = NO;
+				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
+				MOSAIC_SUBMISSION_NAME = "";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REVENUECAT_PUBLIC_SDK_KEY = "";
+				SDKROOT = iphoneos;
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Shipaton;
+		};
 		BA60D3D0F8F6D06A973ACC11 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = MosaicWidgets/MosaicWidgets.entitlements;
+				DEVELOPMENT_TEAM = KFH848D5D7;
 				INFOPLIST_FILE = MosaicWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.kindness.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp.widgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		C432C488A36F94770AA08A11 /* Hackathon */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3E53AE634C4C26F656EAB096 /* Hackathon.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Mosaic/Resources/Mosaic.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = KFH848D5D7;
+				INFOPLIST_FILE = Mosaic/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MOSAIC_BILLING_ENABLED = NO;
+				MOSAIC_HACKATHON_BUILD = YES;
+				MOSAIC_SUBMISSION_NAME = "Reverie Hacks 2026 judge build";
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp;
+				REVENUECAT_PUBLIC_SDK_KEY = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Hackathon;
 		};
 		CB28C99CFF75D1AD991C04E3 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1140,17 +1347,100 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Mosaic/Resources/Mosaic.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = KFH848D5D7;
 				INFOPLIST_FILE = Mosaic/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.mosaic.kindness;
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp;
 				REVENUECAT_PUBLIC_SDK_KEY = "$(REVENUECAT_TEST_STORE_PUBLIC_KEY)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		E5F6A252423108F59B1EA62D /* Hackathon */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MOSAIC_BILLING_ENABLED = NO;
+				MOSAIC_HACKATHON_BUILD = NO;
+				MOSAIC_REMOTE_PUSH_ENABLED = NO;
+				MOSAIC_SUBMISSION_NAME = "";
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REVENUECAT_PUBLIC_SDK_KEY = "";
+				SDKROOT = iphoneos;
+				SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU;
+				SUPABASE_URL = "https://lmemddtpwfbkawlkwthf.supabase.co";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Hackathon;
+		};
+		FC50997C082F45637A41D626 /* Shipaton */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MosaicWidgets/MosaicWidgets.entitlements;
+				DEVELOPMENT_TEAM = KFH848D5D7;
+				INFOPLIST_FILE = MosaicWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Shipaton;
 		};
 /* End XCBuildConfiguration section */
 
@@ -1159,7 +1449,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A5A5A2DE47512D2BA55506A7 /* Debug */,
+				E5F6A252423108F59B1EA62D /* Hackathon */,
 				5768CC178F26CEA521607368 /* Release */,
+				B6B117778774A21FB3B1D843 /* Shipaton */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1168,7 +1460,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CB28C99CFF75D1AD991C04E3 /* Debug */,
+				C432C488A36F94770AA08A11 /* Hackathon */,
 				909E60C63E5CA217FCF44F70 /* Release */,
+				5BB195926EFE3CC180B4DDF5 /* Shipaton */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1177,7 +1471,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BA60D3D0F8F6D06A973ACC11 /* Debug */,
+				4D8B4736092D4F1AA08869F5 /* Hackathon */,
 				57FD9FA2E511D22C8F185924 /* Release */,
+				FC50997C082F45637A41D626 /* Shipaton */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1186,7 +1482,9 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				37CDC2744CC2E8486334A675 /* Debug */,
+				94EE11B2E04B6F2B50D58C9B /* Hackathon */,
 				87AC2EE949CA8D0601A483C8 /* Release */,
+				AF85ED3C3EE36142DBFFEEDA /* Shipaton */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

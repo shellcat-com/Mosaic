@@ -6,9 +6,9 @@ select has_column('public', 'challenges', 'theme_palette_id', 'challenge stores 
 select has_column('public', 'challenges', 'theme_seed', 'challenge stores deterministic artwork seed');
 select has_column('public', 'challenges', 'theme_revision', 'challenge stores catalog revision');
 
-insert into public.challenges (id, name, purpose, goal, reveal_at, invitation_code)
+insert into public.challenges (id, name, purpose, goal, reveal_at, invitation_code, is_showcase)
 values ('24000000-0000-4000-8000-000000000001', 'Legacy theme', 'Fallback coverage', 10,
-        now() + interval '1 day', 'THEME1');
+        now() + interval '1 day', 'THEME1', true);
 
 select is((select theme_id from public.challenges where id = '24000000-0000-4000-8000-000000000001'),
           'neighborhood-quilt', 'legacy rows receive Neighborhood Quilt');

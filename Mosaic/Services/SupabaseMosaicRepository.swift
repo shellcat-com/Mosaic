@@ -6,32 +6,63 @@ final class SupabaseMosaicRepository: MosaicRepository {
     private let client: SupabaseClient
 
     init(configuration: SupabaseConfiguration) {
-        client = SupabaseClient(supabaseURL: configuration.url, supabaseKey: configuration.publishableKey)
+        client = SupabaseClient(
+            supabaseURL: configuration.url,
+            supabaseKey: configuration.publishableKey,
+            options: SupabaseClientOptions(
+                functions: .init(decoder: MosaicJSONDecoder.make())
+            )
+        )
     }
 
     init(client: SupabaseClient) {
         self.client = client
     }
 
-    func bootstrap(displayName: String?, privacy: String?) async throws -> DemoBootstrapResponse {
+    func prepareDemo(displayName: String?, privacy: ParticipantPrivacy) async throws -> DemoBootstrapResponse {
         if client.auth.currentSession == nil {
             _ = try await client.auth.signInAnonymously()
         }
-        struct Body: Encodable { let displayName: String?; let privacy: String? }
+        struct Body: Encodable { let displayName: String?; let privacy: String }
         let response: DemoBootstrapResponse = try await client.functions.invoke(
             "bootstrap-demo",
-            options: FunctionInvokeOptions(body: Body(displayName: displayName, privacy: privacy))
+            options: FunctionInvokeOptions(body: Body(displayName: displayName, privacy: privacy.rawValue))
         )
         return response
     }
 
-    func join(code: String, displayName: String, privacy: String) async throws -> ChallengeRecord {
-        struct Body: Encodable { let code: String; let displayName: String; let privacy: String }
-        let response: ChallengeResponse = try await client.functions.invoke(
-            "join-challenge",
-            options: FunctionInvokeOptions(body: Body(code: code, displayName: displayName, privacy: privacy))
-        )
-        return response.challenge
+    func resolveInvitation(code: String) async throws -> InvitationPreview {
+        struct Body: Encodable { let code: String }
+        do {
+            let response: InvitationPreviewResponse = try await client.functions.invoke(
+                "resolve-invitation",
+                options: FunctionInvokeOptions(body: Body(code: code))
+            )
+            return response.invitation
+        } catch {
+            throw Self.invitationError(from: error)
+        }
+    }
+
+    func join(code: String, displayName: String?, privacy: ParticipantPrivacy) async throws -> ChallengeRecord {
+        struct Body: Encodable { let code: String; let displayName: String?; let privacy: String }
+        do {
+            let response: ChallengeResponse = try await client.functions.invoke(
+                "join-challenge",
+                options: FunctionInvokeOptions(body: Body(code: code, displayName: displayName, privacy: privacy.rawValue))
+            )
+            return response.challenge
+        } catch {
+            throw Self.invitationError(from: error)
+        }
+    }
+
+    private static func invitationError(from error: Error) -> Error {
+        guard case FunctionsError.httpError(_, let data) = error,
+              let payload = try? JSONDecoder().decode(FunctionErrorPayload.self, from: data) else {
+            return error
+        }
+        return InvitationRepositoryError(message: payload.error)
     }
 
     func configureChallenge(_ draft: ChallengeDraft, challengeID: UUID) async throws -> ChallengeRecord {
@@ -378,6 +409,15 @@ final class SupabaseMosaicRepository: MosaicRepository {
     }
 
     private static let challengeColumns = "id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,theme_id,theme_palette_id,theme_seed,theme_revision"
+}
+
+private struct FunctionErrorPayload: Decodable {
+    let error: String
+}
+
+private struct InvitationRepositoryError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
 }
 
 private struct EmptyResponse: Decodable, Sendable {

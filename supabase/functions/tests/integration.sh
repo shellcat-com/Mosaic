@@ -101,8 +101,33 @@ fi
 echo "Joining with a second anonymous participant"
 mosaic_join_body="$(jq -nc --arg code "${mosaic_invite_code}" \
   '{code:$code,displayName:"Integration Participant",privacy:"anonymous"}')"
+
+echo "Resolving a sanitized invitation without creating membership"
+mosaic_preview_body="$(jq -nc --arg code "${mosaic_invite_code}" '{code:$code}')"
+mosaic_preview="$(mosaic_json_post "/functions/v1/resolve-invitation" "${mosaic_token_two}" "${mosaic_preview_body}")"
+jq -e --arg challengeId "${mosaic_sandbox_id}" \
+  '.invitation.challenge_id == $challengeId and .invitation.name == "Judge Sandbox"
+   and (.invitation | keys | sort) == (["challenge_id","code","goal","group_name","name","purpose","reveal_at","start_at","status","theme"] | sort)' \
+  <<<"${mosaic_preview}" >/dev/null
+mosaic_membership_before="$(curl --fail-with-body --silent --show-error \
+  "${mosaic_api_url}/rest/v1/challenge_members?challenge_id=eq.${mosaic_sandbox_id}&select=challenge_id" \
+  -H "apikey: ${mosaic_publishable_key}" \
+  -H "Authorization: Bearer ${mosaic_token_two}")"
+if [[ "$(jq 'length' <<<"${mosaic_membership_before}")" != "0" ]]; then
+  echo "Invitation preview unexpectedly created challenge membership" >&2
+  exit 1
+fi
+
 mosaic_joined="$(mosaic_json_post "/functions/v1/join-challenge" "${mosaic_token_two}" "${mosaic_join_body}")"
 jq -e --arg challengeId "${mosaic_sandbox_id}" '.challenge.id == $challengeId' <<<"${mosaic_joined}" >/dev/null
+mosaic_joined_replay="$(mosaic_json_post "/functions/v1/join-challenge" "${mosaic_token_two}" "${mosaic_join_body}")"
+jq -e --arg challengeId "${mosaic_sandbox_id}" '.challenge.id == $challengeId' <<<"${mosaic_joined_replay}" >/dev/null
+mosaic_membership_after="$(curl --fail-with-body --silent --show-error \
+  "${mosaic_api_url}/rest/v1/challenge_members?challenge_id=eq.${mosaic_sandbox_id}&select=challenge_id,display_name,privacy" \
+  -H "apikey: ${mosaic_publishable_key}" \
+  -H "Authorization: Bearer ${mosaic_token_two}")"
+jq -e 'length == 1 and .[0].display_name == "Guest participant" and .[0].privacy == "anonymous"' \
+  <<<"${mosaic_membership_after}" >/dev/null
 
 echo "Checking organizer authorization and triggering reveal"
 mosaic_reveal_body="$(jq -nc --arg challengeId "${mosaic_sandbox_id}" '{challengeId:$challengeId,revealNow:true}')"

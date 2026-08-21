@@ -12,7 +12,7 @@ import {
   userId,
 } from "../_shared/mosaic.ts";
 
-type RequestBody = { code: string; displayName: string; privacy: string };
+type RequestBody = { code: string; displayName?: string; privacy: string };
 
 export default {
   fetch: withSupabase<any>({ auth: "user" }, async (request, ctx) => {
@@ -20,12 +20,20 @@ export default {
       const uid = userId(ctx);
       const input = await body<RequestBody>(request);
       const code = requiredString(input.code, "code", 12).toUpperCase();
-      const displayName =
-        optionalString(input.displayName, "displayName", 60) ??
-          "Guest participant";
       if (!allowedPrivacy.has(input.privacy)) {
         throw new HttpError(400, "privacy is invalid");
       }
+      const requestedName = optionalString(
+        input.displayName,
+        "displayName",
+        60,
+      );
+      if (input.privacy === "first_name" && !requestedName) {
+        throw new HttpError(400, "displayName is required for first_name");
+      }
+      const displayName = input.privacy === "anonymous"
+        ? "Guest participant"
+        : requestedName ?? "Guest participant";
 
       const { data: challenge, error } = await ctx.supabaseAdmin.rpc(
         "internal_join_challenge",
@@ -45,6 +53,12 @@ export default {
           throw new HttpError(
             409,
             "This Mosaic has reached its participant limit",
+          );
+        }
+        if (error.message?.includes("not accepting")) {
+          throw new HttpError(
+            409,
+            "This Mosaic is no longer accepting participants",
           );
         }
         throw error;

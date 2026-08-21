@@ -63,7 +63,7 @@ insert into public.organization_invites(
 select throws_ok(
   $$select public.internal_accept_organization_invite(
     '71000000-0000-4000-8000-000000000004', repeat('d', 64))$$,
-  'P0001', 'invitation is invalid or already used', 'expired invitation is rejected'
+  'P0001', 'invitation has expired', 'expired invitation is rejected'
 );
 
 select ok(public.internal_process_billing_event(

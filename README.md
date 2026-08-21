@@ -16,7 +16,7 @@
 
 Mosaic gives a school, neighborhood, workplace, nonprofit, or friend group a shared kindness challenge without rankings or points. Each privately verified contribution creates one equal-size ceramic tile. The growing artwork stays sealed until a synchronized reveal opens the final mosaic, approved memories, and an attributable Impact Receipt.
 
-Built for the App Development track at **Reverie Hacks 2026**, the repository includes the SwiftUI app, Supabase backend, private media flows, organizer moderation, widgets, Live Activity infrastructure, recap generation, and a fully judgeable offline showcase.
+Built for **RevenueCat Shipaton 2026**, Mosaic's current submission route is the **Next Gen Award**. The **RevenueCat Peace Prize** and **RevenueCat Design Award** are additional targets only if version 1.0 is first published to an eligible store during the submission window. The repository includes the SwiftUI app, Supabase backend, private media flows, organizer moderation, RevenueCat Test Store integration, widgets, Live Activity infrastructure, recap generation, and a fully judgeable offline showcase.
 
 ## See the story unfold
 
@@ -75,9 +75,13 @@ cd Mosaic
 open Mosaic.xcodeproj
 ```
 
-Select the **Mosaic** scheme and run it on an iPhone Simulator. No private credentials are required: without a reachable Supabase project, Mosaic opens its bundled read-only showcase so the complete visual journey remains usable. For the exact three-minute judging path, follow [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+Select the shared **Mosaic Shipaton** scheme and run it on an iPhone Simulator. Choose **Explore Demo**. No Docker, Supabase CLI, local server, or credentials are required for the participant and reveal showcase. If first-launch connectivity fails, Mosaic opens its clearly labeled bundled read-only showcase and retries the cloud when the app becomes active.
 
-### Run the local collaborative backend
+The RevenueCat purchase proof uses a Test Store public SDK key. Copy `Config/Local.xcconfig.example` to the ignored `Config/Local.xcconfig`, set `REVENUECAT_TEST_STORE_PUBLIC_KEY`, then use **Create a Mosaic** → **Organizer Plus**. The original billing-disabled **Mosaic Hackathon** scheme remains available as the archived Reverie build. Follow [`docs/SHIPATON_DEMO_SCRIPT.md`](docs/SHIPATON_DEMO_SCRIPT.md) for the complete judging path.
+
+The stable showcase invitation code is **KIND42**. The convenience landing page is [shellcat-com.github.io/Mosaic/?join=KIND42](https://shellcat-com.github.io/Mosaic/?join=KIND42); the code remains the source of truth if a browser cannot open the custom app scheme.
+
+### Backend development (maintainers only)
 
 Additional requirements: XcodeGen, Docker, Supabase CLI, `curl`, and `jq`.
 
@@ -87,7 +91,7 @@ supabase db reset
 supabase functions serve
 ```
 
-Debug builds automatically connect to `http://127.0.0.1:55321`. Anonymous authentication creates a persistent guest identity; the seeded showcase is read-only, while each installation receives an isolated synthetic organizer sandbox.
+Normal Debug, Hackathon, Shipaton, and Release builds use the hosted judging backend. A maintainer may override the public URL/key at build time with another hosted HTTPS Supabase project; localhost and unresolved configuration are rejected by the app.
 
 Run the two-user lifecycle check in another terminal:
 
@@ -100,14 +104,12 @@ Run the two-user lifecycle check in another terminal:
 ```sh
 xcodebuild \
   -project Mosaic.xcodeproj \
-  -scheme Mosaic \
+  -scheme 'Mosaic Shipaton' \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   test
 
 supabase test db
 supabase db lint --local
-supabase db advisors --local
-supabase migration list --local
 ```
 
 After editing `project.yml`, regenerate the Xcode project with:
@@ -116,20 +118,20 @@ After editing `project.yml`, regenerate the Xcode project with:
 xcodegen generate
 ```
 
-## Hosted demo configuration
+## Hosted judging backend
 
-The app accepts a hosted project URL and publishable key through build settings. These are public client identifiers protected by explicit grants and RLS. Never add a secret key, service-role key, database password, or CLI token to the app or repository.
+The repository is preconfigured for `https://lmemddtpwfbkawlkwthf.supabase.co`. Its committed publishable key is a public client identifier protected by explicit grants and RLS. Never add a secret key, service-role key, database password, Apple credential, or CLI/access token to the app or repository.
 
 ```sh
 xcodebuild \
   -project Mosaic.xcodeproj \
   -scheme Mosaic \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  SUPABASE_URL='https://YOUR_PROJECT.supabase.co' \
-  SUPABASE_PUBLISHABLE_KEY='sb_publishable_YOUR_KEY'
+  SUPABASE_URL='https://YOUR_MAINTAINER_PROJECT.supabase.co' \
+  SUPABASE_PUBLISHABLE_KEY='sb_publishable_YOUR_PUBLIC_KEY'
 ```
 
-For contributor-only values, create `Config/Local.xcconfig`; that path is ignored by Git. Production push, Live Activity, RevenueCat, and Apple authentication setup are documented under [`docs/`](docs).
+For contributor-only values, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig`; that destination is ignored by Git. Production push, Live Activity, RevenueCat, and Apple authentication setup are documented under [`docs/`](docs). Only public client identifiers belong in an app build; RevenueCat `sk_` keys, webhook secrets, service-role keys, and database credentials remain server-side.
 
 <details>
 <summary><strong>Implemented product and platform capabilities</strong></summary>
@@ -137,7 +139,7 @@ For contributor-only values, create `Config/Local.xcconfig`; that path is ignore
 - Anonymous guest onboarding with name and identity-privacy choices.
 - Native Sign in with Apple linking that preserves the anonymous Supabase UUID and contributions.
 - Owner, admin, and reviewer workspaces; seven-day single-use invites; organization switching.
-- RevenueCat Paywall V2, Organizer Plus state, restore, and atomic non-expiring PASS redemption.
+- RevenueCat Paywall V2, Test Store purchase and restore, server-derived Organizer Plus state, and atomic non-expiring PASS redemption.
 - Synthetic read-only showcase plus a deterministic per-installation organizer sandbox.
 - Reflection, photo, video, receipt, and organizer-approval evidence paths.
 - Private evidence and memory storage with signed upload and download access.
@@ -151,7 +153,7 @@ For contributor-only values, create `Config/Local.xcconfig`; that path is ignore
 - Cached read-only recovery and retryable local drafts when writes fail.
 - RLS, explicit Data API grants, pgTAP policies, Edge Functions, seed data, and minute-level reveal cron.
 
-Partner confirmation is intentionally labeled as post-hackathon work and is not required by judged missions. Push and Live Activity delivery require the Apple and Supabase production credentials described in [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md); local reminders, Calendar editing, widgets, cached recaps, and the bundled showcase work without them.
+Partner confirmation is intentionally labeled as future work and is not required by judged missions. Push and Live Activity delivery require the Apple and Supabase production credentials described in [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md); local reminders, Calendar editing, widgets, cached recaps, and the bundled showcase work without them.
 
 </details>
 
@@ -172,11 +174,15 @@ Partner confirmation is intentionally labeled as post-hackathon work and is not 
 - [`PRODUCT_BLUEPRINT.md`](PRODUCT_BLUEPRINT.md) — product thesis, roles, lifecycle, privacy, and v1 boundary.
 - [`design/DESIGN_DIRECTION.md`](design/DESIGN_DIRECTION.md) — Living Kiln visual system and interaction principles.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — trust boundaries and data flow.
+- [`docs/SHIPATON_DEMO_SCRIPT.md`](docs/SHIPATON_DEMO_SCRIPT.md) — sub-two-minute Shipaton judging walkthrough.
+- [`docs/SHIPATON_SUBMISSION.md`](docs/SHIPATON_SUBMISSION.md) — ready-to-paste Next Gen, Peace Prize, and Design Award copy.
 - [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — three-minute Reverie Hacks judging walkthrough.
 - [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — Apple capabilities, Edge Function secrets, and scheduling.
 - [`docs/MONETIZATION_SETUP.md`](docs/MONETIZATION_SETUP.md) — RevenueCat, App Store Connect, webhooks, and Apple auth.
 
-Public policies: [Privacy](https://shellcat-com.github.io/Mosaic/privacy/) · [Terms](https://shellcat-com.github.io/Mosaic/terms/)
+Public launch pages: [Marketing](https://shellcat-com.github.io/Mosaic/) · [Support](https://shellcat-com.github.io/Mosaic/support/) · [Privacy](https://shellcat-com.github.io/Mosaic/privacy/) · [Terms](https://shellcat-com.github.io/Mosaic/terms/) · [Account deletion](https://shellcat-com.github.io/Mosaic/account-deletion/) · [Community guidelines](https://shellcat-com.github.io/Mosaic/community-guidelines/)
+
+The App Store URL mapping and final production review gates are documented in [`docs/APP_STORE_WEB_CHECKLIST.md`](docs/APP_STORE_WEB_CHECKLIST.md).
 
 ## License and credits
 

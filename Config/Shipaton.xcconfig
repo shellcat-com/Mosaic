@@ -1,0 +1,19 @@
+// RevenueCat Shipaton / Next Gen judging build.
+//
+// The Test Store SDK key is a public client identifier and may be supplied as
+// REVENUECAT_TEST_STORE_PUBLIC_KEY at build time. Never place a RevenueCat
+// secret API key, webhook secret, Supabase service-role key, or database
+// password in this file.
+
+SUPABASE_URL = https:/$()/lmemddtpwfbkawlkwthf.supabase.co
+SUPABASE_PUBLISHABLE_KEY = sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU
+REVENUECAT_PUBLIC_SDK_KEY = $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
+MOSAIC_BILLING_ENABLED = YES
+MOSAIC_HACKATHON_BUILD = YES
+MOSAIC_REMOTE_PUSH_ENABLED = NO
+MOSAIC_SUBMISSION_NAME = RevenueCat Shipaton 2026 judge build
+ENABLE_TESTABILITY = YES
+
+// Optional local override. Copy Local.xcconfig.example to Local.xcconfig and
+// insert the RevenueCat Test Store public key when it has been created.
+#include? "Local.xcconfig"

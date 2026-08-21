@@ -435,6 +435,12 @@ entrypoint = "./functions/join-challenge/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/join-challenge/*.html" ]
 
+[functions.resolve-invitation]
+enabled = true
+verify_jwt = true
+import_map = "./functions/resolve-invitation/deno.json"
+entrypoint = "./functions/resolve-invitation/index.ts"
+
 [functions.prepare-contribution]
 enabled = true
 verify_jwt = true
@@ -584,3 +590,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/transfer-organization-ownership/deno.json"
 entrypoint = "./functions/transfer-organization-ownership/index.ts"
+
+[functions.update-profile]
+enabled = true
+verify_jwt = true
+import_map = "./functions/update-profile/deno.json"
+entrypoint = "./functions/update-profile/index.ts"

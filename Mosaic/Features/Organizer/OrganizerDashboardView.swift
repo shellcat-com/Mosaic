@@ -67,7 +67,7 @@ struct OrganizerDashboardView: View {
                     VStack(spacing: 0) {
                         row("Challenge code", trailing: store.challenge.invitationCode)
                         Divider().overlay(MosaicTheme.border)
-                        ShareLink(item: "Join \(store.challenge.name) in Mosaic: mosaic.app/join/\(store.challenge.invitationCode)") {
+                        ShareLink(item: MosaicBuildConfiguration.invitationShareText(challengeName: store.challenge.name, code: store.challenge.invitationCode)) {
                             actionRow("Share invitation", systemImage: "square.and.arrow.up")
                         }
                     }
@@ -119,26 +119,38 @@ struct OrganizerDashboardView: View {
                 }
                 }
 
-                organizerSection("Organizer Plus", icon: .spark) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Custom artwork, recap approval, poster export, and high-resolution artwork.")
-                            .font(.subheadline)
-                            .foregroundStyle(MosaicTheme.muted)
-                        HStack {
-                            Text(store.accessSnapshot.planName)
-                                .font(.headline)
-                            Spacer()
-                            Text("\(store.accessSnapshot.participantLimit) people")
-                                .font(.footnote).foregroundStyle(MosaicTheme.muted)
-                        }
-                        Button(store.accessSnapshot.plusActive ? "Manage billing" : "Explore Organizer Plus") {
+                if MosaicBuildConfiguration.billingEnabled {
+                    organizerSection("Organizer Plus", icon: .spark) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Custom artwork, recap approval, poster export, and high-resolution artwork.")
+                                .font(.subheadline)
+                                .foregroundStyle(MosaicTheme.muted)
+                            HStack {
+                                Text(store.accessSnapshot.planName)
+                                    .font(.headline)
+                                Spacer()
+                                Text("\(store.accessSnapshot.participantLimit) people")
+                                    .font(.footnote).foregroundStyle(MosaicTheme.muted)
+                            }
                             if store.accessSnapshot.plusActive {
-                                store.accountMessage = "Open Billing from Profile to manage your Apple subscription."
-                            } else {
-                                store.requestPremium(.customArtwork)
+                                Label("RevenueCat entitlement active", systemImage: "checkmark.seal.fill")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(MosaicTheme.sage)
+                            }
+                            Button(store.accessSnapshot.plusActive ? "Manage billing" : "Explore Organizer Plus") {
+                                if store.accessSnapshot.plusActive {
+                                    store.accountMessage = "Open Billing from Profile to manage your Apple subscription."
+                                } else {
+                                    store.requestPremium(.customArtwork)
+                                }
+                            }
+                                .buttonStyle(SecondaryButtonStyle())
+                            if let message = store.accountMessage {
+                                Text(message)
+                                    .font(.footnote)
+                                    .foregroundStyle(MosaicTheme.muted)
                             }
                         }
-                            .buttonStyle(SecondaryButtonStyle())
                     }
                 }
             }

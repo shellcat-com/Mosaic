@@ -5,6 +5,7 @@ import Testing
 import UIKit
 @testable import Mosaic
 
+@Suite(.serialized)
 struct RecapEngineTests {
     @Test func presetCatalogContainsNineAuthoredEditsAndNewTemplates() {
         #expect(RecapPresetCatalog.all.count == 9)
@@ -265,7 +266,7 @@ struct RecapEngineTests {
         }
     }
 
-    @Test func newTemplateExportsArePlayableAndHaveDistinctFingerprints() async throws {
+    @Test func newTemplateExportsHaveDistinctFingerprints() async throws {
         let tile = source(index: 0, content: .tileOnly)
         let requests = newTemplates.map { preset in
             RecapExportRequest(meta: recapMeta(), sources: [tile], presetID: preset.id,
@@ -275,21 +276,20 @@ struct RecapEngineTests {
         var fingerprints = Set<String>()
         for request in requests {
             fingerprints.insert(try await RecapExportCache.shared.fingerprint(for: request))
-            var output: URL?
-            for try await event in await RecapComposer().export(request) {
-                if case let .completed(url) = event { output = url }
-            }
-            let url = try #require(output)
-            defer { try? FileManager.default.removeItem(at: url) }
-            let asset = AVURLAsset(url: url)
-            let video = try #require(try await asset.loadTracks(withMediaType: .video).first)
-            let audio = try #require(try await asset.loadTracks(withMediaType: .audio).first)
-            #expect(try await video.load(.naturalSize) == CGSize(width: 1080, height: 1920))
-            #expect(abs(try await video.load(.nominalFrameRate) - 30) < 0.01)
-            #expect(CMFormatDescriptionGetMediaSubType(try #require(try await video.load(.formatDescriptions).first)) == kCMVideoCodecType_H264)
-            #expect(CMFormatDescriptionGetMediaSubType(try #require(try await audio.load(.formatDescriptions).first)) == kAudioFormatMPEG4AAC)
         }
         #expect(fingerprints.count == 3)
+    }
+
+    @Test func porcelainPrintExportIsPlayable() async throws {
+        try await validatePlayableExport(for: RecapPresetCatalog.porcelainPrint)
+    }
+
+    @Test func kilnTapeExportIsPlayable() async throws {
+        try await validatePlayableExport(for: RecapPresetCatalog.kilnTape)
+    }
+
+    @Test func pocketKilnExportIsPlayable() async throws {
+        try await validatePlayableExport(for: RecapPresetCatalog.pocketKiln)
     }
 
     @Test func composerProducesPlayableVerticalH264AACAndCacheReuse() async throws {
@@ -357,6 +357,29 @@ struct RecapEngineTests {
 
     private var newTemplates: [RecapPreset] {
         [RecapPresetCatalog.porcelainPrint, RecapPresetCatalog.kilnTape, RecapPresetCatalog.pocketKiln]
+    }
+
+    private func validatePlayableExport(for preset: RecapPreset) async throws {
+        let request = RecapExportRequest(
+            meta: recapMeta(), sources: [source(index: 0, content: .tileOnly)], presetID: preset.id,
+            audio: .init(trackID: preset.defaultMusicID, trimOffset: 0), options: .init(),
+            reduceMotion: true, rendererVersion: RecapFrameRenderer.version
+        )
+        var output: URL?
+        for try await event in await RecapComposer(maximumFrameCount: 60).export(request) {
+            if case let .completed(url) = event { output = url }
+        }
+        let url = try #require(output)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let asset = AVURLAsset(url: url)
+        let video = try #require(try await asset.loadTracks(withMediaType: .video).first)
+        let audio = try #require(try await asset.loadTracks(withMediaType: .audio).first)
+        #expect(abs(try await asset.load(.duration).seconds - 2) <= 1.0 / 30.0)
+        #expect(try await video.load(.naturalSize) == CGSize(width: 1080, height: 1920))
+        #expect(abs(try await video.load(.nominalFrameRate) - 30) < 0.01)
+        #expect(CMFormatDescriptionGetMediaSubType(try #require(try await video.load(.formatDescriptions).first)) == kCMVideoCodecType_H264)
+        #expect(CMFormatDescriptionGetMediaSubType(try #require(try await audio.load(.formatDescriptions).first)) == kAudioFormatMPEG4AAC)
     }
 
     private func templateTimeline(

@@ -17,6 +17,9 @@ struct HomeView: View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 26) {
                 header
+                if store.sandboxChallengeID != nil && !store.isOrganizer {
+                    organizerSandboxCard
+                }
                 nextUpCard
                 if store.challenge.cameraRollEnabled { developingRollCard }
                 mosaicHero
@@ -52,6 +55,29 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: Binding(get: { store.showReveal }, set: { store.showReveal = $0 })) {
             RevealView()
+        }
+    }
+
+    private var organizerSandboxCard: some View {
+        OrganicPanel(variant: .leaningRight, tint: MosaicTheme.indigo.opacity(0.08)) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("ORGANIZER SANDBOX", systemImage: "person.crop.rectangle.stack.fill")
+                    .font(MosaicTheme.caption(.bold))
+                    .tracking(1)
+                    .foregroundStyle(MosaicTheme.indigo)
+                Text("Try the complete organizer experience")
+                    .font(MosaicTheme.display(24, weight: .semibold))
+                Text("Review synthetic evidence, configure the private challenge, share its code, place tiles, and trigger the reveal.")
+                    .font(.subheadline)
+                    .foregroundStyle(MosaicTheme.muted)
+                Button("Open organizer sandbox") {
+                    Task {
+                        await store.openOrganizerSandbox()
+                        showOrganizer = true
+                    }
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
         }
     }
 
@@ -211,11 +237,21 @@ struct HomeView: View {
             .accessibilityLabel("Open organizer dashboard")
         }
         .overlay(alignment: .bottomLeading) {
+#if DEBUG
+            if MarketingPreviewScene.current == nil {
+                backendStatus
+            }
+#else
+            backendStatus
+#endif
+        }
+    }
+
+    private var backendStatus: some View {
             Label(store.backendState.isLive ? "Live Supabase" : "Demo cache", systemImage: store.backendState.isLive ? "bolt.horizontal.circle.fill" : "externaldrive.fill")
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(store.backendState.isLive ? MosaicTheme.sage : MosaicTheme.muted)
                 .offset(y: 18)
-        }
     }
 
     private var mosaicHero: some View {
@@ -248,7 +284,15 @@ struct HomeView: View {
                 HStack {
                     Label("\(store.challenge.goal - store.challenge.contributions.count) spaces", systemImage: "square.dashed")
                     Spacer()
+#if DEBUG
+                    if MarketingPreviewScene.current == .home {
+                        Text("5 days")
+                    } else {
+                        Text(store.challenge.revealDate, style: .relative)
+                    }
+#else
                     Text(store.challenge.revealDate, style: .relative)
+#endif
                 }
                 .font(MosaicTheme.caption(.semibold))
                 .foregroundStyle(MosaicTheme.muted)

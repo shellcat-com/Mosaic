@@ -92,6 +92,12 @@ struct RevealView: View {
             }
         }
         .task {
+#if DEBUG
+            if MarketingPreviewScene.current == .reveal {
+                phase = 2
+                return
+            }
+#endif
             if reduceMotion {
                 phase = 2
             } else {

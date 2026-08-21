@@ -4,6 +4,7 @@ struct ProfileView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var showDeleteConfirmation = false
+    @State private var showHowMosaicWorks = false
 
     var body: some View {
         MosaicScreen {
@@ -44,6 +45,12 @@ struct ProfileView: View {
             Button("Delete account", role: .destructive) { Task { await store.deleteAccount() } }
         } message: {
             Text("You must transfer or delete owned workspaces first. Account deletion does not cancel an App Store subscription.")
+        }
+        .fullScreenCover(isPresented: $showHowMosaicWorks) {
+            OnboardingStoryView(
+                onFinish: { showHowMosaicWorks = false },
+                onSkip: { showHowMosaicWorks = false }
+            )
         }
     }
 
@@ -128,7 +135,8 @@ struct ProfileView: View {
                         settingsRow("Organization & roles", icon: .people)
                     }
                     Divider().overlay(MosaicTheme.border)
-                    if store.selectedOrganization?.role.canManageBilling == true {
+                    if MosaicBuildConfiguration.billingEnabled,
+                       store.selectedOrganization?.role.canManageBilling == true {
                         NavigationLink { BillingManagementView() } label: {
                             settingsRow("Billing & Mosaic Passes", icon: .kiln)
                         }
@@ -137,7 +145,15 @@ struct ProfileView: View {
                 }
                 settingsRow("Accessibility", icon: .people)
                 Divider().overlay(MosaicTheme.border)
-                settingsRow("About Mosaic", icon: .mosaic)
+                Button { showHowMosaicWorks = true } label: {
+                    settingsRow("How Mosaic works", icon: .spark)
+                }
+                Divider().overlay(MosaicTheme.border)
+                NavigationLink {
+                    AboutMosaicView()
+                } label: {
+                    settingsRow("About Mosaic", icon: .mosaic)
+                }
                 if store.sessionState.isAuthenticated {
                     Divider().overlay(MosaicTheme.border)
                     Button { Task { await store.signOut() } } label: {
@@ -215,6 +231,12 @@ struct ConsentCenterView: View {
                     .font(.footnote)
                     .foregroundStyle(MosaicTheme.muted)
                     .padding(.horizontal, 4)
+
+                Link(destination: MosaicBuildConfiguration.privacyPolicyURL) {
+                    Label("Read the Privacy Policy", systemImage: "arrow.up.right.square")
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                }
+                .buttonStyle(SecondaryButtonStyle())
             }
         }
         .navigationTitle("Privacy & consent")
@@ -227,5 +249,54 @@ struct ConsentCenterView: View {
             Text(value).font(.footnote).foregroundStyle(MosaicTheme.muted)
         }
         .frame(maxWidth: .infinity, minHeight: 58, alignment: .leading)
+    }
+}
+
+struct AboutMosaicView: View {
+    var body: some View {
+        MosaicScreen {
+            VStack(alignment: .leading, spacing: 22) {
+                MosaicSectionHeader(title: "About Mosaic", eyebrow: "Small acts. One shared story.", icon: .mosaic)
+
+                OrganicPanel(variant: .leaningRight, tint: MosaicTheme.indigo.opacity(0.07)) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Mosaic")
+                            .font(MosaicTheme.display(30, weight: .semibold))
+                        Text("Verified acts of kindness become one equal-weight collaborative ceramic artwork. Evidence stays private unless a participant separately consents to share a memory.")
+                            .font(.subheadline)
+                            .foregroundStyle(MosaicTheme.muted)
+                        if let submissionName = MosaicBuildConfiguration.submissionName {
+                            Label(submissionName, systemImage: "sparkles")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(MosaicTheme.indigo)
+                        }
+                    }
+                }
+
+                VStack(spacing: 12) {
+                    policyLink("Privacy Policy", destination: MosaicBuildConfiguration.privacyPolicyURL)
+                    policyLink("Terms of Use", destination: MosaicBuildConfiguration.termsURL)
+                    policyLink("Source code and documentation", destination: MosaicBuildConfiguration.repositoryURL)
+                }
+
+                Text("Questions about privacy or the judging demo: biswas06@iastate.edu")
+                    .font(.footnote)
+                    .foregroundStyle(MosaicTheme.muted)
+            }
+        }
+        .navigationTitle("About")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func policyLink(_ title: String, destination: URL) -> some View {
+        Link(destination: destination) {
+            HStack {
+                Text(title).font(MosaicTheme.body(.medium))
+                Spacer()
+                Image(systemName: "arrow.up.right.square")
+            }
+            .frame(maxWidth: .infinity, minHeight: 50)
+        }
+        .buttonStyle(SecondaryButtonStyle())
     }
 }

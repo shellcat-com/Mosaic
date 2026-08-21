@@ -15,8 +15,8 @@ struct KinderArtworkView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            TimelineView(.animation(minimumInterval: 1 / 24, paused: reduceMotion || !isAnimatedPhase)) { timeline in
-                let time = timeline.date.timeIntervalSinceReferenceDate
+            TimelineView(.animation(minimumInterval: 1 / 24, paused: reduceMotion || freezeMarketingArtwork || !isAnimatedPhase)) { timeline in
+                let time = freezeMarketingArtwork ? 0 : timeline.date.timeIntervalSinceReferenceDate
                 ZStack {
                     OrganicPanelShape(variant: .softRectangle)
                         .fill(backgroundGradient)
@@ -94,6 +94,14 @@ struct KinderArtworkView: View {
         phase == .invitation || phase == .reveal
     }
 
+    private var freezeMarketingArtwork: Bool {
+#if DEBUG
+        MarketingPreviewScene.current != nil
+#else
+        false
+#endif
+    }
+
     private var backgroundGradient: LinearGradient {
         LinearGradient(
             colors: [palette.background, palette.paper, palette.secondary.opacity(0.88)],
@@ -105,7 +113,7 @@ struct KinderArtworkView: View {
     @ViewBuilder
     private func composition(in size: CGSize, time: TimeInterval) -> some View {
         let points = layoutPoints(for: theme.composition, size: size)
-        let motion: CGSize = reduceMotion ? .zero : motionOffset(time: time, size: size)
+        let motion: CGSize = (reduceMotion || freezeMarketingArtwork) ? .zero : motionOffset(time: time, size: size)
 
         ZStack {
             HandPaintedBackdrop(

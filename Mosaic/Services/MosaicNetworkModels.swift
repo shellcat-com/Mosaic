@@ -93,6 +93,55 @@ struct ChallengeRecord: Codable, Sendable {
     }
 }
 
+struct InvitationPreview: Codable, Hashable, Sendable {
+    let challengeID: UUID
+    let code: String
+    let name: String
+    let groupName: String
+    let purpose: String
+    let goal: Int
+    let startAt: Date?
+    let revealAt: Date
+    let status: String
+    let theme: ThemeSelection
+
+    enum CodingKeys: String, CodingKey {
+        case code, name, purpose, goal, status, theme
+        case challengeID = "challenge_id"
+        case groupName = "group_name"
+        case startAt = "start_at"
+        case revealAt = "reveal_at"
+    }
+
+    init(
+        challengeID: UUID,
+        code: String,
+        name: String,
+        groupName: String,
+        purpose: String,
+        goal: Int,
+        startAt: Date?,
+        revealAt: Date,
+        status: String,
+        theme: ThemeSelection = .fallback
+    ) {
+        self.challengeID = challengeID
+        self.code = code
+        self.name = name
+        self.groupName = groupName
+        self.purpose = purpose
+        self.goal = goal
+        self.startAt = startAt
+        self.revealAt = revealAt
+        self.status = status
+        self.theme = theme
+    }
+}
+
+struct InvitationPreviewResponse: Codable, Sendable {
+    let invitation: InvitationPreview
+}
+
 struct ContributionChallengeRecord: Decodable, Sendable {
     let challengeId: UUID
     enum CodingKeys: String, CodingKey { case challengeId = "challenge_id" }

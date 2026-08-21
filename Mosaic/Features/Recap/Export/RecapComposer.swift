@@ -54,6 +54,13 @@ actor RecapComposer {
     private let width = 1080
     private let height = 1920
     private let fps: Int32 = 30
+    private let maximumFrameCount: Int?
+
+    /// A bounded frame count keeps codec integration tests deterministic without
+    /// changing production exports, which always render the complete timeline.
+    init(maximumFrameCount: Int? = nil) {
+        self.maximumFrameCount = maximumFrameCount
+    }
 
     func export(_ request: RecapExportRequest) -> AsyncThrowingStream<RecapExportEvent, Error> {
         AsyncThrowingStream { continuation in
@@ -104,7 +111,9 @@ actor RecapComposer {
         writer.add(input)
         writer.startWriting()
         writer.startSession(atSourceTime: .zero)
-        let frameCount = Int(ceil(timeline.totalDuration * Double(fps)))
+        let completeFrameCount = Int(ceil(timeline.totalDuration * Double(fps)))
+        let frameCount = min(completeFrameCount, maximumFrameCount ?? completeFrameCount)
+        let renderedDuration = min(timeline.totalDuration, Double(frameCount) / Double(fps))
         let renderRequest = RecapRenderRequest(meta: request.meta, timeline: timeline, options: request.options, music: music)
         let frameRenderer = RecapFrameRenderer()
 
@@ -124,7 +133,7 @@ actor RecapComposer {
         progress(0.92, .muxing)
 
         if let musicURL = music?.bundledURL {
-            try await mux(videoURL: silentURL, audioURL: musicURL, selection: request.audio, duration: timeline.totalDuration, outputURL: finalURL)
+            try await mux(videoURL: silentURL, audioURL: musicURL, selection: request.audio, duration: renderedDuration, outputURL: finalURL)
         } else {
             try FileManager.default.moveItem(at: silentURL, to: finalURL)
         }

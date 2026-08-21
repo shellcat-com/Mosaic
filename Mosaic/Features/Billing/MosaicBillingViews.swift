@@ -24,7 +24,7 @@ struct MosaicPaywallView: View {
                 PaywallView(displayCloseButton: true)
                     .onPurchaseCompleted { _ in
                         Task {
-                            await store.refreshBilling()
+                            await store.refreshBilling(expectPremium: true)
                             store.isShowingPaywall = false
                             dismiss()
                         }
@@ -114,6 +114,12 @@ struct BillingManagementView: View {
 
                 Text("A Mosaic Pass is a purchased, non-expiring credit. Applying it is permanent for that challenge. Deleting your Mosaic account does not cancel an Apple subscription.")
                     .font(.footnote).foregroundStyle(MosaicTheme.muted)
+                HStack {
+                    Link("Privacy", destination: MosaicBuildConfiguration.privacyPolicyURL)
+                    Spacer()
+                    Link("Terms", destination: MosaicBuildConfiguration.termsURL)
+                }
+                .font(.footnote.weight(.semibold))
                 if let message = store.accountMessage {
                     Text(message).font(.footnote).foregroundStyle(MosaicTheme.muted)
                 }
@@ -164,13 +170,19 @@ struct WorkspaceSettingsView: View {
                                 Text("Admin").tag(OrganizationRole.admin)
                                 Text("Reviewer").tag(OrganizationRole.reviewer)
                             }.pickerStyle(.segmented)
-                            Button("Create seven-day invite") {
-                                if store.accessSnapshot.collaboratorLimit == 0 {
-                                    store.requestPremium(.collaborators)
-                                } else {
-                                    Task { await store.createCollaboratorInvite(role: inviteRole) }
-                                }
-                            }.buttonStyle(SecondaryButtonStyle())
+                            if store.accessSnapshot.collaboratorLimit == 0 && !MosaicBuildConfiguration.billingEnabled {
+                                Label("Collaborator invites are outside the hackathon build.", systemImage: "info.circle")
+                                    .font(.footnote)
+                                    .foregroundStyle(MosaicTheme.muted)
+                            } else {
+                                Button("Create seven-day invite") {
+                                    if store.accessSnapshot.collaboratorLimit == 0 {
+                                        store.requestPremium(.collaborators)
+                                    } else {
+                                        Task { await store.createCollaboratorInvite(role: inviteRole) }
+                                    }
+                                }.buttonStyle(SecondaryButtonStyle())
+                            }
                             if let url = store.latestCollaboratorInvite {
                                 ShareLink(item: url) { Label("Share single-use link", systemImage: "square.and.arrow.up") }
                             }
@@ -178,7 +190,8 @@ struct WorkspaceSettingsView: View {
                     }
                 }
 
-                if store.selectedOrganization?.role.canManageBilling == true {
+                if MosaicBuildConfiguration.billingEnabled,
+                   store.selectedOrganization?.role.canManageBilling == true {
                     NavigationLink { BillingManagementView() } label: {
                         Label("Billing and Mosaic Passes", systemImage: "creditcard")
                             .frame(maxWidth: .infinity, minHeight: 50)

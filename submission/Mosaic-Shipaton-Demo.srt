@@ -1,0 +1,27 @@
+1
+00:00:00,000 --> 00:00:12,000
+Small acts of kindness often disappear. Mosaic gives each verified act one equal place in a story a community reveals together.
+
+2
+00:00:12,000 --> 00:00:32,000
+An invited participant chooses an approachable mission. Evidence is private to organizers, while identity, memory inclusion, and recap consent remain separate choices.
+
+3
+00:00:32,000 --> 00:00:48,000
+Emotion, mission, and verification shape a ceramic tile. Every tile is the same size—there are no rankings, likes, or paid visual advantages.
+
+4
+00:00:48,000 --> 00:01:02,000
+Organizers verify outcomes without exposing proof. At the scheduled reveal, approved memories and an attributable Impact Receipt open with the shared artwork.
+
+5
+00:01:02,000 --> 00:01:30,000
+Participants contribute for free. Organizers fund larger community events through Organizer Plus. This is a real RevenueCat Test Store purchase, attached to the organizer’s Supabase identity.
+
+6
+00:01:30,000 --> 00:01:40,000
+RevenueCat returns the entitlement, Mosaic synchronizes it server-side, and organizer capacity and creation tools unlock immediately.
+
+7
+00:01:40,000 --> 00:01:50,000
+SwiftUI, RevenueCat, and a Supabase backend keep billing authoritative and community evidence private. Mosaic: small acts, one shared story.

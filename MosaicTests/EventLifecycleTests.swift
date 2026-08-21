@@ -63,6 +63,7 @@ struct EventLifecycleTests {
 
     @Test func deepLinksCoverDetailRevealMissionAndRecap() {
         let id = UUID()
+        #expect(EventRouteParser.parse(URL(string: "mosaic://join/kind42")!) == .join("KIND42"))
         #expect(EventRouteParser.parse(URL(string: "mosaic://challenge/\(id)")!) == .challenge(id))
         #expect(EventRouteParser.parse(URL(string: "mosaic://reveal/\(id)")!) == .reveal(id))
         #expect(EventRouteParser.parse(URL(string: "mosaic://missions/\(id)")!) == .missions(id))

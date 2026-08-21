@@ -6,6 +6,7 @@ struct RootView: View {
 
     init() {
 #if DEBUG
+        let marketingPreview = MarketingPreviewScene.current != nil
         let previewRecap = ProcessInfo.processInfo.arguments.contains("-preview-recap")
             || ProcessInfo.processInfo.environment["MOSAIC_PREVIEW_RECAP"] == "1"
         let previewCamera = ProcessInfo.processInfo.arguments.contains("-preview-camera")
@@ -14,7 +15,7 @@ struct RootView: View {
             || ProcessInfo.processInfo.arguments.contains("-preview-kinder-artwork")
             || ProcessInfo.processInfo.environment["MOSAIC_PREVIEW_KINDER"] == "1"
         _isShowingLaunchOverlay = State(
-            initialValue: !(previewRecap || previewCamera || previewKinder)
+            initialValue: !(marketingPreview || previewRecap || previewCamera || previewKinder)
         )
 #else
         _isShowingLaunchOverlay = State(initialValue: true)
@@ -22,6 +23,19 @@ struct RootView: View {
     }
 
     var body: some View {
+#if DEBUG
+        if let marketingPreview = MarketingPreviewScene.current {
+            MarketingPreviewRootView(scene: marketingPreview)
+                .preferredColorScheme(.light)
+        } else {
+            appRoot
+        }
+#else
+        appRoot
+#endif
+    }
+
+    private var appRoot: some View {
         ZStack {
             ZStack {
                 MosaicTheme.canvas.ignoresSafeArea()
@@ -32,9 +46,13 @@ struct RootView: View {
                     EvidenceCameraView(mission: mission) { _ in }
                 } else if isRecapPreview {
                     RecapEditorView(challenge: store.challenge)
-                } else if store.hasJoined {
+                } else if store.entryState == .main {
                     MainTabView()
                         .transition(.opacity.combined(with: .scale(scale: 0.985)))
+                } else if store.entryState == .launching {
+                    ProgressView("Preparing Mosaic…")
+                        .font(MosaicTheme.body(.medium))
+                        .tint(MosaicTheme.indigo)
                 } else {
                     WelcomeView()
                         .transition(.opacity)
@@ -51,7 +69,7 @@ struct RootView: View {
                 .transition(.identity)
             }
         }
-        .animation(.easeInOut(duration: 0.35), value: store.hasJoined)
+        .animation(.easeInOut(duration: 0.35), value: store.entryState)
         .tint(MosaicTheme.indigo)
         .sheet(isPresented: Binding(
             get: { store.isShowingOrganizerSetup },
@@ -60,7 +78,7 @@ struct RootView: View {
             OrganizationSetupView()
         }
         .sheet(isPresented: Binding(
-            get: { store.isShowingPaywall },
+            get: { MosaicBuildConfiguration.billingEnabled && store.isShowingPaywall },
             set: { store.isShowingPaywall = $0 }
         )) {
             MosaicPaywallView()
@@ -122,6 +140,102 @@ struct RootView: View {
     }
 }
 
+#if DEBUG
+enum MarketingPreviewScene: String, CaseIterable {
+    case home
+    case mission
+    case privacy
+    case placement
+    case organizer
+    case reveal
+
+    static var current: MarketingPreviewScene? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flagIndex = arguments.firstIndex(of: "-marketing-preview") else { return nil }
+        let valueIndex = arguments.index(after: flagIndex)
+        guard arguments.indices.contains(valueIndex) else { return nil }
+        return MarketingPreviewScene(rawValue: arguments[valueIndex].lowercased())
+    }
+}
+
+private struct MarketingPreviewRootView: View {
+    let scene: MarketingPreviewScene
+    @Environment(AppStore.self) private var store
+
+    private var mission: Mission {
+        store.missions.first ?? Mission(
+            title: "Leave a kind note",
+            detail: "Brighten someone’s day with a few kind words.",
+            category: .encouragement,
+            minutes: 5,
+            effort: "Easy",
+            evidence: [.reflection, .photo]
+        )
+    }
+
+    private var contribution: TileContribution {
+        TileContribution(
+            id: UUID(uuidString: "40000000-0000-4000-8000-000000000001")!,
+            mission: mission,
+            emotion: .caring,
+            evidence: .reflection,
+            contributor: "Maya",
+            sharedMemory: true,
+            isRevived: false,
+            status: .verified,
+            tilePosition: 24,
+            participantID: UUID(uuidString: "40000000-0000-4000-8000-000000000002")!,
+            createdAt: Date(timeIntervalSince1970: 1_799_971_200),
+            memory: ContributionMemory(
+                kind: .reflection,
+                note: "A small note changed the tone of the whole afternoon.",
+                recapConsent: true,
+                attributionAllowed: true
+            )
+        )
+    }
+
+    @ViewBuilder
+    private var preview: some View {
+        switch scene {
+        case .home:
+            MainTabView()
+        case .mission:
+            NavigationStack {
+                MissionDetailView(mission: mission)
+            }
+        case .privacy:
+            NavigationStack {
+                PrivacyReviewView(
+                    mission: mission,
+                    method: .reflection,
+                    reflection: "I left a note for someone who needed a little encouragement.",
+                    photoData: nil,
+                    videoDuration: nil
+                )
+            }
+        case .placement:
+            NavigationStack {
+                TilePlacementView(contribution: contribution)
+            }
+        case .organizer:
+            NavigationStack {
+                OrganizerDashboardView()
+            }
+        case .reveal:
+            RevealView()
+        }
+    }
+
+    var body: some View {
+        preview
+            .transaction { transaction in
+                transaction.animation = nil
+            }
+    }
+}
+#endif
+
 private struct MainTabView: View {
     @Environment(AppStore.self) private var store
     @State private var selection: AppTab
@@ -182,6 +296,8 @@ private struct MainTabView: View {
     private func handlePendingRoute() {
         guard let route = store.consumePendingRoute() else { return }
         switch route {
+        case .join(let code):
+            Task { await store.resolveInvitation(code: code) }
         case .missions(let challengeID):
             selection = .home
             showRoutedMissions = true

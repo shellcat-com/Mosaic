@@ -1,12 +1,15 @@
 # Reverie Hacks demo script — 3:00 target
 
+**Deliverable:** `submission/Mosaic-Reverie-Demo.mp4`
+**Format:** 1920 × 1080 H.264/AAC, captioned, synthetic data only
+
 ## 0:00–0:20 — The disappearing-kindness problem
 
 Kind acts usually disappear into private moments. Mosaic gives a group a shared goal without turning kindness into a leaderboard: every verified contribution becomes one equal-size ceramic tile.
 
 ## 0:20–0:45 — Join instantly and privately
 
-Open the seeded showcase, choose a guest name and privacy mode, and join through Supabase anonymous authentication. Point out that there is no account wall and that the synthetic showcase cannot be vandalized.
+On the Hackathon build, skip the three-scene product story and choose **Explore the demo**. Point out that demo provisioning happens only after this explicit action, there is no account wall, and the synthetic showcase cannot be vandalized. Then open a real invitation preview and show the first-name and anonymous join cards.
 
 ## 0:45–1:15 — Submit evidence with consent
 
@@ -38,3 +41,4 @@ Flash the repository's Supabase migrations, pgTAP policies, Edge Functions, and 
 - Keep invitation tokens synthetic and avoid showing dashboard identifiers.
 - Capture one cached or recoverable-error screen as optional B-roll.
 - Keep the final edit at or below three minutes, including title and end cards.
+- End on the public repository, Privacy Policy, and documentation references.

@@ -1,71 +1,72 @@
 import SwiftUI
 
 struct TilePlacementView: View {
-    let contribution: TileContribution
     @Environment(AppStore.self) private var store
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var dragOffset: CGSize = .zero
+    @Environment(\.dismiss) private var dismiss
+    let contribution: TileContribution
+    @AppStorage(ContextualEducationProgress.passTheTileShownKey) private var hasShownPassTheTile = false
     @State private var placed = false
-    @State private var showFinish = false
+    @State private var showPassTheTile = false
 
     var body: some View {
-        MosaicScreen {
-            VStack(spacing: 22) {
-                MosaicProgressRail(current: 5, total: 5)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                VStack(spacing: 5) {
-                    Text(placed ? "You’re part of the picture" : "Place your tile")
-                        .font(MosaicTheme.display(36, weight: .semibold))
-                    Text(placed ? "Every tile carries equal weight." : "Drag toward the open space, or use the Place button.")
-                        .font(.subheadline).foregroundStyle(MosaicTheme.muted)
-                        .multilineTextAlignment(.center)
-                }
+        VStack(spacing: 28) {
+            MosaicProgressRail(current: 5, total: 5, tint: MosaicTheme.sage)
+                .padding(.horizontal, 22)
+                .padding(.top, 12)
 
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(MosaicTheme.sage.opacity(0.14))
+                    .frame(width: 270, height: 270)
                 CeramicTile(
                     category: contribution.mission.category,
                     emotion: contribution.emotion,
                     evidence: contribution.evidence,
-                    size: placed ? 0 : 96
+                    isRevived: contribution.isRevived,
+                    size: 176
                 )
-                .opacity(placed ? 0 : 1)
-                .offset(dragOffset)
-                .gesture(
-                    DragGesture(minimumDistance: 4)
-                        .onChanged { dragOffset = $0.translation }
-                        .onEnded { value in
-                            if value.translation.height > 45 { placeTile() }
-                            else { withAnimation(.spring) { dragOffset = .zero } }
-                        }
-                )
-                .accessibilityHint("Drag down to place in the mosaic")
+                .scaleEffect(placed ? 0.88 : 1)
+                .rotationEffect(.degrees(placed ? 0 : -3))
+            }
 
-                MosaicBoard(
-                    contributions: Array((placed ? store.challenge.contributions : store.challenge.contributions).suffix(19)),
-                    columns: 5, tileSize: 55, showOpenPosition: !placed
-                )
-                .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.6, dampingFraction: 0.8), value: placed)
+            VStack(spacing: 10) {
+                Text(placed ? "Your tile has a place" : "Place your tile")
+                    .font(MosaicTheme.display(36, weight: .semibold))
+                Text(placed ? "Your kindness is now part of the shared Mosaic." : "Every act gets equal space in the community artwork.")
+                    .font(MosaicTheme.body())
+                    .foregroundStyle(MosaicTheme.muted)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 36)
+            }
 
-                if !placed {
-                    Button("Place in open space") { placeTile() }
-                        .buttonStyle(PrimaryButtonStyle())
+            Spacer()
+            Button(completionButtonTitle) {
+                if placed {
+                    if hasShownPassTheTile {
+                        dismiss()
+                    } else {
+                        hasShownPassTheTile = true
+                        showPassTheTile = true
+                    }
                 } else {
-                    Button("Continue") { showFinish = true }
-                        .buttonStyle(PrimaryButtonStyle())
+                    store.addContribution(contribution)
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { placed = true }
                 }
             }
+            .buttonStyle(PrimaryButtonStyle(color: placed ? MosaicTheme.sage : MosaicTheme.indigo))
+            .padding(20)
         }
+        .porcelainBackground()
         .navigationBarBackButtonHidden(placed)
-        .navigationDestination(isPresented: $showFinish) {
+        .fullScreenCover(isPresented: $showPassTheTile, onDismiss: dismiss.callAsFunction) {
             PassTheTileView(contribution: contribution)
+                .environment(store)
         }
     }
 
-    private func placeTile() {
-        guard !placed else { return }
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.55, dampingFraction: 0.72)) {
-            dragOffset = .zero
-            store.addContribution(contribution)
-            placed = true
-        }
+    private var completionButtonTitle: String {
+        if !placed { return "Place my tile" }
+        return hasShownPassTheTile ? "Done" : "Continue"
     }
 }

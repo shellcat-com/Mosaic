@@ -188,6 +188,7 @@ enum EventReminderPlan {
 }
 
 enum EventRoute: Equatable, Sendable {
+    case join(String)
     case challenge(UUID)
     case reveal(UUID)
     case recap(UUID)
@@ -198,11 +199,21 @@ enum EventRoute: Equatable, Sendable {
 
 enum EventRouteParser {
     static func parse(_ url: URL) -> EventRoute? {
+        if url.scheme?.lowercased() == "https",
+           url.host?.lowercased() == "shellcat-com.github.io",
+           ["/Mosaic", "/Mosaic/"].contains(url.path),
+           let rawCode = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+               .queryItems?.first(where: { $0.name == "join" })?.value,
+           let code = invitationCode(rawCode) {
+            return .join(code)
+        }
+
         guard url.scheme?.lowercased() == "mosaic" else { return nil }
         let kind = url.host?.lowercased()
         let components = url.pathComponents.filter { $0 != "/" }
         let id = components.first.flatMap(UUID.init(uuidString:))
         switch kind {
+        case "join": return components.first.flatMap(invitationCode).map(EventRoute.join)
         case "challenge": return id.map(EventRoute.challenge)
         case "reveal": return id.map(EventRoute.reveal)
         case "recap": return id.map(EventRoute.recap)
@@ -211,5 +222,12 @@ enum EventRouteParser {
         case "missions": return .missions(id)
         default: return nil
         }
+    }
+
+    private static func invitationCode(_ value: String) -> String? {
+        let code = value.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !code.isEmpty, code.count <= 12,
+              code.allSatisfy({ $0.isLetter || $0.isNumber }) else { return nil }
+        return code
     }
 }

@@ -1,0 +1,6 @@
+// Copy this file to Config/Local.xcconfig. The destination is ignored by Git.
+// Public Test Store SDK keys are safe in a client build. Never add a key whose
+// prefix is sk_, a webhook authorization secret, or a Supabase secret key.
+
+REVENUECAT_TEST_STORE_PUBLIC_KEY = test_REPLACE_WITH_PUBLIC_SDK_KEY
+REVENUECAT_APP_STORE_PUBLIC_KEY = appl_REPLACE_ONLY_FOR_PRODUCTION_RELEASES

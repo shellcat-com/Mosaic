@@ -1,0 +1,459 @@
+1
+00:00:00,000 --> 00:00:01,700
+Kind acts usually disappear into
+
+2
+00:00:01,700 --> 00:00:02,580
+private moments.
+
+3
+00:00:03,020 --> 00:00:04,300
+Mosaic gives a group one
+
+4
+00:00:04,300 --> 00:00:05,620
+shared goal without turning
+
+5
+00:00:05,620 --> 00:00:07,040
+kindness into a leaderboard.
+
+6
+00:00:07,440 --> 00:00:08,880
+Every verified contribution
+
+7
+00:00:08,880 --> 00:00:10,780
+becomes one equal-size ceramic
+
+8
+00:00:10,780 --> 00:00:12,800
+tile, so a quiet check-in
+
+9
+00:00:12,800 --> 00:00:14,380
+counts exactly as much as
+
+10
+00:00:14,380 --> 00:00:15,200
+a larger act.
+
+11
+00:00:15,360 --> 00:00:16,320
+A judge can open the
+
+12
+00:00:16,320 --> 00:00:17,760
+seeded showcase and join in
+
+13
+00:00:17,760 --> 00:00:18,960
+seconds with a guest name
+
+14
+00:00:18,960 --> 00:00:20,140
+and a privacy choice.
+
+15
+00:00:20,520 --> 00:00:21,380
+Supabase anonymous
+
+16
+00:00:21,380 --> 00:00:23,120
+authentication removes the
+
+17
+00:00:23,120 --> 00:00:24,760
+account wall, while challenge
+
+18
+00:00:24,760 --> 00:00:25,920
+membership and row-level
+
+19
+00:00:25,920 --> 00:00:27,600
+security still protect every
+
+20
+00:00:27,600 --> 00:00:28,080
+record.
+
+21
+00:00:28,080 --> 00:00:29,520
+If the network disappears,
+
+22
+00:00:30,160 --> 00:00:31,860
+Mosaic automatically opens a
+
+23
+00:00:31,860 --> 00:00:33,160
+bundled read-only showcase.
+
+24
+00:00:33,500 --> 00:00:35,280
+Each mission is small, specific,
+
+25
+00:00:35,720 --> 00:00:36,520
+and verifiable.
+
+26
+00:00:36,920 --> 00:00:38,300
+A participant can use a
+
+27
+00:00:38,300 --> 00:00:38,700
+reflection,
+
+28
+00:00:39,220 --> 00:00:39,500
+photo,
+
+29
+00:00:39,940 --> 00:00:40,560
+short video,
+
+30
+00:00:41,000 --> 00:00:42,380
+receipt, or organizer
+
+31
+00:00:42,380 --> 00:00:43,040
+confirmation.
+
+32
+00:00:43,660 --> 00:00:45,420
+The app validates media locally,
+
+33
+00:00:45,820 --> 00:00:47,160
+uploads evidence to private
+
+34
+00:00:47,160 --> 00:00:48,900
+storage, and uses short-lived
+
+35
+00:00:48,900 --> 00:00:50,720
+signed URLs instead of exposing
+
+36
+00:00:50,720 --> 00:00:52,080
+a public evidence bucket.
+
+37
+00:00:52,340 --> 00:00:53,600
+Consent is not one vague
+
+38
+00:00:53,600 --> 00:00:53,920
+switch.
+
+39
+00:00:53,920 --> 00:00:55,180
+Evidence visibility,
+
+40
+00:00:55,720 --> 00:00:56,900
+inclusion in the community
+
+41
+00:00:56,900 --> 00:00:59,200
+story, attribution, and recap
+
+42
+00:00:59,200 --> 00:01:00,880
+export are separate decisions.
+
+43
+00:01:01,260 --> 00:01:02,780
+Anonymous identity is the
+
+44
+00:01:02,780 --> 00:01:03,160
+default,
+
+45
+00:01:03,620 --> 00:01:04,820
+memories stay sealed until
+
+46
+00:01:04,820 --> 00:01:06,600
+reveal, and organizers can
+
+47
+00:01:06,600 --> 00:01:08,080
+review proof without receiving
+
+48
+00:01:08,080 --> 00:01:09,480
+permission to publish it.
+
+49
+00:01:09,600 --> 00:01:11,080
+The organizer sees a private
+
+50
+00:01:11,080 --> 00:01:12,460
+moderation queue built from
+
+51
+00:01:12,460 --> 00:01:13,240
+synthetic submissions.
+
+52
+00:01:13,960 --> 00:01:15,120
+Approval of evidence and
+
+53
+00:01:15,120 --> 00:01:16,440
+approval of a memory remain
+
+54
+00:01:16,440 --> 00:01:17,080
+independent.
+
+55
+00:01:17,440 --> 00:01:18,460
+Every transition is
+
+56
+00:01:18,460 --> 00:01:19,580
+re-authorized in an Edge
+
+57
+00:01:19,580 --> 00:01:21,080
+Function and database function,
+
+58
+00:01:21,080 --> 00:01:23,000
+so a modified client cannot
+
+59
+00:01:23,000 --> 00:01:24,920
+place a tile, reveal early,
+
+60
+00:01:25,240 --> 00:01:26,740
+or read another participant's
+
+61
+00:01:26,740 --> 00:01:27,000
+proof.
+
+62
+00:01:27,260 --> 00:01:28,880
+Here are two iPhone Simulators
+
+63
+00:01:28,880 --> 00:01:30,480
+using the same seeded challenge
+
+64
+00:01:30,480 --> 00:01:31,720
+from different viewpoints.
+
+65
+00:01:32,140 --> 00:01:33,720
+One participant follows the
+
+66
+00:01:33,720 --> 00:01:35,160
+shared progress while the other
+
+67
+00:01:35,160 --> 00:01:36,700
+places a prepared tile.
+
+68
+00:01:37,080 --> 00:01:38,640
+Hosted mode refreshes through a
+
+69
+00:01:38,640 --> 00:01:40,040
+private challenge channel that
+
+70
+00:01:40,040 --> 00:01:41,780
+broadcasts only invalidation
+
+71
+00:01:41,780 --> 00:01:43,260
+events never evidence,
+
+72
+00:01:43,720 --> 00:01:44,720
+identity records,
+
+73
+00:01:45,140 --> 00:01:46,540
+or private memory content.
+
+74
+00:01:46,540 --> 00:01:48,540
+At the synchronized reveal, the
+
+75
+00:01:48,540 --> 00:01:50,160
+sealed artwork resolves into the
+
+76
+00:01:50,160 --> 00:01:51,440
+image the group made together.
+
+77
+00:01:51,800 --> 00:01:53,480
+Only consented memories appear.
+
+78
+00:01:53,860 --> 00:01:55,360
+The Impact Receipt summarizes
+
+79
+00:01:55,360 --> 00:01:56,480
+verified actions,
+
+80
+00:01:56,940 --> 00:01:58,100
+self-attested reflections,
+
+81
+00:01:58,600 --> 00:01:59,380
+approved memories,
+
+82
+00:01:59,840 --> 00:02:01,040
+and revived chains without
+
+83
+00:02:01,040 --> 00:02:01,940
+ranking people.
+
+84
+00:02:02,340 --> 00:02:03,940
+The recap engine exports real
+
+85
+00:02:03,940 --> 00:02:04,820
+portrait H.
+
+86
+00:02:05,640 --> 00:02:07,800
+264 video with AAC audio.
+
+87
+00:02:08,020 --> 00:02:09,540
+The iOS client talks to
+
+88
+00:02:09,540 --> 00:02:11,480
+anonymous Auth, narrowly scoped
+
+89
+00:02:11,480 --> 00:02:12,160
+Edge Functions,
+
+90
+00:02:12,580 --> 00:02:14,540
+Postgres with explicit Data API
+
+91
+00:02:14,540 --> 00:02:16,160
+grants and row-level security,
+
+92
+00:02:16,660 --> 00:02:17,260
+private Storage,
+
+93
+00:02:17,700 --> 00:02:18,490
+and Realtime.
+
+94
+00:02:18,490 --> 00:02:20,020
+Required-reason privacy
+
+95
+00:02:20,020 --> 00:02:21,720
+manifests cover the app and
+
+96
+00:02:21,720 --> 00:02:21,980
+widget.
+
+97
+00:02:22,360 --> 00:02:24,060
+Public privacy and terms pages
+
+98
+00:02:24,060 --> 00:02:26,100
+are reachable from Profile, and
+
+99
+00:02:26,100 --> 00:02:27,240
+billing is absent from the
+
+100
+00:02:27,240 --> 00:02:28,100
+Hackathon build.
+
+101
+00:02:28,300 --> 00:02:29,940
+Mosaic ships with reproducible
+
+102
+00:02:29,940 --> 00:02:31,360
+XcodeGen configuration,
+
+103
+00:02:31,780 --> 00:02:33,320
+database policy tests,
+
+104
+00:02:33,740 --> 00:02:35,700
+serialized media export tests,
+
+105
+00:02:36,140 --> 00:02:37,100
+detailed architecture
+
+106
+00:02:37,100 --> 00:02:37,920
+documentation,
+
+107
+00:02:38,540 --> 00:02:39,780
+and a public judge path.
+
+108
+00:02:40,160 --> 00:02:41,340
+It is an equal-weight,
+
+109
+00:02:41,340 --> 00:02:42,880
+privacy-first way to make
+
+110
+00:02:42,880 --> 00:02:44,880
+kindness visible without making
+
+111
+00:02:44,880 --> 00:02:46,420
+people perform for points.
+
+112
+00:02:46,800 --> 00:02:48,540
+The repository, documentation,
+
+113
+00:02:49,220 --> 00:02:49,680
+policies,
+
+114
+00:02:50,180 --> 00:02:51,240
+and demo are ready for
+
+115
+00:02:51,240 --> 00:02:51,900
+Reverie Hacks.

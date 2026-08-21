@@ -7,7 +7,7 @@ struct PassTheTileView: View {
     @State private var showShare = false
 
     private var invitationText: String {
-        "I added an act of kindness to \(store.challenge.name). Pass the Tile and add yours: mosaic.app/join/\(store.challenge.invitationCode)"
+        "I added an act of kindness to \(store.challenge.name). Pass the Tile with code \(store.challenge.invitationCode): \(MosaicBuildConfiguration.invitationLandingURL(code: store.challenge.invitationCode).absoluteString)"
     }
 
     var body: some View {

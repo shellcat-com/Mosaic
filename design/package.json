@@ -1,0 +1,16 @@
+{
+  "name": "mosaic-design-tooling",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Deterministic brand and App Store asset tooling for Mosaic.",
+  "scripts": {
+    "brand:export": "node brand/export-logo.cjs",
+    "marketing:capture": "bash marketing/capture-marketing.sh",
+    "marketing:render": "node marketing/render-marketing.cjs",
+    "marketing:validate": "node marketing/validate-marketing.cjs",
+    "marketing": "npm run marketing:capture && npm run marketing:render && npm run marketing:validate"
+  },
+  "devDependencies": {
+    "sharp": "0.35.3"
+  }
+}

@@ -4,6 +4,7 @@ import SwiftUI
 struct MosaicAppleSignInButton: View {
     @Environment(AppStore.self) private var store
     let createWorkspace: Bool
+    var onCancel: (() -> Void)? = nil
     @State private var rawNonce = ""
 
     var body: some View {
@@ -30,7 +31,9 @@ struct MosaicAppleSignInButton: View {
                 )
                 Task { await store.completeAppleAuthorization(value, createWorkspace: createWorkspace) }
             case .failure(let error):
-                if (error as? ASAuthorizationError)?.code != .canceled {
+                if (error as? ASAuthorizationError)?.code == .canceled {
+                    onCancel?()
+                } else {
                     store.accountMessage = error.localizedDescription
                 }
             }
@@ -63,7 +66,10 @@ struct OrganizerEntryView: View {
                         }
                         .buttonStyle(EditorialButtonStyle())
                     } else {
-                        MosaicAppleSignInButton(createWorkspace: true)
+                        MosaicAppleSignInButton(createWorkspace: true) {
+                            store.accountMessage = "Apple sign-in was cancelled. Explore Demo still includes the complete organizer sandbox."
+                            dismiss()
+                        }
                     }
                     Label("Your private contributions stay attached when a guest account is upgraded.", systemImage: "checkmark.shield.fill")
                         .font(.footnote)
