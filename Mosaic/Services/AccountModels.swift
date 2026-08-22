@@ -101,7 +101,7 @@ struct AppleAuthorization: Sendable {
 enum PurchasePackage: String, CaseIterable, Identifiable, Sendable {
     case annual = "organizer_annual"
     case monthly = "organizer_monthly"
-    case eventPass = "mosaic_event_pass"
+    case eventPass = "mosaic_event_pass_v2"
     var id: String { rawValue }
 }
 

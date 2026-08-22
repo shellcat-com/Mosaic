@@ -64,7 +64,9 @@ export default {
         ? new Date(event.expiration_at_ms).toISOString()
         : null;
       const isPass = event.type === "NON_RENEWING_PURCHASE" &&
-        event.product_id === "mosaic_event_pass";
+        ["mosaic_event_pass", "mosaic_event_pass_v2"].includes(
+          event.product_id ?? "",
+        );
       const willRenew = !["CANCELLATION", "EXPIRATION"].includes(event.type);
       const { data, error } = await ctx.supabaseAdmin.rpc(
         "internal_process_billing_event",

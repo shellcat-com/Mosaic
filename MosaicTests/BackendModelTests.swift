@@ -14,6 +14,7 @@ struct BackendModelTests {
         let payload = """
         {
           "id":"11111111-1111-4111-8111-111111111111",
+          "organization_id":"22222222-2222-4222-8222-222222222222",
           "name":"A Kinder Block",
           "purpose":"Test",
           "goal":40,
@@ -28,6 +29,7 @@ struct BackendModelTests {
         let challenge = try decoder.decode(ChallengeRecord.self, from: payload)
 
         #expect(challenge.name == "A Kinder Block")
+        #expect(challenge.organizationId == UUID(uuidString: "22222222-2222-4222-8222-222222222222"))
         #expect(challenge.invitationCode == "KIND42")
         #expect(challenge.isShowcase)
     }

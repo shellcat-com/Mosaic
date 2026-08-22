@@ -2,6 +2,7 @@ import Foundation
 
 struct ChallengeRecord: Codable, Sendable {
     let id: UUID
+    let organizationId: UUID?
     let name: String
     let groupName: String?
     let purpose: String
@@ -38,9 +39,11 @@ struct ChallengeRecord: Codable, Sendable {
         themeId: String? = nil,
         themePaletteId: KinderThemePaletteID? = nil,
         themeSeed: Int? = nil,
-        themeRevision: Int? = nil
+        themeRevision: Int? = nil,
+        organizationId: UUID? = nil
     ) {
         self.id = id
+        self.organizationId = organizationId
         self.name = name
         self.groupName = groupName
         self.purpose = purpose
@@ -62,6 +65,7 @@ struct ChallengeRecord: Codable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, purpose, goal, status
+        case organizationId = "organization_id"
         case groupName = "group_name"
         case startAt = "start_at"
         case revealAt = "reveal_at"

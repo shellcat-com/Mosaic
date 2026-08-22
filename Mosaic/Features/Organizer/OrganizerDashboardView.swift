@@ -169,6 +169,12 @@ struct OrganizerDashboardView: View {
         .sheet(isPresented: $showCatalogReview) {
             NavigationStack { KinderThemeContactSheetView() }
         }
+        .sheet(isPresented: Binding(
+            get: { MosaicBuildConfiguration.billingEnabled && store.isShowingPaywall },
+            set: { store.isShowingPaywall = $0 }
+        )) {
+            MosaicPaywallView()
+        }
     }
 
     private var challengeSummary: some View {

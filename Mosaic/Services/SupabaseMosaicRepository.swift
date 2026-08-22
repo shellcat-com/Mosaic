@@ -190,7 +190,8 @@ final class SupabaseMosaicRepository: MosaicRepository {
                 goal: challenge.goal,
                 recapAvailability: recapAvailability(for: challenge, records: recaps),
                 recapThumbnailFilename: thumbnailFilenames[challenge.id],
-                theme: challenge.themeSelection
+                theme: challenge.themeSelection,
+                organizationID: challenge.organizationId
             )
         }
     }
@@ -408,7 +409,7 @@ final class SupabaseMosaicRepository: MosaicRepository {
         }
     }
 
-    private static let challengeColumns = "id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,theme_id,theme_palette_id,theme_seed,theme_revision"
+    private static let challengeColumns = "id,organization_id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,theme_id,theme_palette_id,theme_seed,theme_revision"
 }
 
 private struct FunctionErrorPayload: Decodable {

@@ -64,6 +64,7 @@ final class AppStore {
     @ObservationIgnored private let purchaseService: PurchaseServicing?
     @ObservationIgnored private let workspaceService: WorkspaceServicing?
     @ObservationIgnored private let onboardingProgress: OnboardingProgressStore
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var deferredInvitation: InvitationPreview?
     @ObservationIgnored private var invitationReturnState: AppEntryState = .entryChoice
     @ObservationIgnored private var hasRestoredMembership = false
@@ -79,6 +80,7 @@ final class AppStore {
         let isMarketingPreview = false
 #endif
         self.localParticipantID = Self.persistedParticipantID()
+        self.defaults = onboardingDefaults
         self.onboardingProgress = OnboardingProgressStore(defaults: onboardingDefaults)
         if let repository {
             self.repository = repository
@@ -582,8 +584,11 @@ final class AppStore {
             backendState = .live
             backendMessage = nil
 
-            if !isHandlingInvitation, let initial = preferredInitialChallenge(from: loaded) {
-                try await loadChallenge(initial.id, organizer: false)
+            if !isHandlingInvitation,
+               let initial = preferredInitialChallenge(from: loaded, organizationID: selectedOrganizationID) {
+                let organizer = initial.organizationID == selectedOrganizationID
+                    && selectedOrganization?.role.canManageChallenges == true
+                try await loadChallenge(initial.id, organizer: organizer)
                 entryState = .main
             } else if entryState == .launching {
                 entryState = initialOnboardingState
@@ -618,6 +623,7 @@ final class AppStore {
             )
             organizations.append(organization)
             selectedOrganizationID = organization.id
+            persistSelectedOrganizationID()
             sandboxChallengeID = challengeRecord.id
             try await loadChallenge(challengeRecord.id, organizer: true)
             accessSnapshot = try await workspaceService.accessSnapshot(organizationID: organization.id, challengeID: challengeRecord.id)
@@ -640,9 +646,13 @@ final class AppStore {
         }
         do {
             organizations = try await workspaceService.organizations()
+            if selectedOrganizationID == nil {
+                selectedOrganizationID = restoredSelectedOrganizationID()
+            }
             if !organizations.contains(where: { $0.id == selectedOrganizationID }) {
                 selectedOrganizationID = organizations.first?.id
             }
+            persistSelectedOrganizationID()
             if let selectedOrganizationID {
                 accessSnapshot = try await workspaceService.accessSnapshot(organizationID: selectedOrganizationID, challengeID: challenge.id)
             }
@@ -654,6 +664,13 @@ final class AppStore {
     func selectOrganization(_ organizationID: UUID) async {
         guard organizations.contains(where: { $0.id == organizationID }) else { return }
         selectedOrganizationID = organizationID
+        persistSelectedOrganizationID()
+        if let summary = preferredInitialChallenge(from: challengeLibrary, organizationID: organizationID) {
+            try? await loadChallenge(
+                summary.id,
+                organizer: selectedOrganization?.role.canManageChallenges == true
+            )
+        }
         if let workspaceService {
             accessSnapshot = (try? await workspaceService.accessSnapshot(organizationID: organizationID, challengeID: challenge.id)) ?? .free
         }
@@ -668,6 +685,11 @@ final class AppStore {
         }
         guard selectedOrganizationID != nil else {
             accountMessage = "Create or select an organizer workspace before purchasing Organizer Plus."
+            isShowingOrganizerSetup = true
+            return
+        }
+        guard selectedOrganization?.name != "Judge Sandbox" else {
+            accountMessage = "Create a recoverable workspace before purchasing Organizer Plus. The Judge Sandbox remains a free synthetic demo."
             isShowingOrganizerSetup = true
             return
         }
@@ -724,6 +746,11 @@ final class AppStore {
             isShowingOrganizerSetup = true
             return
         }
+        guard selectedOrganization?.name != "Judge Sandbox" else {
+            accountMessage = "Create a recoverable workspace before purchasing a Mosaic Pass. The Judge Sandbox remains a free synthetic demo."
+            isShowingOrganizerSetup = true
+            return
+        }
         guard let purchaseService else { return }
 
         do {
@@ -773,6 +800,7 @@ final class AppStore {
             let organization = try await workspaceService.acceptInvite(token: token)
             await refreshOrganizations()
             selectedOrganizationID = organization.id
+            persistSelectedOrganizationID()
             accountMessage = "You joined \(organization.name) as \(organization.role.rawValue)."
         } catch {
             accountMessage = error.localizedDescription
@@ -781,6 +809,26 @@ final class AppStore {
 
     var selectedOrganization: OrganizationSummary? {
         organizations.first { $0.id == selectedOrganizationID }
+    }
+
+    private var selectedOrganizationDefaultsKey: String? {
+        sessionState.userID.map { "mosaic.selectedOrganization.\($0.uuidString.lowercased())" }
+    }
+
+    private func restoredSelectedOrganizationID() -> UUID? {
+        guard let key = selectedOrganizationDefaultsKey,
+              let value = defaults.string(forKey: key)
+        else { return nil }
+        return UUID(uuidString: value)
+    }
+
+    private func persistSelectedOrganizationID() {
+        guard let key = selectedOrganizationDefaultsKey else { return }
+        if let selectedOrganizationID {
+            defaults.set(selectedOrganizationID.uuidString.lowercased(), forKey: key)
+        } else {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     func signOut() async {
@@ -1225,8 +1273,9 @@ final class AppStore {
     }
 
     private func updateCurrentChallengeInLibrary() {
-        let summary = challenge.summary
+        var summary = challenge.summary
         if let index = challengeLibrary.firstIndex(where: { $0.id == summary.id }) {
+            summary.organizationID = challengeLibrary[index].organizationID
             challengeLibrary[index] = summary
         } else {
             challengeLibrary.append(summary)
@@ -1274,10 +1323,20 @@ final class AppStore {
         }
     }
 
-    private func preferredInitialChallenge(from summaries: [ChallengeSummary]) -> ChallengeSummary? {
-        summaries.first { $0.phase() == .active }
-            ?? summaries.first { $0.phase() == .upcoming }
-            ?? summaries.first
+    private func preferredInitialChallenge(
+        from summaries: [ChallengeSummary],
+        organizationID: UUID? = nil
+    ) -> ChallengeSummary? {
+        let candidates: [ChallengeSummary]
+        if let organizationID,
+           summaries.contains(where: { $0.organizationID == organizationID }) {
+            candidates = summaries.filter { $0.organizationID == organizationID }
+        } else {
+            candidates = summaries
+        }
+        return candidates.first { $0.phase() == .active }
+            ?? candidates.first { $0.phase() == .upcoming }
+            ?? candidates.first
     }
 
     private static func offlineChallenge(from summary: ChallengeSummary) -> KindnessChallenge {

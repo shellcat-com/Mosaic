@@ -21,13 +21,13 @@ Create these exact identifiers:
 | Entitlement | `organizer_plus` | Attach monthly and annual products |
 | Monthly subscription | `organizer_monthly` | $9.99/month |
 | Annual subscription | `organizer_annual` | $79.99/year, 7-day introductory trial |
-| Consumable | `mosaic_event_pass` | $14.99, grants one `PASS` |
+| Consumable | `mosaic_event_pass_v2` | $14.99, grants one `PASS` |
 | Offering | `organizer_plus_v1` | Include all three packages |
 | Virtual currency | `PASS` | Purchased balance never expires |
 
 Create a Paywall V2 titled **Fire bigger mosaics**. Make annual visually recommended and include renewal/trial terms, a feature comparison, Restore Purchases, Privacy, Terms, and a close control. The app renders this remote paywall through `RevenueCatUI` and provides a separate custom billing screen.
 
-For Shipaton, configure Test Store products using the identifiers above. Attach the monthly and annual products to `organizer_plus`, grant one unit of virtual currency `PASS` from `mosaic_event_pass`, make `organizer_plus_v1` current, and publish the Paywall V2.
+For Shipaton, configure Test Store products using the identifiers above. Attach the monthly and annual products to `organizer_plus`, grant one unit of virtual currency `PASS` from `mosaic_event_pass_v2`, make `organizer_plus_v1` current, and publish the Paywall V2. The legacy `mosaic_event_pass` product is retained only so existing Test Store transactions continue to synchronize.
 
 Create a least-privilege RevenueCat secret API key with customer read, subscription read, and purchase/virtual-currency read-write permissions. `refresh-billing` reads the customer's active entitlements, subscriptions, and virtual-currency balance from their dedicated RevenueCat API v2 endpoints. The secret key is used only by hosted Edge Functions.
 
@@ -44,7 +44,7 @@ or distribute the Test Store build.
 2. Use RevenueCat Test Store in Simulator for purchase/cancel/pending/restore UI states.
 3. Use hosted staging on a physical device for Sign in with Apple and anonymous identity linking.
 4. In the Shipaton scheme, sign in with Apple, create a workspace, complete a Test Store subscription, relaunch, restore purchases, and verify Organizer Plus remains active.
-5. Purchase `mosaic_event_pass`, verify a PASS balance of one, redeem it on one challenge, and prove a retry does not debit twice.
+5. Purchase `mosaic_event_pass_v2`, verify a PASS balance of one, redeem it on one challenge, and prove a retry does not debit twice.
 6. Keep the billing-disabled Reverie scheme available only as an archived reproduction path.
 7. Confirm account deletion blocks sole owners and warns that deletion does not cancel an Apple subscription.
 

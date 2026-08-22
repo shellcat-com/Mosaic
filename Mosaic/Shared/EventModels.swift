@@ -24,6 +24,7 @@ enum RecapAvailability: String, Codable, Sendable {
 
 struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
+    var organizationID: UUID?
     var name: String
     var groupName: String
     var purpose: String
@@ -52,9 +53,11 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
         goal: Int,
         recapAvailability: RecapAvailability,
         recapThumbnailFilename: String?,
-        theme: ThemeSelection = .fallback
+        theme: ThemeSelection = .fallback,
+        organizationID: UUID? = nil
     ) {
         self.id = id
+        self.organizationID = organizationID
         self.name = name
         self.groupName = groupName
         self.purpose = purpose
@@ -72,12 +75,13 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case id, name, groupName, purpose, startAt, revealAt, revealedAt, serverStatus
-        case scheduleRevision, contributionCount, goal, recapAvailability, recapThumbnailFilename, theme
+        case organizationID, scheduleRevision, contributionCount, goal, recapAvailability, recapThumbnailFilename, theme
     }
 
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         id = try values.decode(UUID.self, forKey: .id)
+        organizationID = try values.decodeIfPresent(UUID.self, forKey: .organizationID)
         name = try values.decode(String.self, forKey: .name)
         groupName = try values.decode(String.self, forKey: .groupName)
         purpose = try values.decode(String.self, forKey: .purpose)
