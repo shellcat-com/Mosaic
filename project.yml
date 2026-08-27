@@ -1,12 +1,11 @@
 name: Mosaic
 options:
   bundleIdPrefix: com.mosaic
+  postGenCommand: ./scripts/fix_xcodegen_capabilities.sh
   deploymentTarget:
     iOS: "18.0"
 configs:
   Debug: debug
-  Hackathon: release
-  Shipaton: debug
   Release: release
 settings:
   base:
@@ -14,11 +13,6 @@ settings:
     CODE_SIGN_STYLE: Automatic
     SUPABASE_URL: https://lmemddtpwfbkawlkwthf.supabase.co
     SUPABASE_PUBLISHABLE_KEY: sb_publishable_8qeng2xEiQUxUyzkNMQ_pA_6j1rQsGU
-    REVENUECAT_PUBLIC_SDK_KEY: ""
-    MOSAIC_BILLING_ENABLED: NO
-    MOSAIC_HACKATHON_BUILD: NO
-    MOSAIC_REMOTE_PUSH_ENABLED: NO
-    MOSAIC_SUBMISSION_NAME: ""
 packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift.git
@@ -34,11 +28,9 @@ targets:
       path: Mosaic/Resources/Info.plist
       properties:
         CFBundleDisplayName: Mosaic
-        NSCameraUsageDescription: Mosaic uses the camera for private evidence and moments you explicitly seal into a group reveal.
-        NSMicrophoneUsageDescription: Mosaic uses the microphone only while recording a private evidence video.
-        NSPhotoLibraryUsageDescription: Choose a photo for private evidence or a moment you explicitly add to a group reveal.
-        NSPhotoLibraryAddUsageDescription: Save your finished Mosaic recap to Photos.
-        NSSupportsLiveActivities: true
+        NSCameraUsageDescription: Mosaic uses the camera to capture photos for an event's sealed disposable roll.
+        NSPhotoLibraryAddUsageDescription: Save the photo recap you create to Photos.
+        ITSAppUsesNonExemptEncryption: true
         CFBundleURLTypes:
           - CFBundleURLName: com.biswaskhatiwada.mosaicapp
             CFBundleURLSchemes:
@@ -47,12 +39,11 @@ targets:
         SupabasePublishableKey: $(SUPABASE_PUBLISHABLE_KEY)
         RevenueCatPublicSDKKey: $(REVENUECAT_PUBLIC_SDK_KEY)
         MosaicBillingEnabled: $(MOSAIC_BILLING_ENABLED)
-        MosaicHackathonBuild: $(MOSAIC_HACKATHON_BUILD)
-        MosaicRemotePushEnabled: $(MOSAIC_REMOTE_PUSH_ENABLED)
         MosaicSubmissionName: $(MOSAIC_SUBMISSION_NAME)
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
-        UIUserInterfaceStyle: Light
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
         UILaunchScreen:
           UIColorName: LaunchBackground
         UIAppFonts:
@@ -60,19 +51,18 @@ targets:
           - Fraunces72ptSoft-SemiBold.ttf
           - Fraunces72ptSoft-Bold.ttf
     sources:
-      - path: Mosaic
+      - path: MosaicV3
+      - path: Mosaic/DesignSystem/MosaicTheme.swift
+      - path: Mosaic/Services/DisposableCameraFilter.swift
+      - path: Mosaic/Resources
         excludes:
-          - Resources/Fonts/Fraunces-OFL.txt
+          - Fonts/Fraunces-OFL.txt
           - "**/*.icloud-backup"
     dependencies:
       - package: Supabase
         product: Supabase
       - package: RevenueCat
         product: RevenueCat
-      - package: RevenueCat
-        product: RevenueCatUI
-      - target: MosaicWidgets
-        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.biswaskhatiwada.mosaicapp
@@ -85,29 +75,15 @@ targets:
         Debug:
           REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
           MOSAIC_BILLING_ENABLED: YES
-          MOSAIC_HACKATHON_BUILD: YES
-          MOSAIC_REMOTE_PUSH_ENABLED: NO
-          MOSAIC_SUBMISSION_NAME: RevenueCat Shipaton 2026 judge build
-        Hackathon:
-          REVENUECAT_PUBLIC_SDK_KEY: ""
-          MOSAIC_BILLING_ENABLED: NO
-          MOSAIC_HACKATHON_BUILD: YES
-          MOSAIC_SUBMISSION_NAME: Reverie Hacks 2026 judge build
-        Shipaton:
-          REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
-          MOSAIC_BILLING_ENABLED: YES
-          MOSAIC_HACKATHON_BUILD: YES
-          MOSAIC_SUBMISSION_NAME: RevenueCat Shipaton 2026 judge build
+          MOSAIC_SUBMISSION_NAME: RevenueCat Shipaton 2026 Next Gen judge build
         Release:
           REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_APP_STORE_PUBLIC_KEY)
+          MOSAIC_BILLING_ENABLED: YES
     configFiles:
       Debug: Config/Shipaton.xcconfig
-      Hackathon: Config/Hackathon.xcconfig
-      Shipaton: Config/Shipaton.xcconfig
+      Release: Config/AppStore.xcconfig
     attributes:
       SystemCapabilities:
-        com.apple.ApplicationGroups.iOS:
-          enabled: 1
         com.apple.InAppPurchase:
           enabled: 1
         com.apple.SignInWithApple:
@@ -115,71 +91,47 @@ targets:
     scheme:
       testTargets:
         - MosaicTests
+        - MosaicUITests
   MosaicTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: MosaicTests
+      - path: MosaicV3Tests
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: KFH848D5D7
+        CODE_SIGN_STYLE: Automatic
     dependencies:
       - target: Mosaic
-  MosaicWidgets:
-    type: app-extension
+  MosaicUITests:
+    type: bundle.ui-testing
     platform: iOS
-    info:
-      path: MosaicWidgets/Info.plist
-      properties:
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     sources:
-      - path: MosaicWidgets
-      - path: Mosaic/Shared/EventModels.swift
-      - path: Mosaic/Shared/MosaicActivityAttributes.swift
-      - path: Mosaic/Shared/MosaicEventCache.swift
-      - path: Mosaic/Features/Themes/KinderTheme.swift
+      - path: MosaicV3UITests
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.biswaskhatiwada.mosaicapp.widgets
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Mosaic
         DEVELOPMENT_TEAM: KFH848D5D7
-        CODE_SIGN_ENTITLEMENTS: MosaicWidgets/MosaicWidgets.entitlements
-        SKIP_INSTALL: YES
-        TARGETED_DEVICE_FAMILY: "1"
-    attributes:
-      SystemCapabilities:
-        com.apple.ApplicationGroups.iOS:
-          enabled: 1
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - target: Mosaic
 schemes:
-  Mosaic Hackathon:
+  Mosaic Shipaton Debug:
     build:
       targets:
         Mosaic: all
     run:
-      config: Hackathon
+      config: Debug
     test:
-      config: Hackathon
+      config: Debug
       targets:
         - MosaicTests
-    archive:
-      config: Hackathon
+        - MosaicUITests
     profile:
-      config: Hackathon
+      config: Debug
     analyze:
-      config: Hackathon
-  Mosaic Shipaton:
-    build:
-      targets:
-        Mosaic: all
-    run:
-      config: Shipaton
-    test:
-      config: Shipaton
-      targets:
-        - MosaicTests
+      config: Debug
     archive:
-      config: Shipaton
-    profile:
-      config: Shipaton
-    analyze:
-      config: Shipaton
+      config: Debug

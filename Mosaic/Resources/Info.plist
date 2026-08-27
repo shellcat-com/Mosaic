@@ -31,24 +31,16 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<true/>
 	<key>MosaicBillingEnabled</key>
 	<string>$(MOSAIC_BILLING_ENABLED)</string>
-	<key>MosaicHackathonBuild</key>
-	<string>$(MOSAIC_HACKATHON_BUILD)</string>
-	<key>MosaicRemotePushEnabled</key>
-	<string>$(MOSAIC_REMOTE_PUSH_ENABLED)</string>
 	<key>MosaicSubmissionName</key>
 	<string>$(MOSAIC_SUBMISSION_NAME)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Mosaic uses the camera for private evidence and moments you explicitly seal into a group reveal.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Mosaic uses the microphone only while recording a private evidence video.</string>
+	<string>Mosaic uses the camera to capture photos for an event's sealed disposable roll.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Save your finished Mosaic recap to Photos.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo for private evidence or a moment you explicitly add to a group reveal.</string>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
+	<string>Save the photo recap you create to Photos.</string>
 	<key>RevenueCatPublicSDKKey</key>
 	<string>$(REVENUECAT_PUBLIC_SDK_KEY)</string>
 	<key>SupabasePublishableKey</key>
@@ -71,7 +63,9 @@
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 	</dict>
-	<key>UIUserInterfaceStyle</key>
-	<string>Light</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
 </dict>
 </plist>

@@ -1,69 +1,50 @@
-# Mosaic architecture and privacy model
+# Mosaic v3 technical architecture
 
-## System boundary
+## Client
 
-```mermaid
-flowchart LR
-    A["SwiftUI AppStore"] --> B["Async repository"]
-    B --> C["Supabase Auth + RLS reads"]
-    B --> D["Authenticated Edge Functions"]
-    D --> E["Narrow service-level writes"]
-    D --> F["Private Storage signed URLs"]
-    E --> G["Postgres + RLS"]
-    G --> H["Private Realtime invalidation"]
-    H --> B
-```
+`MosaicAppModel` is a small root facade over five feature stores:
 
-`AppStore` remains the observable UI source of truth. `AppDependencies` owns one `SupabaseClient` shared by auth, challenges, shared moments, recaps, organizations, and billing. RevenueCat is configured only after a Supabase session exists and always uses that session's UUID. When the backend is unavailable, the last successful snapshot remains readable and failed writes stay visible as retryable drafts; Supabase is authoritative whenever connectivity returns.
+- `SessionStore`: Apple session, required profile/display name, sign out, deletion.
+- `MosaicLibraryStore`: joined event summaries, invitation previews, create/join.
+- `MosaicDetailStore`: event, activities, atomic contributions, notes, reveal outcomes, gallery safety actions.
+- `CameraStore`: event-scoped shot ledger, developed review frame, upload retry state, sealed roll.
+- `BillingStore`: RevenueCat identity, live offering packages, purchase/restore state, and the last server-authoritative snapshot.
 
-Organization authorization lives in `organization_members`, never auth metadata. Participants remain only in `challenge_members`. RevenueCat state is presentation data on-device; Edge Functions enforce plan limits from synchronized `billing_accounts` and `challenge_access_grants`.
+The SwiftUI root uses a stable three-tab `TabView` and `MosaicRoute` navigation values. UI state is `@MainActor @Observable`; Supabase access, disk storage, sensitive-content analysis, and recap rendering cross actor boundaries.
 
-## Data separation
+## Data boundary
 
-| Data | Table or bucket | Who can read it |
+| Data | Storage | Access invariant |
 | --- | --- | --- |
-| Abstract tile state | `contributions` | Challenge members; revealed showcase tiles are public to authenticated guests |
-| Participant and consent | `contribution_owners` | Owner and challenge organizer |
-| Reflection/media metadata | `evidence_submissions` | Owner and organizer |
-| Approved story | `memories` | Owner/organizer before reveal; members only after approval and reveal |
-| Evidence object | `evidence-private` | Signed access after owner/organizer authorization |
-| Approved recap memory object | `recap-memories` | Signed access after memory authorization |
-| Moderation history | `moderation_actions` | Organizers only; append-only from Edge Functions |
+| Profile | `profiles` | Self only; post-reveal names are emitted by the authorized event function. |
+| Event | `mosaics`, `mosaic_members` | Members only; invitation preview is a narrow function available before reveal. |
+| Activities | `kindness_activities` | Members only. |
+| Contributions | `kindness_contributions` | Own row before reveal; all joined-member rows after reveal. Aggregate occupied positions remain visible before reveal. |
+| Photos | `event_photos`, private `event-photos` bucket | Own eligible photos before reveal; joined members after reveal; quarantine and block filters always apply. |
+| Safety | `event_photo_reports`, `user_blocks` | Reporter/blocker scoped. |
+| Artwork package | `private.artwork_reveal_packages` | Released only to a member after fixed reveal. |
+| Billing snapshot | `billing_accounts` | User-owned read; service-role reconciliation is the only write path. |
+| RevenueCat events | `private.revenuecat_events` | Bearer-authenticated webhook, event ID + payload-hash idempotency. |
+| PASS redemption | `private.pass_redemptions` | User/request scoped reservation; RevenueCat debit uses the same idempotency key. |
 
-Every exposed table has RLS. Membership checks include both `auth.uid()` and challenge identity; merely holding the `authenticated` role is insufficient.
+The v3 migration enables RLS on every exposed table, revokes default table/function access, explicitly grants only required operations, and exposes narrow functions. Atomic contribution placement locks the event row and relies on uniqueness for both `(mosaic, activity, participant)` and `(mosaic, tile_position)`.
 
-## Lifecycle
+## Billing authority
 
-```mermaid
-stateDiagram-v2
-    [*] --> draft
-    draft --> self_attested: reflection
-    draft --> pending_review: photo/video/receipt/organizer
-    pending_review --> verified: organizer approves
-    pending_review --> rejected: organizer rejects
-    rejected --> verified: organizer reconsiders
-    self_attested --> placed: owner places
-    verified --> placed: owner places
-    placed --> revealed: scheduled/manual reveal
-    revealed --> archived
-```
+After Supabase authentication, RevenueCat is configured with the lowercase Supabase UUID. The custom SwiftUI paywall reads the current `organizer_plus_v1` offering and never invents prices, trials, renewal language, or savings. Purchase and restore success enter a synchronizing state; `refresh-billing` reads RevenueCat API v2 entitlements, subscriptions, and `PASS`, then overwrites `billing_accounts`. The server snapshot—not CustomerInfo—unlocks creation choices.
 
-`public.internal_place_tile` takes a challenge-scoped advisory lock and chooses the first free position, preventing collisions under concurrent requests. The cron job activates due reveals every minute, while `set-reveal` gives organizers a manual demo trigger.
+`v3_create_mosaic` enforces the free contract and concurrent-event limit. Plus is selected automatically when active. Without Plus, `create-premium-mosaic` reserves one local mirrored PASS, debits one RevenueCat `PASS` with `Idempotency-Key`, and creates the Mosaic in the same resumable request. A trigger makes `mosaics.access_source` immutable, so later subscription expiry changes only eligibility for new events.
 
-## Realtime
+## Photo pipeline
 
-Postgres sends sanitized change notifications to private topics named `challenge:<uuid>`. Authorization policies on `realtime.messages` require current challenge membership. Payloads include only a challenge ID, record type, record ID, and change kind—never evidence, memory text, or ownership. The app treats a broadcast as an invalidation and refetches canonical RLS-filtered state.
+`AVCapturePhotoOutput → review/retake → SensitiveContentAnalysis → permanent event film development → protected local JPEG → prepare row → private Storage upload → finalize row`
 
-## Evidence constraints
+Only `image/jpeg` up to 12 MiB is accepted. One prepared/eligible row consumes a shot, so concurrent prepares cannot overrun the event limit. A prepared capture may finalize after reveal for offline retry; new captures cannot begin after reveal. The original capture bytes are discarded after the developed JPEG is produced.
 
-- Photo and receipt: JPEG or PNG, at most 10 MiB.
-- Video: QuickTime or MP4, at most 25 MiB and at most 10 seconds.
-- Reflection: required text, self-attested without media.
-- Organizer approval: moderation request without media.
-- Partner confirmation: documented post-hackathon scope and excluded from missions.
+## Recap boundary
 
-## Submission configurations and release boundary
+`PhotoRecapProject` contains only event ID, ordered photo IDs, template, music, and trim offset. `PhotoRecapRenderer` resolves those IDs in order and emits each once. The export is on-device and is never uploaded. The type system offers no artwork, contribution, note, identity, title, caption, or statistics input to the renderer.
 
-Both judging configurations use the hosted Supabase project, anonymous authentication, synthetic seed data, committed public client identifiers, and an offline showcase fallback. Guest access is immediate. Native Sign in with Apple remains available for permanent organizer accounts and guest identity linking, but it never blocks the participant showcase.
+## Scheduled reveal
 
-The archived `Mosaic Hackathon` scheme keeps billing and remote push disabled for the original Reverie reproduction. The `Mosaic Shipaton` scheme enables RevenueCat Test Store billing while leaving remote push disabled. A purchase is available only to a permanent organizer with a selected workspace; the app uses the organizer's Supabase UUID as the RevenueCat customer ID, then refreshes opaque entitlement, subscription, and virtual-currency state through authenticated Edge Functions. A public App Store release still requires production RevenueCat values, notification credentials, App Store products, sandbox purchase testing, and App Review. Partner verification remains post-v1 scope.
+`private.mark_due_mosaics_revealed()` records due reveals every minute through `pg_cron`. Authorization also compares `now()` directly with `reveal_at`, so access boundaries do not depend on scheduler latency. No early organizer reveal exists.

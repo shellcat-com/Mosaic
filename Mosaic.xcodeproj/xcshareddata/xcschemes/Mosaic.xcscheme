@@ -50,6 +50,17 @@
                ReferencedContainer = "container:Mosaic.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A82C4FFABD4E9E03E898B931"
+               BuildableName = "MosaicUITests.xctest"
+               BlueprintName = "MosaicUITests"
+               ReferencedContainer = "container:Mosaic.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

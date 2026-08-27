@@ -3,21 +3,28 @@ import SwiftUI
 import UIKit
 
 enum MosaicTheme {
-    static let porcelain = dynamic(light: 0xFFFDF8, dark: 0x181614)
-    static let canvas = dynamic(light: 0xF8F1E7, dark: 0x211E1B)
-    static let paper = dynamic(light: 0xFFFDF8, dark: 0x2B2723)
+    static let porcelain = dynamic(light: 0xFFFCF5, dark: 0x181614)
+    static let canvas = dynamic(light: 0xF4EEE4, dark: 0x211E1B)
+    static let paper = dynamic(light: 0xFFFCF6, dark: 0x2B2723)
     static let raisedPaper = dynamic(light: 0xFFFFFF, dark: 0x35302B)
-    static let ink = dynamic(light: 0x302923, dark: 0xFFF5E8)
-    static let muted = dynamic(light: 0x746A61, dark: 0xC5B9AA)
-    static let border = dynamic(light: 0xDED2C5, dark: 0x554D45)
-    static let indigo = Color(hex: 0x5A47F2)
-    static let persimmon = Color(hex: 0xF56E3E)
-    static let sage = Color(hex: 0x7D9A83)
-    static let sky = Color(hex: 0x7EB7CD)
-    static let rose = Color(hex: 0xE4A6B4)
-    static let clay = Color(hex: 0xB88468)
-    static let gold = Color(hex: 0xD6A937)
-    static let claySurface = dynamic(light: 0xF1E4D7, dark: 0x46372F)
+    static let ink = dynamic(light: 0x2D2925, dark: 0xFFF5E8)
+    static let muted = dynamic(light: 0x685F57, dark: 0xC5B9AA)
+    static let border = dynamic(light: 0xD9CDBC, dark: 0x554D45)
+    static let indigo = Color(hex: 0x315F6B)
+    static let deepGlaze = Color(hex: 0x214A55)
+    /// Contrast-safe teal for text, symbols, links, focus rings, and progress.
+    /// Keep `indigo` and `deepGlaze` for filled material surfaces.
+    static let accentForeground = dynamic(light: 0x214A55, dark: 0x78A9B5)
+    static let persimmon = Color(hex: 0xC9633F)
+    static let sage = Color(hex: 0x718D78)
+    static let sky = Color(hex: 0x78A9B5)
+    static let rose = Color(hex: 0xC98F92)
+    static let clay = Color(hex: 0xAD765B)
+    static let gold = Color(hex: 0xC49A3C)
+    static let claySurface = dynamic(light: 0xEDE0D1, dark: 0x46372F)
+    static let unglazedCeramic = dynamic(light: 0xFFFCF5, dark: 0xD8CEC0)
+    static let warmShadow = Color(hex: 0x5C4435).opacity(0.14)
+    static let glazePalette = [deepGlaze, persimmon, sage, sky, rose, clay, gold]
     static let editorialScrim = Color.black.opacity(0.32)
 
     static let minimumHitTarget: CGFloat = 44
@@ -35,8 +42,8 @@ enum MosaicTheme {
 
     enum Radius {
         static let small: CGFloat = 10
-        static let medium: CGFloat = 18
-        static let large: CGFloat = 28
+        static let medium: CGFloat = 14
+        static let large: CGFloat = 20
     }
 
     static func display(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
@@ -113,11 +120,12 @@ extension View {
     }
 
     func porcelainCard() -> some View {
-        padding(18)
+        padding(16)
             .background(MosaicTheme.paper, in: RoundedRectangle(cornerRadius: MosaicTheme.Radius.large, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: MosaicTheme.Radius.large, style: .continuous)
                     .stroke(MosaicTheme.border, lineWidth: 1)
             }
+            .shadow(color: MosaicTheme.warmShadow, radius: 8, y: 3)
     }
 }

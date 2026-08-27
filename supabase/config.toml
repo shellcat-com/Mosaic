@@ -175,9 +175,9 @@ refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = true
+enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
-enable_manual_linking = true
+enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
 minimum_password_length = 6
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
@@ -459,6 +459,24 @@ import_map = "./functions/finalize-contribution/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/finalize-contribution/index.ts"
+
+[functions.prepare-kindness-moment]
+enabled = true
+verify_jwt = true
+import_map = "./functions/prepare-kindness-moment/deno.json"
+entrypoint = "./functions/prepare-kindness-moment/index.ts"
+
+[functions.finalize-kindness-moment]
+enabled = true
+verify_jwt = true
+import_map = "./functions/finalize-kindness-moment/deno.json"
+entrypoint = "./functions/finalize-kindness-moment/index.ts"
+
+[functions.withdraw-kindness-moment]
+enabled = true
+verify_jwt = true
+import_map = "./functions/withdraw-kindness-moment/deno.json"
+entrypoint = "./functions/withdraw-kindness-moment/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/finalize-contribution/*.html" ]
@@ -531,6 +549,24 @@ verify_jwt = true
 import_map = "./functions/configure-challenge/deno.json"
 entrypoint = "./functions/configure-challenge/index.ts"
 
+[functions.list-artworks]
+enabled = true
+verify_jwt = true
+import_map = "./functions/list-artworks/deno.json"
+entrypoint = "./functions/list-artworks/index.ts"
+
+[functions.prefetch-reveal-artwork]
+enabled = true
+verify_jwt = true
+import_map = "./functions/prefetch-reveal-artwork/deno.json"
+entrypoint = "./functions/prefetch-reveal-artwork/index.ts"
+
+[functions.get-revealed-artwork]
+enabled = true
+verify_jwt = true
+import_map = "./functions/get-revealed-artwork/deno.json"
+entrypoint = "./functions/get-revealed-artwork/index.ts"
+
 [functions.accept-organization-invite]
 enabled = true
 verify_jwt = true
@@ -567,24 +603,6 @@ verify_jwt = false
 import_map = "./functions/merge-guest-account/deno.json"
 entrypoint = "./functions/merge-guest-account/index.ts"
 
-[functions.redeem-event-pass]
-enabled = true
-verify_jwt = true
-import_map = "./functions/redeem-event-pass/deno.json"
-entrypoint = "./functions/redeem-event-pass/index.ts"
-
-[functions.refresh-billing]
-enabled = true
-verify_jwt = true
-import_map = "./functions/refresh-billing/deno.json"
-entrypoint = "./functions/refresh-billing/index.ts"
-
-[functions.revenuecat-webhook]
-enabled = true
-verify_jwt = false
-import_map = "./functions/revenuecat-webhook/deno.json"
-entrypoint = "./functions/revenuecat-webhook/index.ts"
-
 [functions.transfer-organization-ownership]
 enabled = true
 verify_jwt = true
@@ -596,3 +614,21 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/update-profile/deno.json"
 entrypoint = "./functions/update-profile/index.ts"
+
+[functions.refresh-billing]
+enabled = true
+verify_jwt = true
+import_map = "./functions/refresh-billing/deno.json"
+entrypoint = "./functions/refresh-billing/index.ts"
+
+[functions.create-premium-mosaic]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-premium-mosaic/deno.json"
+entrypoint = "./functions/create-premium-mosaic/index.ts"
+
+[functions.revenuecat-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/revenuecat-webhook/deno.json"
+entrypoint = "./functions/revenuecat-webhook/index.ts"

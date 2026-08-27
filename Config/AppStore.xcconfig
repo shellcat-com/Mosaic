@@ -1,0 +1,10 @@
+// App Store release configuration.
+// Public client keys are supplied by the ignored Local.xcconfig or CI.
+// Never add RevenueCat secret API keys, webhook secrets, Supabase service-role
+// keys, or database credentials here.
+
+#include? "Local.xcconfig"
+
+REVENUECAT_PUBLIC_SDK_KEY = $(REVENUECAT_APP_STORE_PUBLIC_KEY)
+MOSAIC_BILLING_ENABLED = YES
+MOSAIC_REMOTE_PUSH_ENABLED = NO
