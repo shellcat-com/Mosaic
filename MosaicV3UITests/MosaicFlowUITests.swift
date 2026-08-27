@@ -202,14 +202,11 @@ final class MosaicFlowUITests: XCTestCase {
         XCTAssertTrue(takePart.waitForExistence(timeout: 4))
         takePart.tap()
         XCTAssertTrue(activity.descendants(matching: .any)["placement.ceremony"].waitForExistence(timeout: 4))
-        let skipPlacement = activity.buttons["placement.skip"]
-        if skipPlacement.exists {
-            skipPlacement.tap()
-        }
-        let continuePlacement = activity.buttons["placement.continue"]
-        if continuePlacement.waitForExistence(timeout: 1) {
-            continuePlacement.tap()
-        }
+        let finishPlacement = activity.buttons.matching(
+            NSPredicate(format: "identifier IN %@", ["placement.skip", "placement.continue"])
+        ).firstMatch
+        XCTAssertTrue(finishPlacement.waitForExistence(timeout: 4))
+        finishPlacement.tap()
         XCTAssertTrue(activity.buttons["Save note"].waitForExistence(timeout: 3))
 
         let retake = launch(.cameraReview)
