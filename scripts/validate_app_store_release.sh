@@ -25,7 +25,7 @@ required_catalog=(
   PASS
 )
 for identifier in "${required_catalog[@]}"; do
-  rg -q --fixed-strings "$identifier" \
+  grep -Fq -- "$identifier" \
     "$repo_root/MosaicV3/Domain/BillingModels.swift" \
     "$repo_root/supabase/functions/_shared/revenuecat.ts" \
     "$repo_root/docs/MONETIZATION_SETUP.md" || {
@@ -34,11 +34,11 @@ for identifier in "${required_catalog[@]}"; do
     }
 done
 
-rg -q 'com\.apple\.InAppPurchase' "$project_spec"
-rg -q 'com\.apple\.SignInWithApple' "$project_spec"
-rg -q 'ITSAppUsesNonExemptEncryption: true' "$project_spec"
-rg -q 'TARGETED_DEVICE_FAMILY: "1"' "$project_spec"
-if rg -q 'RevenueCatUI' "$project_spec"; then
+grep -Eq 'com\.apple\.InAppPurchase' "$project_spec"
+grep -Eq 'com\.apple\.SignInWithApple' "$project_spec"
+grep -Eq 'ITSAppUsesNonExemptEncryption: true' "$project_spec"
+grep -Eq 'TARGETED_DEVICE_FAMILY: "1"' "$project_spec"
+if grep -Eq 'RevenueCatUI' "$project_spec"; then
   echo "RevenueCatUI must remain absent; Mosaic uses its native paywall." >&2
   exit 1
 fi
@@ -69,7 +69,7 @@ for screenshot in "${screenshot_files[@]}"; do
   fi
 done
 
-if rg -n 'TODO|FIXME|HACK|fatalError\(|try!|as!|\bprint\(' "$repo_root/MosaicV3" -g '*.swift'; then
+if grep -REn --include='*.swift' 'TODO|FIXME|HACK|fatalError\(|try!|as!|(^|[^[:alnum:]_])print\(' "$repo_root/MosaicV3"; then
   echo "Production code-quality marker found in MosaicV3." >&2
   exit 1
 fi
