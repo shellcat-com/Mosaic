@@ -12,28 +12,30 @@ permissions:
 jobs:
   test:
     runs-on: macos-26
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        scheme: ["Mosaic Hackathon", "Mosaic Shipaton"]
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Verify Xcode 26
         run: xcodebuild -version | grep 'Xcode 26'
-      - name: Validate Shipaton source media
-        if: matrix.scheme == 'Mosaic Shipaton'
-        run: ./scripts/validate_shipaton_submission.sh
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate the shipping project
+        run: xcodegen generate
+      - name: Verify generated project is committed
+        run: git diff --exit-code -- Mosaic.xcodeproj/project.pbxproj Mosaic.xcodeproj/xcshareddata/xcschemes
+      - name: Validate App Store release assets and configuration
+        run: ./scripts/validate_app_store_release.sh
       - name: Resolve pinned Swift packages
-        run: xcodebuild -resolvePackageDependencies -project Mosaic.xcodeproj -scheme "${{ matrix.scheme }}"
-      - name: Build and test cloud-configured app
+        run: xcodebuild -resolvePackageDependencies -project Mosaic.xcodeproj -scheme Mosaic
+      - name: Build and run the complete unit and UI suite
         run: >-
           xcodebuild
           -project Mosaic.xcodeproj
-          -scheme "${{ matrix.scheme }}"
+          -scheme Mosaic
           -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
           -skipPackagePluginValidation
           ONLY_ACTIVE_ARCH=YES
+          CODE_SIGNING_ALLOWED=NO
           test
 
   backend-contracts:
@@ -44,8 +46,21 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: Test RevenueCat response contracts
-        run: deno test supabase/functions/_shared/revenuecat_test.ts
+      - name: Check Edge Function formatting
+        run: >-
+          deno fmt --check
+          supabase/functions/_shared/mosaic.ts
+          supabase/functions/_shared/revenuecat.ts
+          supabase/functions/_shared/revenuecat_test.ts
+          supabase/functions/create-premium-mosaic/index.ts
+          supabase/functions/delete-account
+          supabase/functions/refresh-billing/index.ts
+          supabase/functions/revenuecat-webhook
+      - name: Test backend contracts
+        run: |
+          deno test supabase/functions/_shared/revenuecat_test.ts
+          deno test --config supabase/functions/delete-account/deno.json supabase/functions/delete-account/index_test.ts
+          deno test --config supabase/functions/revenuecat-webhook/deno.json supabase/functions/revenuecat-webhook/index_test.ts
       - name: Reject whitespace errors
         run: git diff-tree --check --no-commit-id --root -r HEAD
       - name: Verify repository documentation targets

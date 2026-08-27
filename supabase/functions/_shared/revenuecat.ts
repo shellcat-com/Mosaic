@@ -1,39 +1,13 @@
-export type RevenueCatList<T> = {
-  items?: T[];
-  next_page?: string | null;
-};
+export const revenueCatCatalog = {
+  entitlement: "organizer_plus",
+  monthly: "organizer_monthly",
+  annual: "organizer_annual",
+  pass: "PASS",
+} as const;
 
-export type RevenueCatActiveEntitlement = {
-  entitlement_id?: string;
-  expires_at?: number | null;
-};
-
-export type RevenueCatSubscription = {
-  product_id?: string | null;
-  product?: { store_identifier?: string | null } | null;
-  current_period_ends_at?: number | null;
-  ends_at?: number | null;
-  gives_access?: boolean;
-  auto_renewal_status?: string | null;
-  status?: string | null;
-  entitlements?:
-    | RevenueCatList<{
-      id?: string;
-      products?: RevenueCatList<{
-        product?: { id?: string; store_identifier?: string | null };
-      }>;
-    }>
-    | null;
-};
-
-export type RevenueCatVirtualCurrencyBalance = {
-  currency_code?: string;
-  balance?: number;
-};
-
-export type RevenueCatBillingState = {
+export type BillingSnapshot = {
   plusActive: boolean;
-  subscriptionStatus:
+  subscriptionState:
     | "none"
     | "trialing"
     | "active"
@@ -41,114 +15,156 @@ export type RevenueCatBillingState = {
     | "billing_issue"
     | "cancelled"
     | "expired";
-  productId: string | null;
+  productID: string | null;
   expiresAt: string | null;
   willRenew: boolean;
   passBalance: number;
+  synchronizedAt: string;
 };
 
-function normalizedStatus(
-  value: string | null | undefined,
-  autoRenewalStatus: string | null | undefined,
-): RevenueCatBillingState["subscriptionStatus"] {
-  if (autoRenewalStatus?.toLowerCase() === "will_not_renew") {
-    return "cancelled";
+type Item = Record<string, unknown>;
+
+function items(value: unknown): Item[] {
+  if (!value || typeof value !== "object") return [];
+  const candidate = (value as { items?: unknown }).items;
+  return Array.isArray(candidate)
+    ? candidate.filter((item): item is Item =>
+      !!item && typeof item === "object"
+    )
+    : [];
+}
+
+function nestedItems(item: Item | undefined, key: string): Item[] {
+  return items(item?.[key]);
+}
+
+function text(item: Item | undefined, ...keys: string[]): string | null {
+  for (const key of keys) {
+    if (typeof item?.[key] === "string") return item[key] as string;
   }
-  switch (value?.toLowerCase()) {
-    case "trialing":
-      return "trialing";
-    case "active":
-      return "active";
-    case "in_grace_period":
-      return "grace_period";
-    case "in_billing_retry":
-      return "billing_issue";
-    case "paused":
-      return "cancelled";
-    case "expired":
-      return "expired";
-    default:
-      return "active";
+  return null;
+}
+
+function bool(item: Item | undefined, ...keys: string[]): boolean | null {
+  for (const key of keys) {
+    if (typeof item?.[key] === "boolean") return item[key] as boolean;
   }
+  return null;
 }
 
-export function isoDateFromMilliseconds(value: unknown): string | null {
-  if (value == null) return null;
-  const milliseconds = Number(value);
-  if (!Number.isFinite(milliseconds) || milliseconds <= 0) return null;
-  const date = new Date(milliseconds);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+function time(item: Item | undefined, ...keys: string[]): string | null {
+  const value = text(item, ...keys);
+  if (value && !Number.isNaN(Date.parse(value))) return value;
+  for (const key of keys) {
+    const number = item?.[key];
+    if (typeof number === "number") {
+      return new Date(number > 10_000_000_000 ? number : number * 1000)
+        .toISOString();
+    }
+  }
+  return null;
 }
 
-export function passBalance(
-  balances: RevenueCatVirtualCurrencyBalance[],
-): number {
-  const pass = balances.find((item) => item.currency_code === "PASS");
-  const value = Number(pass?.balance ?? 0);
-  return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
-}
-
-export function billingState(
-  entitlementId: string,
-  activeEntitlements: RevenueCatActiveEntitlement[],
-  subscriptions: RevenueCatSubscription[],
-  balances: RevenueCatVirtualCurrencyBalance[],
-): RevenueCatBillingState {
-  const entitlement = activeEntitlements.find((item) =>
-    item.entitlement_id === entitlementId
-  );
-  const subscription = subscriptions.find((item) =>
-    item.entitlements?.items?.some((candidate) =>
-      candidate.id === entitlementId
+export function parseBillingSnapshot(
+  entitlements: unknown,
+  subscriptions: unknown,
+  currencies: unknown,
+  now = new Date(),
+): BillingSnapshot {
+  const subscription = items(subscriptions).find((entry) =>
+    nestedItems(entry, "entitlements").some((candidate) =>
+      text(candidate, "lookup_key") === revenueCatCatalog.entitlement
     )
   );
-  const subscriptionEntitlement = subscription?.entitlements?.items?.find(
-    (candidate) => candidate.id === entitlementId,
+  const plusEntitlement = nestedItems(subscription, "entitlements").find((
+    candidate,
+  ) => text(candidate, "lookup_key") === revenueCatCatalog.entitlement);
+  const internalEntitlementID = text(plusEntitlement, "id");
+  const activeEntitlement = items(entitlements).find((entry) =>
+    text(entry, "entitlement_id") === internalEntitlementID
   );
-  const storeProductId = subscriptionEntitlement?.products?.items?.find(
-    (candidate) => candidate.product?.id === subscription?.product_id,
-  )?.product?.store_identifier;
-  const plusActive = entitlement != null;
-  const subscriptionStatus = plusActive
-    ? normalizedStatus(
-      subscription?.status,
-      subscription?.auto_renewal_status,
-    )
-    : "none";
-
+  const entitlementExpiry = time(activeEntitlement, "expires_at", "ends_at");
+  const plusActive = !!subscription &&
+    bool(subscription, "gives_access") === true && !!activeEntitlement &&
+    (!entitlementExpiry || Date.parse(entitlementExpiry) > now.getTime());
+  const internalProductID = text(subscription, "product_id");
+  const entitlementProducts = nestedItems(plusEntitlement, "products");
+  const product =
+    entitlementProducts.find((candidate) =>
+      text(candidate, "id") === internalProductID
+    ) ?? entitlementProducts[0];
+  const productIdentifier = text(product, "store_identifier") ??
+    text(subscription, "product_identifier", "product_lookup_key");
+  const rawStatus = text(subscription, "status", "state")?.toLowerCase() ??
+    (plusActive ? "active" : "none");
+  const state: BillingSnapshot["subscriptionState"] =
+    rawStatus.includes("trial")
+      ? "trialing"
+      : rawStatus.includes("grace")
+      ? "grace_period"
+      : rawStatus.includes("billing") || rawStatus.includes("past_due")
+      ? "billing_issue"
+      : rawStatus.includes("cancel")
+      ? "cancelled"
+      : rawStatus.includes("expire")
+      ? "expired"
+      : plusActive || rawStatus === "active"
+      ? "active"
+      : "none";
+  const pass = items(currencies).find((entry) =>
+    text(entry, "currency_code", "code") === revenueCatCatalog.pass
+  );
+  const rawBalance = pass?.balance;
   return {
     plusActive,
-    subscriptionStatus,
-    productId: plusActive
-      ? subscription?.product?.store_identifier ?? storeProductId ??
-        subscription?.product_id ?? null
-      : null,
-    expiresAt: plusActive
-      ? isoDateFromMilliseconds(
-        entitlement?.expires_at ?? subscription?.current_period_ends_at ??
-          subscription?.ends_at,
-      )
-      : null,
-    willRenew: plusActive && ["will_renew", "has_already_renewed"].includes(
-      subscription?.auto_renewal_status ?? "",
-    ),
-    passBalance: passBalance(balances),
+    subscriptionState: state,
+    productID: productIdentifier,
+    expiresAt: time(subscription, "current_period_ends_at", "expires_at") ??
+      entitlementExpiry,
+    willRenew: bool(subscription, "will_renew") ??
+      text(subscription, "auto_renewal_status") === "will_renew",
+    passBalance: typeof rawBalance === "number" && Number.isFinite(rawBalance)
+      ? Math.max(0, Math.trunc(rawBalance))
+      : 0,
+    synchronizedAt: now.toISOString(),
   };
 }
 
-export async function fetchRevenueCatList<T>(
-  apiKey: string,
+export function revenueCatConfiguration() {
+  const projectID = Deno.env.get("REVENUECAT_PROJECT_ID")?.trim();
+  const secretKey = Deno.env.get("REVENUECAT_SECRET_API_KEY")?.trim();
+  if (!projectID || !secretKey || !secretKey.startsWith("sk_")) {
+    throw new Error("RevenueCat server configuration is missing");
+  }
+  return { projectID, secretKey };
+}
+
+export async function revenueCatRequest(
+  projectID: string,
+  secretKey: string,
   path: string,
-): Promise<T[]> {
-  const response = await fetch(`https://api.revenuecat.com/v2${path}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
+  init: RequestInit = {},
+) {
+  const response = await fetch(
+    `https://api.revenuecat.com/v2/projects/${
+      encodeURIComponent(projectID)
+    }${path}`,
+    {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/json",
+        ...(init.headers ?? {}),
+      },
+    },
+  );
+  const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(`RevenueCat request failed with HTTP ${response.status}`);
+    throw new Error(
+      `RevenueCat ${response.status}: ${
+        (payload as { message?: string }).message ?? "request failed"
+      }`,
+    );
   }
-  const payload = await response.json() as RevenueCatList<T>;
-  if (!Array.isArray(payload?.items)) {
-    throw new Error("RevenueCat returned an invalid list response");
-  }
-  return payload.items;
+  return payload;
 }

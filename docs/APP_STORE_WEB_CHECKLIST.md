@@ -1,65 +1,31 @@
 # Mosaic App Store web checklist
 
-This document maps the public Mosaic website to the URL fields and policy
-surfaces used for an iOS release. Review the legal text against the final
-production build, data practices, products, developer identity, and supported
-countries before submitting.
-
 ## Public URLs
 
-| App Store Connect field or review need | Mosaic URL | Status |
-| --- | --- | --- |
-| Marketing URL | https://shellcat-com.github.io/Mosaic/ | Ready |
-| Support URL | https://shellcat-com.github.io/Mosaic/support/ | Ready |
-| Privacy Policy URL | https://shellcat-com.github.io/Mosaic/privacy/ | Ready |
-| User Privacy Choices URL | https://shellcat-com.github.io/Mosaic/account-deletion/ | Ready |
-| Terms of Use URL | https://shellcat-com.github.io/Mosaic/terms/ | Ready |
-| Community Guidelines / UGC safety | https://shellcat-com.github.io/Mosaic/community-guidelines/ | Ready |
+| Field | URL |
+| --- | --- |
+| Marketing | https://shellcat-com.github.io/Mosaic/ |
+| Support | https://shellcat-com.github.io/Mosaic/support/ |
+| Privacy Policy | https://shellcat-com.github.io/Mosaic/privacy/ |
+| Account deletion | https://shellcat-com.github.io/Mosaic/account-deletion/ |
+| Terms | https://shellcat-com.github.io/Mosaic/terms/ |
+| Community Guidelines | https://shellcat-com.github.io/Mosaic/community-guidelines/ |
 
-Apple requires a Privacy Policy URL for iOS apps. App Review also expects the
-app and its Support URL to provide an easy way to contact the developer. Apps
-that create accounts must let users initiate account deletion inside the app.
-Mosaic exposes deletion in **You → Account & privacy → Delete account** and
-publishes the supporting explanation above.
+## Final audit
 
-Official references:
+- Confirm the durable developer name and contact email.
+- Confirm App Store privacy answers match [`APP_STORE_DISCLOSURES.md`](APP_STORE_DISCLOSURES.md) and `PrivacyInfo.xcprivacy`.
+- Test Sign in with Apple first authorization, returning authorization, required display-name creation, sign out, and deletion.
+- Confirm Camera and Add Photos are the only runtime permission prompts.
+- Test report quarantine, block filtering, photographer deletion, and creator deletion against the production RLS deployment.
+- Verify that no anonymous Auth provider, widget, Live Activity, notification, calendar, microphone, or Photo Library read capability appears in the archived build.
+- Verify the processed build's Mosaic Plus monthly/annual subscriptions and one-event Event Pass exactly match the live RevenueCat offering, App Store products, localized terms, restore behavior, and submitted IAP metadata.
+- Verify the support, privacy, terms, community-guidelines, and deletion pages without authentication.
+- Re-check age rating and school/youth language with qualified counsel for the intended release countries.
+- Complete export compliance for Mosaic's AES-GCM artwork-reveal package; the app archive declares `ITSAppUsesNonExemptEncryption = YES`.
+- Replace both invitation placeholders in [`TESTFLIGHT_REVIEW_NOTES.md`](TESTFLIGHT_REVIEW_NOTES.md) with hosted, review-safe active and revealed Mosaics.
+- Upload the seven opaque 1320×2868 JPEGs from `design/app-store-screenshots/6.9-inch/`.
 
-- https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy
-- https://developer.apple.com/support/offering-account-deletion-in-your-app/
-- https://developer.apple.com/app-store/review/guidelines/
+The current section-by-section result is recorded in [`APP_STORE_REVIEW_AUDIT.md`](APP_STORE_REVIEW_AUDIT.md).
 
-## Final production audit before submission
-
-- Confirm the developer/seller identity and support email are appropriate for
-  public release. Replace the current university email if a durable product
-  support address is available.
-- Confirm the Privacy Policy matches the exact production configuration for
-  Supabase, RevenueCat, Sign in with Apple, notifications, media storage, and
-  any analytics or crash-reporting SDK added later.
-- Complete App Store Connect privacy nutrition-label answers for every data
-  type collected by Mosaic or an integrated third party.
-- Verify the in-app Privacy and Terms links open the published pages.
-- Exercise account deletion for a guest, a permanent participant, a normal
-  organizer, and a sole workspace owner. Confirm associated user-generated
-  content is handled as described.
-- Verify Sign in with Apple tokens are revoked when a linked account is deleted.
-- Confirm Restore Purchases, subscription management, price/renewal copy, and
-  RevenueCat entitlement synchronization in the App Store sandbox.
-- Confirm the Support URL loads without authentication and the email link works.
-- Verify community reporting and organizer moderation behavior for user-created
-  text, photos, videos, and invitations.
-- Re-check the age rating and the policy language if Mosaic will be used by
-  schools or participants under the age of majority.
-- Ask qualified counsel to review the production Privacy Policy and Terms for
-  the intended countries. These drafts describe the product but are not a
-  substitute for legal advice.
-
-## Site deployment checks
-
-- GitHub Pages deploys `site/` from `.github/workflows/pages.yml` on pushes to
-  `main` that change the site or its workflow.
-- The site includes a canonical URL, social sharing image, sitemap, robots file,
-  touch icon, responsive navigation, reduced-motion support, semantic headings,
-  and a custom not-found page.
-- Invitation links using `?join=CODE` keep the existing `mosaic://join/CODE`
-  handoff.
+The legal pages describe the v3 product but are not a substitute for legal advice.

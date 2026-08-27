@@ -11,9 +11,8 @@ REVENUECAT_PUBLIC_SDK_KEY = $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
 MOSAIC_BILLING_ENABLED = YES
 MOSAIC_HACKATHON_BUILD = YES
 MOSAIC_REMOTE_PUSH_ENABLED = NO
-MOSAIC_SUBMISSION_NAME = RevenueCat Shipaton 2026 judge build
+MOSAIC_SUBMISSION_NAME = RevenueCat Shipaton 2026 Next Gen judge build
 ENABLE_TESTABILITY = YES
 
-// Optional local override. Copy Local.xcconfig.example to Local.xcconfig and
-// insert the RevenueCat Test Store public key when it has been created.
+// Optional ignored local override. Never commit server credentials.
 #include? "Local.xcconfig"
