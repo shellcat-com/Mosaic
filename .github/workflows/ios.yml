@@ -27,13 +27,25 @@ jobs:
         run: ./scripts/validate_app_store_release.sh
       - name: Resolve pinned Swift packages
         run: xcodebuild -resolvePackageDependencies -project Mosaic.xcodeproj -scheme Mosaic
-      - name: Build and run the complete unit and UI suite
+      - name: Build and run Swift unit tests
         run: >-
           xcodebuild
           -project Mosaic.xcodeproj
           -scheme Mosaic
           -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
           -skipPackagePluginValidation
+          -only-testing:MosaicTests
+          ONLY_ACTIVE_ARCH=YES
+          CODE_SIGNING_ALLOWED=NO
+          test
+      - name: Run all 14 UI journeys
+        run: >-
+          xcodebuild
+          -project Mosaic.xcodeproj
+          -scheme Mosaic
+          -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
+          -skipPackagePluginValidation
+          -only-testing:MosaicUITests
           ONLY_ACTIVE_ARCH=YES
           CODE_SIGNING_ALLOWED=NO
           test

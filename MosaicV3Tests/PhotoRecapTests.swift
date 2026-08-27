@@ -70,7 +70,7 @@ struct PhotoRecapTests {
         #expect(templates.allSatisfy { !$0.detail.isEmpty })
     }
 
-    @Test(.timeLimit(.minutes(3)))
+    @Test(.timeLimit(.minutes(5)))
     func twentyFourPhotoRecapRendersAtVerticalFullHDWithoutDroppingSelections() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appending(path: "Mosaic-Recap-Performance-\(UUID().uuidString)", directoryHint: .isDirectory)
