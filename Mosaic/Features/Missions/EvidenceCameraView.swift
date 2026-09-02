@@ -7,6 +7,7 @@ import UIKit
 struct EvidenceCameraView: View {
     let contextTitle: String
     let privacyCopy: String
+    let filmLookID: FilmLookID
     let dismissOnUse: Bool
     let onUsePhoto: (Data) -> Void
 
@@ -16,10 +17,12 @@ struct EvidenceCameraView: View {
     @State private var libraryItem: PhotosPickerItem?
     @State private var capturedData: Data?
     @State private var flashOverlay = false
+    @State private var isDeveloping = false
 
     init(mission: Mission, onUsePhoto: @escaping (Data) -> Void) {
         self.contextTitle = mission.title
         self.privacyCopy = "Evidence stays private"
+        self.filmLookID = .sunwashed
         self.dismissOnUse = true
         self.onUsePhoto = onUsePhoto
     }
@@ -27,6 +30,7 @@ struct EvidenceCameraView: View {
     init(challenge: KindnessChallenge, dismissOnUse: Bool = false, onUsePhoto: @escaping (Data) -> Void) {
         self.contextTitle = challenge.name
         self.privacyCopy = "Private until you seal it"
+        self.filmLookID = challenge.filmLookID
         self.dismissOnUse = dismissOnUse
         self.onUsePhoto = onUsePhoto
     }
@@ -39,13 +43,11 @@ struct EvidenceCameraView: View {
             } else {
                 livePreview
             }
-            if flashOverlay { MosaicTheme.persimmon.opacity(0.72).ignoresSafeArea().allowsHitTesting(false) }
+            if flashOverlay { Color.white.ignoresSafeArea().allowsHitTesting(false) }
         }
         .task { await camera.prepare() }
         .onDisappear { camera.stop() }
-        .task(id: libraryItem) {
-            if let data = try? await libraryItem?.loadTransferable(type: Data.self) { capturedData = data }
-        }
+        .task(id: libraryItem) { await loadLibraryPhoto() }
         .onChange(of: camera.photoData) { _, data in
             guard let data else { return }
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -53,111 +55,291 @@ struct EvidenceCameraView: View {
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(120))
                 flashOverlay = false
-                capturedData = data
+                await develop(data)
             }
         }
     }
 
     private var livePreview: some View {
-        ZStack {
-            CameraPreview(session: camera.session).ignoresSafeArea()
-            LinearGradient(colors: [.black.opacity(0.62), .clear, .black.opacity(0.76)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea().allowsHitTesting(false)
-            Canvas { context, size in
-                for index in 0..<70 {
-                    let x = CGFloat((index * 47) % 101) / 101 * size.width
-                    let y = CGFloat((index * 71) % 103) / 103 * size.height
-                    context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1, height: 1)), with: .color(.white.opacity(0.12)))
+        GeometryReader { _ in
+            ZStack {
+                CameraPreview(session: camera.session)
+                    .ignoresSafeArea()
+
+                LinearGradient(
+                    stops: [
+                        .init(color: .black.opacity(0.62), location: 0),
+                        .init(color: .clear, location: 0.3),
+                        .init(color: .clear, location: 0.6),
+                        .init(color: .black.opacity(0.76), location: 1)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+
+                MosaicTheme.porcelain
+                    .frame(height: 80)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .ignoresSafeArea(edges: .bottom)
+                    .allowsHitTesting(false)
+
+                VStack(spacing: 12) {
+                    cameraHeader
+
+                    Label(privacyCopy, systemImage: "lock.shield.fill")
+                        .font(MosaicTheme.caption(.bold))
+                        .foregroundStyle(MosaicTheme.indigo)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(MosaicTheme.paper.opacity(0.96), in: Capsule())
+                        .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+
+                    if camera.permissionDenied {
+                        Spacer()
+                        cameraPermissionRationale
+                        Spacer()
+                    } else {
+                        Spacer()
+                    }
+
+                    Label("Avoid faces, addresses, and private details", systemImage: "hand.raised.fill")
+                        .font(MosaicTheme.caption(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.black.opacity(0.54), in: Capsule())
+
+                    if isDeveloping {
+                        Label("Developing \(filmLookID.title)…", systemImage: "sparkles")
+                            .font(MosaicTheme.caption(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.black.opacity(0.62), in: Capsule())
+                    }
+
+                    captureDeck
+                        .padding(.horizontal, -20)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
             }
-            .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
+        }
+    }
 
-            VStack(spacing: 13) {
-                HStack {
-                    ceramicIcon("xmark", label: "Close") { dismiss() }
-                    Spacer()
-                    Label(contextTitle, systemImage: "camera.aperture")
-                        .font(.subheadline.weight(.bold)).foregroundStyle(MosaicTheme.indigo)
-                        .lineLimit(1).padding(.horizontal, 15).padding(.vertical, 11)
-                        .background(MosaicTheme.paper, in: Capsule())
-                    Spacer()
-                    ceramicIcon(camera.flashEnabled ? "bolt.fill" : "bolt.slash.fill", label: "Flash") { camera.toggleFlash() }
-                }
-                Label(privacyCopy, systemImage: "shield.lefthalf.filled")
-                    .font(.caption.weight(.bold)).foregroundStyle(MosaicTheme.indigo)
-                    .padding(.horizontal, 13).padding(.vertical, 8)
-                    .background(MosaicTheme.paper.opacity(0.95), in: Capsule())
-                if camera.permissionDenied {
-                    VStack(spacing: 7) {
-                        Text("Camera access is off").font(.headline)
-                        Text("You can choose a photo below or enable Camera in Settings.")
-                            .font(.caption).multilineTextAlignment(.center)
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                        }
-                        .font(.caption.weight(.bold))
-                    }
-                    .foregroundStyle(MosaicTheme.ink)
-                    .padding(14)
-                    .background(MosaicTheme.paper.opacity(0.96), in: RoundedRectangle(cornerRadius: 18))
-                }
-                Spacer()
-                Label("Choose what belongs in the group reveal", systemImage: "hand.raised.fill")
-                    .font(.caption.weight(.semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 13).padding(.vertical, 8)
-                    .background(.black.opacity(0.58), in: Capsule())
-                HStack(spacing: 34) {
-                    PhotosPicker(selection: $libraryItem, matching: .images) {
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.title2.weight(.semibold)).foregroundStyle(MosaicTheme.ink)
-                            .frame(width: 52, height: 52).background(MosaicTheme.paper, in: Circle())
-                    }
-                    .accessibilityLabel("Choose from library")
+    private var cameraHeader: some View {
+        HStack(spacing: 12) {
+            ceramicControl("xmark", label: "Close camera") { dismiss() }
+            Spacer(minLength: 0)
+            Label(contextTitle, systemImage: "camera.aperture")
+                .font(MosaicTheme.body(.semibold))
+                .foregroundStyle(MosaicTheme.indigo)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 48)
+                .background(MosaicTheme.paper.opacity(0.96), in: Capsule())
+                .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+            Spacer(minLength: 0)
+            ceramicControl(
+                camera.flashEnabled ? "bolt.fill" : "bolt.slash.fill",
+                label: camera.flashEnabled ? "Turn flash off" : "Turn flash on",
+                selected: camera.flashEnabled
+            ) { camera.toggleFlash() }
+        }
+    }
 
-                    Button { camera.capture() } label: {
-                        Circle().fill(MosaicTheme.paper).frame(width: 94, height: 94)
-                            .overlay(Circle().stroke(MosaicTheme.indigo, lineWidth: 5).padding(10))
-                            .overlay(Circle().stroke(.white.opacity(0.65), lineWidth: 1).padding(3))
-                            .shadow(color: .black.opacity(0.38), radius: 16, y: 9)
-                    }
-                    .disabled(!camera.isReady).accessibilityLabel("Take photo")
-
-                    ceramicIcon("arrow.triangle.2.circlepath.camera", label: "Flip camera") { camera.flip() }
-                }
-                .padding(.bottom, 22)
+    private var cameraPermissionRationale: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "camera.fill")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(MosaicTheme.indigo)
+            Text("Let Mosaic use the camera")
+                .font(MosaicTheme.display(24, weight: .semibold))
+            Text("Capture a private moment for this Mosaic, or choose one you already have.")
+                .font(MosaicTheme.caption())
+                .foregroundStyle(MosaicTheme.muted)
+                .multilineTextAlignment(.center)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             }
-            .padding(.horizontal, 20).padding(.top, 10)
+            .buttonStyle(PrimaryButtonStyle())
+        }
+        .foregroundStyle(MosaicTheme.ink)
+        .padding(20)
+        .frame(maxWidth: 320)
+        .background(MosaicTheme.paper.opacity(0.98), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.24), radius: 18, y: 8)
+    }
+
+    private var captureDeck: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 20) {
+                PhotosPicker(selection: $libraryItem, matching: .images) {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(MosaicTheme.ink)
+                        .frame(width: 52, height: 52)
+                        .background(MosaicTheme.raisedPaper, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .accessibilityLabel("Choose from library")
+
+                Button { camera.capture() } label: {
+                    ZStack {
+                        Circle().fill(MosaicTheme.paper)
+                        Circle().stroke(MosaicTheme.indigo, lineWidth: 4).padding(9)
+                    }
+                    .frame(width: 88, height: 88)
+                    .shadow(color: .black.opacity(0.22), radius: 12, y: 7)
+                    .opacity(camera.isReady ? 1 : 0.48)
+                }
+                .disabled(!camera.isReady)
+                .accessibilityLabel(camera.isReady ? "Take photo" : "Camera is preparing")
+
+                Button { camera.flip() } label: {
+                    Image(systemName: "arrow.triangle.2.circlepath.camera")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(MosaicTheme.ink)
+                        .frame(width: 52, height: 52)
+                        .background(MosaicTheme.raisedPaper, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .accessibilityLabel("Flip camera")
+            }
+
+            HStack(spacing: 6) {
+                Circle().fill(MosaicTheme.indigo).frame(width: 6, height: 6)
+                Text("PHOTO  ·  PRIVATE EVIDENCE")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .tracking(1.2)
+                    .foregroundStyle(MosaicTheme.muted)
+            }
+        }
+        .padding(.top, 16)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 12)
+        .background {
+            UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28)
+                .fill(MosaicTheme.porcelain.opacity(0.98))
+                .ignoresSafeArea(edges: .bottom)
         }
     }
 
     private func review(_ image: UIImage, data: Data) -> some View {
-        VStack(spacing: 0) {
-            Image(uiImage: image).resizable().scaledToFill().frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
-            VStack(spacing: 16) {
-                Capsule().fill(MosaicTheme.muted.opacity(0.32)).frame(width: 42, height: 5)
-                Label("A moment worth keeping", systemImage: "sparkles")
-                    .font(MosaicTheme.display(23, weight: .semibold))
-                HStack(spacing: 12) {
-                    Button("Retake") { capturedData = nil; camera.photoData = nil }
-                        .buttonStyle(SecondaryButtonStyle())
-                    Button("Use Photo") {
-                        onUsePhoto(data)
-                        if dismissOnUse { dismiss() }
+        GeometryReader { _ in
+            ZStack(alignment: .bottom) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .ignoresSafeArea()
+
+                LinearGradient(colors: [.black.opacity(0.5), .clear, .black.opacity(0.36)], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+
+                MosaicTheme.porcelain
+                    .frame(height: 80)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .ignoresSafeArea(edges: .bottom)
+                    .allowsHitTesting(false)
+
+                VStack(spacing: 0) {
+                    HStack {
+                        ceramicControl("xmark", label: "Close review") { dismiss() }
+                        Spacer()
+                        Text("REVIEW MOMENT")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .tracking(1.5)
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Color.clear.frame(width: 52, height: 52)
                     }
-                        .buttonStyle(PrimaryButtonStyle())
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+
+                    Spacer()
+
+                    VStack(spacing: 16) {
+                        Capsule()
+                            .fill(MosaicTheme.muted.opacity(0.34))
+                            .frame(width: 40, height: 4)
+                        VStack(spacing: 4) {
+                            Text("Keep this moment?")
+                                .font(MosaicTheme.display(26, weight: .semibold))
+                            Label("\(filmLookID.title) disposable film", systemImage: "camera.aperture")
+                                .font(MosaicTheme.caption(.semibold))
+                                .foregroundStyle(MosaicTheme.persimmon)
+                            Label(privacyCopy, systemImage: "lock.fill")
+                                .font(MosaicTheme.caption(.semibold))
+                                .foregroundStyle(MosaicTheme.indigo)
+                        }
+
+                        HStack(spacing: 12) {
+                            Button {
+                                capturedData = nil
+                                camera.photoData = nil
+                            } label: {
+                                Text("Retake")
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
+
+                            Button {
+                                onUsePhoto(data)
+                                if dismissOnUse { dismiss() }
+                            } label: {
+                                Label("Use Photo", systemImage: "checkmark")
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                        }
+                    }
+                    .foregroundStyle(MosaicTheme.ink)
+                    .padding(.top, 8)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+                    .background {
+                        UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28)
+                            .fill(MosaicTheme.porcelain.opacity(0.98))
+                            .ignoresSafeArea(edges: .bottom)
+                    }
                 }
             }
-            .padding(20).background(MosaicTheme.paper)
         }
     }
 
-    private func ceramicIcon(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+    private func ceramicControl(
+        _ symbol: String,
+        label: String,
+        selected: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.headline).foregroundStyle(MosaicTheme.ink)
-                .frame(width: 50, height: 50).background(MosaicTheme.paper.opacity(0.96), in: Circle())
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(selected ? Color.white : MosaicTheme.ink)
+                .frame(width: 52, height: 52)
+                .background(selected ? MosaicTheme.indigo : MosaicTheme.paper.opacity(0.96), in: Circle())
                 .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
         }
         .accessibilityLabel(label)
+    }
+
+    private func loadLibraryPhoto() async {
+        guard let data = try? await libraryItem?.loadTransferable(type: Data.self) else { return }
+        await develop(data)
+    }
+
+    private func develop(_ data: Data) async {
+        isDeveloping = true
+        let look = filmLookID
+        let developed = await Task.detached(priority: .userInitiated) {
+            DisposableCameraFilter.developJPEG(data, look: look)
+        }.value
+        capturedData = developed ?? data
+        isDeveloping = false
     }
 }
 

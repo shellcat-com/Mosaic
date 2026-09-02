@@ -38,8 +38,10 @@
 		678495AA9911B4E0BD734B4F /* MosaicFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AA5F76989ACF7DF2775E56 /* MosaicFlowUITests.swift */; };
 		688CB93C62547AA0DCBDAC62 /* rise.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 99FB8F456F7DF48E51EBF06D /* rise.mp3 */; };
 		6AA86718548947286165A619 /* Fraunces72ptSoft-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 34F5FA1882E23669931E2192 /* Fraunces72ptSoft-SemiBold.ttf */; };
+		73C7C589929B586AF14BD75E /* MosaicFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5CC74777F43E9D8F17C1D49 /* MosaicFeedback.swift */; };
 		7BABECCA66A23E1F2DB9D552 /* MosaicAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A55086790D0F0DF5EFA66BB /* MosaicAPI.swift */; };
 		7C8379AAF7322F72777FEAD2 /* SupabaseMosaicAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = E03288782F4B271AE43F82F1 /* SupabaseMosaicAPI.swift */; };
+		803CF28E63C36AA87109B7FA /* CreativeDraftStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98A9213ACFEB642E7A5A9846 /* CreativeDraftStore.swift */; };
 		859ACC190098EA1A35145225 /* DisposableCameraFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11E6117DE84F0A8A732F0EBA /* DisposableCameraFilter.swift */; };
 		87D82CA20C3FBBE1BF426F1A /* PhotoRecapBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF0015FE33EFA745A1A83C0 /* PhotoRecapBuilderView.swift */; };
 		893C1D8B6100A94931550C90 /* MosaicSupabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7283FE20A288E91BE4B23D5 /* MosaicSupabase.swift */; };
@@ -72,6 +74,7 @@
 		E2DBD15E82787C376734988E /* spark.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8CF98203B54C8A13983B2F9E /* spark.mp3 */; };
 		E7976D6BB99A4260B195EE09 /* PhotoRecapModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7768D6A51DF52D3AA0892A9D /* PhotoRecapModels.swift */; };
 		EAF65CBC1DECA4CF73D97771 /* MosaicShowcase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20AECA3BC21A67B782AE5A23 /* MosaicShowcase.swift */; };
+		ED38D23ABBEEFDCA0F02301D /* MosaicPrivateStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BB46783C1FE18D846367D28 /* MosaicPrivateStateTests.swift */; };
 		F39BF130A16D777348F587F2 /* BillingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49F68F2C6362B3F00D226487 /* BillingTests.swift */; };
 		F58EDEA67EA92F0DB53AD33C /* MosaicLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28CD8C7A39BEF33829EF03F4 /* MosaicLibraryStore.swift */; };
 		F605D23F74E7A84B283CDFB4 /* MosaicEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF10C927F51EE087E897D627 /* MosaicEventView.swift */; };
@@ -114,6 +117,7 @@
 		38AFD44F417E0B14B9A0E242 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		38E05D84475436B5EB920201 /* CreateMosaicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMosaicView.swift; sourceTree = "<group>"; };
 		3B19788840710D6D643B0C25 /* ArtworkRevealCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkRevealCache.swift; sourceTree = "<group>"; };
+		3BB46783C1FE18D846367D28 /* MosaicPrivateStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicPrivateStateTests.swift; sourceTree = "<group>"; };
 		46BE0753552E543A7768D0BB /* Mosaic.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Mosaic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4852A50D45AD5D04B5868E9A /* AppStore.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppStore.xcconfig; sourceTree = "<group>"; };
 		49F68F2C6362B3F00D226487 /* BillingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingTests.swift; sourceTree = "<group>"; };
@@ -143,10 +147,12 @@
 		942C6DD1D10844FD3FD9CCEF /* Mosaic.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Mosaic.entitlements; sourceTree = "<group>"; };
 		944596C8BA5E4EEB212DFA24 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97CF91BC2C0037518215CEF3 /* anywhere.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = anywhere.mp3; sourceTree = "<group>"; };
+		98A9213ACFEB642E7A5A9846 /* CreativeDraftStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreativeDraftStore.swift; sourceTree = "<group>"; };
 		99FB8F456F7DF48E51EBF06D /* rise.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = rise.mp3; sourceTree = "<group>"; };
 		9DD380D7236D7175340D9CFE /* SensitivePhotoAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitivePhotoAnalyzer.swift; sourceTree = "<group>"; };
 		AA13C4ADDBE2C7601347CA6F /* fresh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = fresh.mp3; sourceTree = "<group>"; };
 		B2A5B08AC112FFDABEECE5C7 /* PhotoRecapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoRecapTests.swift; sourceTree = "<group>"; };
+		B5CC74777F43E9D8F17C1D49 /* MosaicFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicFeedback.swift; sourceTree = "<group>"; };
 		B8C2C3A81B96E02AB01EBAE8 /* ArtworkRevealCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkRevealCacheTests.swift; sourceTree = "<group>"; };
 		BA012151B9ECED5F0DACAB28 /* BillingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingModels.swift; sourceTree = "<group>"; };
 		BBDF3C7643EBD688F9485E40 /* MosaicRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicRoute.swift; sourceTree = "<group>"; };
@@ -199,6 +205,7 @@
 			isa = PBXGroup;
 			children = (
 				2989954B5898BAB015EC0758 /* CoreComponents.swift */,
+				B5CC74777F43E9D8F17C1D49 /* MosaicFeedback.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -281,6 +288,7 @@
 			children = (
 				7F656FCF86B2D4C0E8C80D15 /* BillingStore.swift */,
 				5746E0E07C0B266864424AE5 /* CameraStore.swift */,
+				98A9213ACFEB642E7A5A9846 /* CreativeDraftStore.swift */,
 				E96307D9D976FB879EF6D7AE /* MosaicAppModel.swift */,
 				5548A36B34320EAA4600F453 /* MosaicCeremonyStores.swift */,
 				0F360DA9461B3B31E038D3D6 /* MosaicDetailStore.swift */,
@@ -382,6 +390,7 @@
 				7B29F69292F8CE84FFA3566C /* DisposableCameraFilterV3Tests.swift */,
 				CF5624F0E6E884DACB5FB900 /* MosaicCeremonyTests.swift */,
 				DDB79E0B3FC7C095141049EC /* MosaicDomainTests.swift */,
+				3BB46783C1FE18D846367D28 /* MosaicPrivateStateTests.swift */,
 				4E04A6798511D2484379DFC2 /* MosaicRouterTests.swift */,
 				928294F02C91BCA8CAEC765E /* PhotoDiskStoreTests.swift */,
 				B2A5B08AC112FFDABEECE5C7 /* PhotoRecapTests.swift */,
@@ -589,6 +598,7 @@
 				D7DE9972CBF1D485A3C6C50C /* CameraStore.swift in Sources */,
 				5DA9D850C4E5272C097E8305 /* CoreComponents.swift in Sources */,
 				38421DA4392A121693DE69BB /* CreateMosaicView.swift in Sources */,
+				803CF28E63C36AA87109B7FA /* CreativeDraftStore.swift in Sources */,
 				859ACC190098EA1A35145225 /* DisposableCameraFilter.swift in Sources */,
 				5430F0F03262767B265C2248 /* EditMosaicView.swift in Sources */,
 				D7D8A9191667B6DA500A68D2 /* EventCameraView.swift in Sources */,
@@ -602,6 +612,7 @@
 				1CBDA52C2E4B5AF7F1A9D793 /* MosaicCeremonyStores.swift in Sources */,
 				DCE9373147B9AF51DE1D803B /* MosaicDetailStore.swift in Sources */,
 				F605D23F74E7A84B283CDFB4 /* MosaicEventView.swift in Sources */,
+				73C7C589929B586AF14BD75E /* MosaicFeedback.swift in Sources */,
 				F58EDEA67EA92F0DB53AD33C /* MosaicLibraryStore.swift in Sources */,
 				DD62C78E5AA9587D10241B83 /* MosaicModels.swift in Sources */,
 				01A61E5C53ACF904BE988EF8 /* MosaicPaywallView.swift in Sources */,
@@ -644,6 +655,7 @@
 				C077A28D9D18F6F8E39105FF /* DisposableCameraFilterV3Tests.swift in Sources */,
 				6009603980C440BD410693EE /* MosaicCeremonyTests.swift in Sources */,
 				C4048FB44965B7C8939F86F0 /* MosaicDomainTests.swift in Sources */,
+				ED38D23ABBEEFDCA0F02301D /* MosaicPrivateStateTests.swift in Sources */,
 				A52108B56AB6B46335A7BCF0 /* MosaicRouterTests.swift in Sources */,
 				8977D2AF82915193420DFBA3 /* PhotoDiskStoreTests.swift in Sources */,
 				E2219D6009617967B8733843 /* PhotoRecapTests.swift in Sources */,

@@ -44,6 +44,13 @@ final class AppStore {
     var pendingWorkspaceInviteToken: String?
     var isShowingInviteAcceptance = false
     var isShowingRecoveryPrompt = false
+    var museumCatalog: [ArtworkCatalogItem] = []
+    var museumCreationEnabled = false
+    var isLoadingMuseumCatalog = false
+    var artworkAvailability: MuseumArtworkAvailability = .idle
+    var revealedArtwork: RevealedArtwork?
+    var revealedArtworkDisplayURL: URL?
+    var revealedArtworkExportURL: URL?
 
     var missions: [Mission] = [
         Mission(title: "Leave a kind note", detail: "Brighten someone’s day with a few kind words.", category: .encouragement, minutes: 5, effort: "Easy", evidence: [.reflection, .photo]),
@@ -69,9 +76,16 @@ final class AppStore {
     @ObservationIgnored private var invitationReturnState: AppEntryState = .entryChoice
     @ObservationIgnored private var hasRestoredMembership = false
     @ObservationIgnored private var bootstrapTask: Task<Void, Never>?
+    @ObservationIgnored private let revealArtworkCache = RevealArtworkCache()
     let localParticipantID: UUID
 
     var privacyMode: String { participantPrivacy.profileLabel }
+
+    var writableContributionChallengeID: UUID? {
+        guard challenge.isShowcase else { return challenge.id }
+        return sandboxChallengeID
+            ?? challengeLibrary.first(where: { !$0.isShowcase && $0.phase() == .active })?.id
+    }
 
     init(repository: MosaicRepository? = nil, onboardingDefaults: UserDefaults = .standard) {
 #if DEBUG
@@ -147,7 +161,8 @@ final class AppStore {
         }
         challenge = KindnessChallenge(
             name: "A Kinder Block", purpose: "100 small acts to make our neighborhood feel closer.",
-            goal: 40, revealDate: reveal, invitationCode: "KIND42", contributions: seed
+            goal: 40, revealDate: reveal, invitationCode: "KIND42", contributions: seed,
+            experienceVersion: .kindnessRoll, filmLookID: .sunwashed
         )
         let upcoming = KindnessChallenge(
             id: UUID(uuidString: "20000000-0000-4000-8000-000000000001")!,
@@ -203,8 +218,9 @@ final class AppStore {
 
 #if DEBUG
     private func configureMarketingFixture() {
-        let fixedStart = Date(timeIntervalSince1970: 1_799_539_200)
-        let fixedReveal = Date(timeIntervalSince1970: 1_800_144_000)
+        let previewNow = Date.now
+        let fixedStart = Calendar.current.date(byAdding: .day, value: -2, to: previewNow) ?? previewNow
+        let fixedReveal = Calendar.current.date(byAdding: .day, value: 5, to: previewNow) ?? previewNow
         missions = [
             Mission(
                 id: UUID(uuidString: "30000000-0000-4000-8000-000000000001")!,
@@ -286,14 +302,16 @@ final class AppStore {
             invitationCode: "KIND42",
             contributions: contributions,
             theme: .fallback,
-            cameraRollEnabled: false
+            cameraRollEnabled: true,
+            experienceVersion: .kindnessRoll,
+            filmLookID: .sunwashed
         )
         entryState = .main
         displayName = "Maya"
         participantPrivacy = .firstName
         backendState = .localPreview
         backendMessage = nil
-        challengeLibrary = []
+        challengeLibrary = [challenge.summary]
         notificationPreferences = [:]
         pendingContribution = nil
         isOrganizer = MarketingPreviewScene.current == .organizer
@@ -428,7 +446,10 @@ final class AppStore {
             )
             showcaseChallengeID = result.showcase.id
             sandboxChallengeID = result.sandbox?.id
-            try await loadChallenge(result.showcase.id, organizer: false)
+            // The judge/demo workspace must be interactive. The read-only showcase remains
+            // available in the library as a completed example, while the personal sandbox
+            // is the participant's active Mosaic.
+            try await loadChallenge(result.sandbox?.id ?? result.showcase.id, organizer: false)
             await refreshLibrary()
             await refreshOrganizations()
             hasRestoredMembership = true
@@ -457,6 +478,42 @@ final class AppStore {
         Task { await placeRemote(contribution) }
     }
 
+    @discardableResult
+    func placeContribution(_ contribution: TileContribution) async -> Int? {
+        let occupied = Set(challenge.contributions.compactMap(\.tilePosition))
+        let predicted = challenge.sealedArtwork.flatMap {
+            BoardGeometry(side: $0.boardSide).firstOpenPosition(occupied: occupied)
+        } ?? challenge.contributions.count
+        let optimistic = contribution.updated(status: .placed, tilePosition: predicted)
+        if let index = challenge.contributions.firstIndex(where: { $0.id == contribution.id }) {
+            challenge.contributions[index] = optimistic
+        } else {
+            challenge.contributions.append(optimistic)
+        }
+        updateCurrentChallengeInLibrary()
+        pendingContribution = optimistic
+
+        guard let repository, backendState.isLive else { return predicted }
+        do {
+            let record = try await repository.place(contributionID: contribution.id)
+            if let index = challenge.contributions.firstIndex(where: { $0.id == contribution.id }) {
+                challenge.contributions[index] = contribution.updated(
+                    status: record.status,
+                    tilePosition: record.tilePosition
+                )
+            }
+            await refresh()
+            backendMessage = nil
+            return record.tilePosition
+        } catch {
+            if let index = challenge.contributions.firstIndex(where: { $0.id == contribution.id }) {
+                challenge.contributions.remove(at: index)
+            }
+            backendMessage = error.localizedDescription
+            return nil
+        }
+    }
+
     func openSharedCamera() {
         guard challenge.cameraRollEnabled else { return }
         showSharedCamera = true
@@ -468,13 +525,14 @@ final class AppStore {
         Task { await engagementTracker.track(.recapOpen, challengeID: challenge.id) }
     }
 
-    func keepPrivateSharedMoment(jpegData: Data, note: String = "") async {
+    func keepPrivateSharedMoment(payload: SharedMomentPayload, note: String = "") async {
         let candidate = SharedMoment(
             challengeID: challenge.id, creatorID: localParticipantID,
-            note: note, revealConsent: false, exportConsent: false,
+            note: note, mediaKind: payload.kind, mediaMimeType: payload.mimeType,
+            durationSeconds: payload.durationSeconds, revealConsent: false, exportConsent: false,
             lifecycle: .localDraft
         )
-        guard let draft = try? await sharedMomentRepository.saveDraft(candidate, jpegData: jpegData) else { return }
+        guard let draft = try? await sharedMomentRepository.saveDraft(candidate, payload: payload) else { return }
         challenge.sharedMoments.append(draft)
         localChallenges[challenge.id] = challenge
     }
@@ -488,19 +546,48 @@ final class AppStore {
     func retryPendingMomentUploads() async {
         let queued = challenge.sharedMoments.filter { $0.lifecycle == .uploadPending }
         for moment in queued {
-            guard let name = moment.localAssetName,
-                  let data = try? await ProtectedSharedMomentStore.shared.data(for: name),
-                  let saved = try? await sharedMomentRepository.seal(moment, jpegData: data),
+            let data: Data? = if let name = moment.localAssetName {
+                try? await ProtectedSharedMomentStore.shared.data(for: name)
+            } else {
+                nil
+            }
+            let payload = SharedMomentPayload(
+                kind: moment.mediaKind,
+                data: data,
+                mimeType: moment.mediaMimeType,
+                durationSeconds: moment.durationSeconds
+            )
+            if challenge.experienceVersion == .kindnessRoll,
+               let mission = moment.missionID.flatMap({ id in missions.first(where: { $0.id == id }) }) {
+                _ = await sealKindnessAct(
+                    draftID: moment.id,
+                    mission: mission,
+                    payload: payload,
+                    caption: moment.note ?? "",
+                    exportConsent: moment.exportConsent
+                )
+                continue
+            }
+            guard let saved = try? await sharedMomentRepository.seal(moment, payload: payload),
                   let index = challenge.sharedMoments.firstIndex(where: { $0.id == saved.id }) else { continue }
             challenge.sharedMoments[index] = saved
         }
     }
 
     func sealPrivateDraft(_ momentID: UUID) async {
-        guard let moment = challenge.sharedMoments.first(where: { $0.id == momentID }),
-              let name = moment.localAssetName,
-              let data = try? await ProtectedSharedMomentStore.shared.data(for: name),
-              let saved = try? await sharedMomentRepository.seal(moment, jpegData: data),
+        guard let moment = challenge.sharedMoments.first(where: { $0.id == momentID }) else { return }
+        let data: Data? = if let name = moment.localAssetName {
+            try? await ProtectedSharedMomentStore.shared.data(for: name)
+        } else {
+            nil
+        }
+        let payload = SharedMomentPayload(
+            kind: moment.mediaKind,
+            data: data,
+            mimeType: moment.mediaMimeType,
+            durationSeconds: moment.durationSeconds
+        )
+        guard let saved = try? await sharedMomentRepository.seal(moment, payload: payload),
               let index = challenge.sharedMoments.firstIndex(where: { $0.id == momentID }) else { return }
         challenge.sharedMoments[index] = saved
         lastSealedMomentAt = .now
@@ -513,13 +600,21 @@ final class AppStore {
     }
 
     func deleteSharedMoment(_ momentID: UUID) async {
+        let contributionID = challenge.sharedMoments.first(where: { $0.id == momentID })?.contributionID
         try? await sharedMomentRepository.delete(momentID: momentID)
         challenge.sharedMoments.removeAll { $0.id == momentID }
+        if challenge.experienceVersion == .kindnessRoll,
+           Date.now < challenge.revealDate,
+           let contributionID {
+            challenge.contributions.removeAll { $0.id == contributionID }
+        }
+        localChallenges[challenge.id] = challenge
+        updateCurrentChallengeInLibrary()
     }
 
     @discardableResult
     func sealSharedMoment(
-        jpegData: Data,
+        payload: SharedMomentPayload,
         note: String,
         category: MissionCategory?,
         exportConsent: Bool,
@@ -530,13 +625,16 @@ final class AppStore {
             creatorID: localParticipantID,
             editorialCategory: category,
             note: note,
+            mediaKind: payload.kind,
+            mediaMimeType: payload.mimeType,
+            durationSeconds: payload.durationSeconds,
             attribution: attribution,
             revealConsent: true,
             exportConsent: exportConsent,
             lifecycle: .uploadPending
         )
         do {
-            let saved = try await sharedMomentRepository.seal(moment, jpegData: jpegData)
+            let saved = try await sharedMomentRepository.seal(moment, payload: payload)
             if !challenge.sharedMoments.contains(where: { $0.id == saved.id }) {
                 challenge.sharedMoments.append(saved)
             }
@@ -546,6 +644,78 @@ final class AppStore {
             return saved
         } catch {
             backendMessage = "Your moment is still private on this device. Please try sealing it again."
+            return nil
+        }
+    }
+
+    /// Version-2's single write path: one act, one sealed moment, and one automatically placed tile.
+    @discardableResult
+    func sealKindnessAct(
+        draftID: UUID = UUID(),
+        mission: Mission,
+        payload: SharedMomentPayload,
+        caption: String,
+        exportConsent: Bool
+    ) async -> KindnessMomentReceipt? {
+        guard challenge.experienceVersion == .kindnessRoll else { return nil }
+        guard challenge.summary.phase() == .active, Date.now < challenge.revealDate else {
+            backendMessage = "This group is no longer accepting moments."
+            return nil
+        }
+        let occupied = Set(challenge.contributions.compactMap(\.tilePosition))
+        let predictedPosition = challenge.sealedArtwork.flatMap {
+            BoardGeometry(side: $0.boardSide).firstOpenPosition(occupied: occupied)
+        } ?? (0..<challenge.goal).first(where: { !occupied.contains($0) }) ?? challenge.contributions.count
+        let draft = KindnessMomentDraft(
+            id: draftID,
+            challengeID: challenge.id,
+            creatorID: localParticipantID,
+            mission: mission,
+            payload: payload,
+            caption: caption,
+            exportConsent: exportConsent
+        )
+        do {
+            let receipt = try await sharedMomentRepository.sealKindnessMoment(
+                draft,
+                filmLook: challenge.filmLookID,
+                predictedPosition: predictedPosition
+            )
+            let evidence: EvidenceMethod = switch payload.kind {
+            case .photo: .photo
+            case .video: .video
+            case .note: .reflection
+            }
+            let contribution = TileContribution(
+                id: receipt.contributionID,
+                mission: mission,
+                emotion: .caring,
+                evidence: evidence,
+                contributor: nil,
+                sharedMemory: true,
+                isRevived: false,
+                status: .placed,
+                tilePosition: receipt.tilePosition,
+                participantID: localParticipantID
+            )
+            challenge.contributions.removeAll { $0.id == contribution.id }
+            challenge.contributions.append(contribution)
+            challenge.sharedMoments.removeAll { $0.id == receipt.moment.id }
+            challenge.sharedMoments.append(receipt.moment)
+            lastSealedMomentAt = .now
+            localChallenges[challenge.id] = challenge
+            updateCurrentChallengeInLibrary()
+            backendMessage = nil
+            await engagementTracker.track(.sealed, challengeID: challenge.id)
+            return receipt
+        } catch {
+            let local = (try? await sharedMomentRepository.moments(challengeID: challenge.id)) ?? []
+            if let pending = local.first(where: { $0.id == draft.id }) {
+                challenge.sharedMoments.removeAll { $0.id == pending.id }
+                challenge.sharedMoments.append(pending)
+                localChallenges[challenge.id] = challenge
+            }
+            backendMessage = "Your protected draft is waiting to upload. It will retry when you reconnect."
             return nil
         }
     }
@@ -776,7 +946,7 @@ final class AppStore {
             accessSnapshot = try await purchaseService.redeemEventPass(
                 organizationID: selectedOrganizationID, challengeID: challenge.id
             )
-            accountMessage = "Mosaic Pass applied to this challenge."
+            accountMessage = "Mosaic Pass applied."
         } catch {
             accountMessage = error.localizedDescription
         }
@@ -911,7 +1081,10 @@ final class AppStore {
                 revealDate: draft.revealDate,
                 invitationCode: Self.localInvitationCode(for: draft.name),
                 contributions: [],
-                theme: draft.selection
+                theme: draft.selection,
+                artworkMode: draft.usesMuseumArtwork ? .museum : .legacy,
+                experienceVersion: draft.experienceVersion,
+                filmLookID: draft.filmLookID
             )
             challenge = local
             isOrganizer = true
@@ -938,6 +1111,97 @@ final class AppStore {
         }
     }
 
+    func loadMuseumCatalog() async {
+        guard let repository else {
+            museumCatalog = []
+            museumCreationEnabled = false
+            return
+        }
+        isLoadingMuseumCatalog = true
+        defer { isLoadingMuseumCatalog = false }
+        do {
+            let response = try await repository.listArtworks(collection: nil, search: nil)
+            museumCatalog = response.artworks
+            museumCreationEnabled = response.enabled
+        } catch {
+            museumCatalog = []
+            museumCreationEnabled = false
+            backendMessage = error.localizedDescription
+        }
+    }
+
+    func prefetchMuseumArtworkIfNeeded() async {
+        guard challenge.artworkMode == .museum, let repository else { return }
+        artworkAvailability = .prefetching
+        do {
+            let package = try await repository.prefetchRevealArtwork(challengeID: challenge.id)
+            _ = try await revealArtworkCache.prefetch(package, challengeID: challenge.id)
+            artworkAvailability = .sealedReady
+            await engagementTracker.track(.artworkPrefetchCompleted, challengeID: challenge.id)
+        } catch {
+            artworkAvailability = challenge.serverStatus == "revealed" || Date.now >= challenge.revealDate
+                ? .reconnecting("Reconnect to securely open the artwork.")
+                : .idle
+        }
+    }
+
+    @discardableResult
+    func unlockMuseumArtwork() async -> Bool {
+        guard challenge.artworkMode == .museum,
+              let revision = challenge.artworkPackageRevision else { return false }
+        if let display = await revealArtworkCache.cachedDisplayURL(
+            challengeID: challenge.id,
+            revision: revision
+        ), let metadata = try? await revealArtworkCache.cachedMetadata(
+            challengeID: challenge.id,
+            revision: revision
+        ) {
+            revealedArtworkDisplayURL = display
+            revealedArtwork = metadata
+            revealedArtworkExportURL = await revealArtworkCache.cachedExportURL(
+                challengeID: challenge.id,
+                revision: revision
+            )
+            artworkAvailability = .ready
+            return true
+        }
+
+        guard let repository else {
+            artworkAvailability = .reconnecting("Reconnect to securely open the artwork.")
+            return false
+        }
+        artworkAvailability = .unlocking
+        do {
+            await prefetchMuseumArtworkIfNeeded()
+            let response = try await repository.getRevealedArtwork(challengeID: challenge.id)
+            let display = try await revealArtworkCache.decrypt(response, challengeID: challenge.id)
+            try await revealArtworkCache.storeMetadata(
+                response.artwork,
+                challengeID: challenge.id,
+                revision: response.packageRevision
+            )
+            revealedArtwork = response.artwork
+            revealedArtworkDisplayURL = display
+            revealedArtworkExportURL = try? await revealArtworkCache.cacheExport(
+                response,
+                challengeID: challenge.id
+            )
+            artworkAvailability = .ready
+            return true
+        } catch {
+            if error is RevealArtworkCryptoError {
+                await engagementTracker.track(.artworkDecryptFailed, challengeID: challenge.id)
+            }
+            artworkAvailability = .reconnecting("Reconnect to securely open the artwork.")
+            backendMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func trackMuseumReveal(_ event: EngagementEventName) async {
+        await engagementTracker.track(event, challengeID: challenge.id)
+    }
+
     func returnToShowcase() async {
         guard let showcaseChallengeID else { return }
         try? await loadChallenge(showcaseChallengeID, organizer: false)
@@ -956,6 +1220,11 @@ final class AppStore {
     ) async -> Bool {
         let shouldOfferRecovery = pendingContribution == nil && !sessionState.isAuthenticated
         pendingContribution = contribution
+        guard !challenge.isShowcase else {
+            backendState = .failed(message: "The public showcase is read-only.")
+            backendMessage = "This showcase is read-only. Open your private sandbox to create a tile."
+            return false
+        }
         guard let repository else { return true }
         do {
             let record = try await repository.submit(EvidenceDraft(
@@ -1008,21 +1277,24 @@ final class AppStore {
         }
     }
 
-    func startReveal() async {
+    @discardableResult
+    func startReveal() async -> Bool {
         guard let repository else {
             challenge.revealedAt = .now
             challenge.serverStatus = "revealed"
             challenge.recapAvailability = .processing
             updateCurrentChallengeInLibrary()
             showReveal = true
-            return
+            return true
         }
         do {
             _ = try await repository.reveal(challengeID: challenge.id, now: true, at: nil)
             showReveal = true
             await refresh()
+            return true
         } catch {
             backendMessage = error.localizedDescription
+            return false
         }
     }
 
@@ -1045,7 +1317,10 @@ final class AppStore {
     }
 
     func openChallenge(_ id: UUID) async {
-        if challenge.id == id { return }
+        if challenge.id == id {
+            isOrganizer = false
+            return
+        }
         if repository != nil {
             do {
                 try await loadChallenge(id, organizer: false)
@@ -1236,12 +1511,19 @@ final class AppStore {
         applyLoadedChallenge(loaded, organizer: organizer)
         updateCurrentChallengeInLibrary()
         startRealtime(for: id)
+        await prefetchMuseumArtworkIfNeeded()
     }
 
     private func applyLoadedChallenge(
         _ loaded: (KindnessChallenge, [Mission]),
         organizer: Bool
     ) {
+        if challenge.id != loaded.0.id {
+            revealedArtwork = nil
+            revealedArtworkDisplayURL = nil
+            revealedArtworkExportURL = nil
+            artworkAvailability = .idle
+        }
         challenge = loaded.0
         missions = loaded.1
         isOrganizer = organizer
@@ -1334,7 +1616,11 @@ final class AppStore {
         } else {
             candidates = summaries
         }
-        return candidates.first { $0.phase() == .active }
+        let writable = candidates.filter { !$0.isShowcase }
+        return writable.first { $0.phase() == .active }
+            ?? writable.first { $0.phase() == .upcoming }
+            ?? writable.first
+            ?? candidates.first { $0.phase() == .active }
             ?? candidates.first { $0.phase() == .upcoming }
             ?? candidates.first
     }
@@ -1352,7 +1638,13 @@ final class AppStore {
             serverStatus: summary.serverStatus,
             recapAvailability: summary.recapAvailability,
             invitationCode: "",
-            contributions: []
+            isShowcase: summary.isShowcase,
+            contributions: [],
+            theme: summary.theme,
+            artworkMode: summary.artworkMode,
+            sealedArtwork: summary.sealedArtwork,
+            artworkCatalogRevision: summary.artworkCatalogRevision,
+            artworkPackageRevision: summary.artworkPackageRevision
         )
     }
 
@@ -1401,7 +1693,7 @@ final class AppStore {
 private enum InvitationFlowError: LocalizedError {
     case notFound
 
-    var errorDescription: String? { "Challenge code not found" }
+    var errorDescription: String? { "Mosaic code not found" }
 }
 
 extension KindnessChallenge {
@@ -1416,7 +1708,11 @@ extension KindnessChallenge {
             startAt: startDate,
             revealAt: revealDate,
             status: serverStatus,
-            theme: theme
+            artworkMode: artworkMode,
+            sealedArtwork: sealedArtwork,
+            theme: artworkMode == .legacy ? theme : nil,
+            experienceVersion: experienceVersion,
+            filmLookID: filmLookID
         )
     }
 }

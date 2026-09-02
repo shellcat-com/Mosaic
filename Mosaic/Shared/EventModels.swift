@@ -1,5 +1,34 @@
 import Foundation
 
+enum MosaicExperienceVersion: Int, Codable, CaseIterable, Sendable {
+    case legacy = 1
+    case kindnessRoll = 2
+}
+
+enum FilmLookID: String, Codable, CaseIterable, Identifiable, Sendable {
+    case sunwashed
+    case garden
+    case afterglow
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .sunwashed: "Sunwashed"
+        case .garden: "Garden"
+        case .afterglow: "Afterglow"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .sunwashed: "Warm grain and faded amber"
+        case .garden: "Soft greens and quiet contrast"
+        case .afterglow: "Gentle rose and evening warmth"
+        }
+    }
+}
+
 enum ChallengePhase: String, Codable, CaseIterable, Sendable {
     case upcoming
     case active
@@ -37,7 +66,14 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
     var goal: Int
     var recapAvailability: RecapAvailability
     var recapThumbnailFilename: String?
+    var isShowcase: Bool
     var theme: ThemeSelection = .fallback
+    var artworkMode: ArtworkMode = .legacy
+    var sealedArtwork: SealedArtwork?
+    var artworkCatalogRevision: Int?
+    var artworkPackageRevision: Int?
+    var experienceVersion: MosaicExperienceVersion
+    var filmLookID: FilmLookID
 
     init(
         id: UUID,
@@ -53,7 +89,14 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
         goal: Int,
         recapAvailability: RecapAvailability,
         recapThumbnailFilename: String?,
+        isShowcase: Bool = false,
         theme: ThemeSelection = .fallback,
+        artworkMode: ArtworkMode = .legacy,
+        sealedArtwork: SealedArtwork? = nil,
+        artworkCatalogRevision: Int? = nil,
+        artworkPackageRevision: Int? = nil,
+        experienceVersion: MosaicExperienceVersion = .legacy,
+        filmLookID: FilmLookID = .sunwashed,
         organizationID: UUID? = nil
     ) {
         self.id = id
@@ -70,12 +113,20 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
         self.goal = goal
         self.recapAvailability = recapAvailability
         self.recapThumbnailFilename = recapThumbnailFilename
+        self.isShowcase = isShowcase
         self.theme = theme
+        self.artworkMode = artworkMode
+        self.sealedArtwork = sealedArtwork
+        self.artworkCatalogRevision = artworkCatalogRevision
+        self.artworkPackageRevision = artworkPackageRevision
+        self.experienceVersion = experienceVersion
+        self.filmLookID = filmLookID
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, name, groupName, purpose, startAt, revealAt, revealedAt, serverStatus
-        case organizationID, scheduleRevision, contributionCount, goal, recapAvailability, recapThumbnailFilename, theme
+        case organizationID, scheduleRevision, contributionCount, goal, recapAvailability, recapThumbnailFilename, isShowcase, theme
+        case artworkMode, sealedArtwork, artworkCatalogRevision, artworkPackageRevision, experienceVersion, filmLookID
     }
 
     init(from decoder: Decoder) throws {
@@ -94,7 +145,14 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
         goal = try values.decode(Int.self, forKey: .goal)
         recapAvailability = try values.decodeIfPresent(RecapAvailability.self, forKey: .recapAvailability) ?? .unavailable
         recapThumbnailFilename = try values.decodeIfPresent(String.self, forKey: .recapThumbnailFilename)
+        isShowcase = try values.decodeIfPresent(Bool.self, forKey: .isShowcase) ?? false
         theme = try values.decodeIfPresent(ThemeSelection.self, forKey: .theme) ?? .fallback
+        artworkMode = try values.decodeIfPresent(ArtworkMode.self, forKey: .artworkMode) ?? .legacy
+        sealedArtwork = try values.decodeIfPresent(SealedArtwork.self, forKey: .sealedArtwork)
+        artworkCatalogRevision = try values.decodeIfPresent(Int.self, forKey: .artworkCatalogRevision)
+        artworkPackageRevision = try values.decodeIfPresent(Int.self, forKey: .artworkPackageRevision)
+        experienceVersion = try values.decodeIfPresent(MosaicExperienceVersion.self, forKey: .experienceVersion) ?? .legacy
+        filmLookID = try values.decodeIfPresent(FilmLookID.self, forKey: .filmLookID) ?? .sunwashed
     }
 
     var progress: Double {
@@ -112,6 +170,9 @@ struct ChallengeSummary: Identifiable, Codable, Hashable, Sendable {
         if serverStatus == "revealed" {
             let revealWindowEnd = calendar.date(byAdding: .minute, value: 30, to: revealAt) ?? revealAt
             return date < revealWindowEnd && recapAvailability != .ready ? .reveal : .completed
+        }
+        if serverStatus == "awaiting_reveal" {
+            return date >= revealAt ? .reveal : .active
         }
         if date < startAt { return .upcoming }
         if date < revealAt { return .active }

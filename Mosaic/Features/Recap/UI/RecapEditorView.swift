@@ -12,7 +12,7 @@ struct RecapEditorView: View {
     @State private var resumeAfterMusic = false
     @State private var shareItems: [Any] = []
 
-    enum Panel: String, CaseIterable { case edits = "Edits", music = "Music", details = "Details" }
+    enum Panel: String, CaseIterable { case edits = "Style", music = "Music", details = "Details" }
 
     init(challenge: KindnessChallenge) {
         self.challenge = challenge
@@ -21,39 +21,49 @@ struct RecapEditorView: View {
 
     var body: some View {
         ZStack {
-            MosaicTheme.canvas.ignoresSafeArea()
-            ScrollView {
-                VStack(spacing: 20) {
-                    header
-                    RecapPlayerView(request: model.renderRequest, currentTime: $model.currentTime,
-                                    isPlaying: model.isPlaying, onTogglePlayback: model.togglePlayback)
-                        .frame(maxHeight: 540)
-                        .padding(.horizontal, 30)
-
-                    if let timeline = model.timeline {
-                        Slider(value: $model.currentTime, in: 0...max(timeline.totalDuration, 0.1))
-                            .tint(MosaicTheme.indigo).padding(.horizontal, 24)
-                            .accessibilityLabel("Recap position")
-                    }
-
-                    Picker("Editor panel", selection: $panel) {
-                        ForEach(Panel.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented).padding(.horizontal, 20)
-                    .onChange(of: panel) { previous, next in
-                        if next == .music {
-                            resumeAfterMusic = model.isPlaying
-                            model.pause()
-                        } else if previous == .music, resumeAfterMusic {
-                            resumeAfterMusic = false
-                            model.play()
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        header
+                        preview
+                        if model.sources.isEmpty {
+                            Label(
+                                "No moments were approved for export, so this recap is an artwork keepsake.",
+                                systemImage: "photo.artframe"
+                            )
+                            .font(MosaicTheme.body(.medium))
+                            .foregroundStyle(MosaicTheme.muted)
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(MosaicTheme.paper, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        } else if model.sources.count < 3 {
+                            Label(
+                                "This shorter, artwork-led recap uses each approved moment once.",
+                                systemImage: "sparkles"
+                            )
+                            .font(MosaicTheme.body(.medium))
+                            .foregroundStyle(MosaicTheme.muted)
                         }
+                        editorPicker
+                        panelContent
+                        exportControls
                     }
-
-                    panelContent.padding(.horizontal, 20)
-                    exportControls.padding(.horizontal, 20).padding(.bottom, 34)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 40)
+                }
+                .scrollIndicators(.hidden)
+                .background(MosaicTheme.canvas)
+                .navigationTitle("Recap")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button { dismiss() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel("Close")
+                    }
                 }
             }
+
             if model.isExporting {
                 Color.black.opacity(0.22).ignoresSafeArea()
                 RecapExportProgressView(progress: model.exportProgress, status: model.exportStatus, cancel: model.cancelExport)
@@ -71,52 +81,130 @@ struct RecapEditorView: View {
     }
 
     private var header: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "xmark").font(.headline).foregroundStyle(MosaicTheme.ink)
-                    .frame(width: 44, height: 44).background(MosaicTheme.paper, in: Circle())
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Your story, in motion")
+                    .font(MosaicTheme.display(36, weight: .semibold))
+                    .foregroundStyle(MosaicTheme.ink)
+                Text(challenge.name)
+                    .font(MosaicTheme.body())
+                    .foregroundStyle(MosaicTheme.muted)
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Mosaic Recap").font(MosaicTheme.display(30, weight: .semibold))
-                Text(model.preset.name).font(.caption.weight(.semibold)).foregroundStyle(MosaicTheme.muted)
+
+            HStack(spacing: 8) {
+                MetricPill(icon: "photo.stack", text: "\(model.sources.count) memories")
+                MetricPill(icon: "wand.and.stars", text: model.preset.name)
             }
-            Spacer()
-            MosaicSticker(kind: .sparkles, size: 50)
         }
-        .padding(.horizontal, 20).padding(.top, 8)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var preview: some View {
+        VStack(spacing: 12) {
+            RecapPlayerView(
+                request: model.renderRequest,
+                currentTime: $model.currentTime,
+                isPlaying: model.isPlaying,
+                onTogglePlayback: model.togglePlayback
+            )
+            .frame(maxHeight: 500)
+            .padding(.horizontal, 32)
+
+            if let timeline = model.timeline {
+                VStack(spacing: 4) {
+                    Slider(value: $model.currentTime, in: 0...max(timeline.totalDuration, 0.1))
+                        .tint(MosaicTheme.indigo)
+                        .accessibilityLabel("Recap position")
+                    HStack {
+                        Text(time(model.currentTime))
+                        Spacer()
+                        Text(time(timeline.totalDuration))
+                    }
+                    .font(.system(.caption2, design: .monospaced, weight: .medium))
+                    .foregroundStyle(MosaicTheme.muted)
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 20)
+        .background(MosaicTheme.paper, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(MosaicTheme.border, lineWidth: 1)
+        }
+    }
+
+    private var editorPicker: some View {
+        Picker("Editor panel", selection: $panel) {
+            ForEach([Panel.edits, Panel.music], id: \.self) { Text($0.rawValue).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .onChange(of: panel) { previous, next in
+            if next == .music {
+                resumeAfterMusic = model.isPlaying
+                model.pause()
+            } else if previous == .music, resumeAfterMusic {
+                resumeAfterMusic = false
+                model.play()
+            }
+        }
     }
 
     @ViewBuilder private var panelContent: some View {
         switch panel {
         case .edits:
-            VStack(alignment: .leading, spacing: 12) {
-                MosaicSectionHeader(title: "Choose an edit", eyebrow: "One story, nine moods", icon: .memory)
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeading("Choose a style", detail: "Each style changes the pacing, layout, and color of your recap.")
                 RecapPresetPicker(selected: model.preset) { model.selectPreset($0) }
             }
         case .music:
-            VStack(alignment: .leading, spacing: 12) {
-                MosaicSectionHeader(title: "Find the rhythm", eyebrow: "Licensed and credited", icon: .spark)
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeading("Choose the soundtrack", detail: "Preview licensed tracks or let the memories play without music.")
                 RecapMusicPicker(selection: $model.audio, recapDuration: model.timeline?.totalDuration ?? 20)
                     .onChange(of: model.audio) { _, _ in model.rebuildTimeline() }
             }
         case .details:
-            VStack(alignment: .leading, spacing: 14) {
-                MosaicSectionHeader(title: "Story details", eyebrow: "Keep it human", icon: .heart)
-                Picker("Reflection density", selection: $model.options.reflectionDensity) {
-                    ForEach(RecapDetailsOptions.ReflectionDensity.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
-                }.pickerStyle(.segmented)
-                Toggle("Show allowed names", isOn: $model.options.showAttribution)
-                Toggle("Show mission labels", isOn: $model.options.showMissionLabels)
-                Toggle("Include Impact Receipt", isOn: $model.options.showImpactReceipt)
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeading("Story details", detail: "Choose how much context appears around the memories.")
+
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Reflection cards")
+                            .font(MosaicTheme.body(.medium))
+                        Picker("Reflection cards", selection: $model.options.reflectionDensity) {
+                            ForEach(RecapDetailsOptions.ReflectionDensity.allCases, id: \.self) {
+                                Text($0.rawValue.capitalized).tag($0)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                    }
+
+                    Divider()
+                    Toggle("Show allowed names", isOn: $model.options.showAttribution)
+                    Divider()
+                    Toggle("Show act labels", isOn: $model.options.showMissionLabels)
+                    Divider()
+                    Toggle("Include impact receipt", isOn: $model.options.showImpactReceipt)
+                }
+                .font(MosaicTheme.body())
+                .padding(16)
+                .background(MosaicTheme.paper, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(MosaicTheme.border, lineWidth: 1)
+                }
             }
-            .tint(MosaicTheme.indigo).porcelainCard()
+            .tint(MosaicTheme.indigo)
             .onChange(of: model.options) { _, _ in model.rebuildTimeline() }
         }
     }
 
     private var exportControls: some View {
-        VStack(spacing: 12) {
-            Button(model.exportURL == nil ? "Share Recap" : "Share Again") {
+        VStack(alignment: .leading, spacing: 16) {
+            sectionHeading("Ready to share?", detail: "Mosaic exports a vertical video made from the choices above.")
+
+            Button {
                 if let url = model.exportURL {
                     shareItems = RecapShareService.activityItems(videoURL: url, music: model.selectedMusic)
                     showShare = true
@@ -127,31 +215,71 @@ struct RecapEditorView: View {
                         showShare = true
                     }
                 }
+            } label: {
+                Label(model.exportURL == nil ? "Create & Share Recap" : "Share Recap", systemImage: "square.and.arrow.up")
             }
             .buttonStyle(PrimaryButtonStyle())
+            .disabled(model.renderRequest == nil)
+
+            if model.exportURL != nil {
+                HStack(spacing: 8) {
+                    Button {
+                        Task {
+                            do { try await model.saveToPhotos() }
+                            catch { model.errorMessage = error.localizedDescription }
+                        }
+                    } label: {
+                        Label("Save", systemImage: "arrow.down.to.line")
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+
+                    Button {
+                        Task { await model.publishToGroup() }
+                    } label: {
+                        if model.isPublishing {
+                            ProgressView()
+                        } else {
+                            Label(model.isPublished ? "Shared" : "Group", systemImage: model.isPublished ? "checkmark" : "person.2")
+                        }
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                    .disabled(model.isPublished || model.isPublishing)
+                }
+            }
+
             Menu {
-                Button("Final mosaic card") { shareCard(.finalMosaic) }
-                Button("Impact Receipt card") { shareCard(.impactReceipt) }
+                Button { shareCard(.finalMosaic) } label: {
+                    Label("Final mosaic card", systemImage: "square.grid.2x2")
+                }
+                Button { shareCard(.impactReceipt) } label: {
+                    Label("Impact receipt card", systemImage: "heart.text.square")
+                }
             } label: {
-                Label("Share a static card", systemImage: "photo.on.rectangle.angled")
+                Label("Share a still image", systemImage: "photo.on.rectangle.angled")
             }
             .buttonStyle(SecondaryButtonStyle())
-            if model.exportURL != nil {
-                Button("Save to Photos") {
-                    Task {
-                        do { try await model.saveToPhotos() }
-                        catch { model.errorMessage = error.localizedDescription }
-                    }
-                }.buttonStyle(SecondaryButtonStyle())
-                Button(model.isPublished ? "Available to your group" : "Make available to group") {
-                    Task { await model.publishToGroup() }
-                }
-                .buttonStyle(SecondaryButtonStyle())
-                .disabled(model.isPublished || model.isPublishing)
-            }
-            Label("1080 × 1920 · H.264 · Your selected music credit is included", systemImage: "lock.shield.fill")
-                .font(.caption).foregroundStyle(MosaicTheme.muted).multilineTextAlignment(.center)
+
+            Label("1080 × 1920 video · Music credit included", systemImage: "checkmark.shield.fill")
+                .font(MosaicTheme.caption())
+                .foregroundStyle(MosaicTheme.muted)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
+    }
+
+    private func sectionHeading(_ title: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(MosaicTheme.display(26, weight: .semibold))
+                .foregroundStyle(MosaicTheme.ink)
+            Text(detail)
+                .font(MosaicTheme.caption())
+                .foregroundStyle(MosaicTheme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func time(_ seconds: TimeInterval) -> String {
+        String(format: "%d:%02d", Int(seconds) / 60, Int(seconds) % 60)
     }
 
     private func shareCard(_ kind: RecapShareService.StaticCardKind) {

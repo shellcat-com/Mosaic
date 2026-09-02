@@ -70,6 +70,17 @@ struct PhotoRecapTests {
         #expect(templates.allSatisfy { !$0.detail.isEmpty })
     }
 
+    @Test
+    func durationEstimateTracksSelectionAndTemplate() {
+        var selection = PhotoRecapSelection()
+        selection.toggle(UUID())
+        selection.toggle(UUID())
+        let project = PhotoRecapProject(mosaicID: UUID(), selection: selection, template: .kilnTape)
+        #expect(project.estimatedDuration == 3.6)
+        #expect(project.hasEdits)
+        #expect(!PhotoRecapProject(mosaicID: UUID()).hasEdits)
+    }
+
     @Test(.timeLimit(.minutes(5)))
     func twentyFourPhotoRecapRendersAtVerticalFullHDWithoutDroppingSelections() async throws {
         let directory = FileManager.default.temporaryDirectory

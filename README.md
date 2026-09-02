@@ -1,189 +1,87 @@
-<p align="center">
-  <img src="design/marketing/repository/mosaic-repository-hero.png" alt="Mosaic — Small acts. One shared story. A colorful ceramic tile logo beside the Mosaic name." width="100%">
-</p>
+# Mosaic
 
-<p align="center">
-  <strong>Verified acts of kindness become one equal-weight collaborative ceramic artwork.</strong>
-</p>
+> A shared kindness challenge without rankings or points.
 
-<p align="center">
-  <a href="https://www.swift.org/"><img alt="Swift 6" src="https://img.shields.io/badge/Swift-6.0-F56E3E?style=flat-square&logo=swift&logoColor=white"></a>
-  <a href="https://developer.apple.com/ios/"><img alt="iOS 18 or newer" src="https://img.shields.io/badge/iOS-18%2B-5A47F2?style=flat-square&logo=apple&logoColor=white"></a>
-  <a href="https://developer.apple.com/xcode/swiftui/"><img alt="SwiftUI" src="https://img.shields.io/badge/UI-SwiftUI-7EB7CD?style=flat-square"></a>
-  <a href="https://supabase.com/"><img alt="Supabase" src="https://img.shields.io/badge/Backend-Supabase-7D9A83?style=flat-square&logo=supabase&logoColor=white"></a>
-  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-D6A937?style=flat-square"></a>
-</p>
+Mosaic lets a school, neighborhood, workplace, nonprofit, or friend group turn small acts of kindness into one collaborative artwork. A signed-in organizer chooses activities, reviewed public-domain artwork, a disposable-film look, a per-member shot limit, and a fixed reveal time. Members join by QR code or invitation link, confirm each activity at most once, and add one equal-size tile. No proof, ranking, score, organizer approval, or configurable privacy mode exists.
 
-Mosaic gives a school, neighborhood, workplace, nonprofit, or friend group a shared kindness challenge without rankings or points. Each privately verified contribution creates one equal-size ceramic tile. The growing artwork stays sealed until a synchronized reveal opens the final mosaic, approved memories, and an attributable Impact Receipt.
+The in-app camera is a separate, photo-only disposable roll. A kept frame consumes a shot; retakes do not. The event film look is permanently developed into the JPEG before upload. Before reveal, photographers see only their own sealed roll. At reveal, joining, kindness confirmations, and photography close; every joined member receives the completed artwork, the readable Kindness side, and the eligible photo gallery.
 
-Built for **RevenueCat Shipaton 2026**, Mosaic's current submission route is the **Next Gen Award**. The **RevenueCat Peace Prize** and **RevenueCat Design Award** are additional targets only if version 1.0 is first published to an eligible store during the submission window. The repository includes the SwiftUI app, Supabase backend, private media flows, organizer moderation, RevenueCat Test Store integration, widgets, Live Activity infrastructure, recap generation, and a fully judgeable offline showcase.
+Each member can build a personal 1–24-photo vertical recap. Selection order is preserved and each selected photo appears once. Templates control layout, transition, grade, and timing; music can be selected and trimmed. Artwork, names, notes, activities, captions, title cards, statistics, and impact receipts are structurally absent from the recap model and renderer. Recaps render on-device and are saved or shared locally.
 
-## See the story unfold
+## Product structure
 
-<p align="center">
-  <img src="design/marketing/repository/mosaic-app-store-gallery.png" alt="Five Mosaic product images showing the collaborative home mosaic, mission details, privacy controls, ceramic tile placement, and final reveal." width="100%">
-</p>
-
-The gallery is built from deterministic **real simulator UI**, not generated product screens. Full-size App Store exports live in [`design/marketing/app-store`](design/marketing/app-store).
-
-## How Mosaic works
-
-| 1. Choose an act | 2. Verify privately | 3. Place your tile | 4. Reveal together |
-| --- | --- | --- | --- |
-| Pick an approachable mission that fits your time and energy. | Submit an accepted reflection, photo, video, receipt, or organizer approval. | Emotion, mission, and evidence shape an equal-size ceramic tile. | The kiln opens the artwork, approved memories, recap, and Impact Receipt. |
-
-**Pass the Tile** lets a participant invite someone else to continue the chain. A dormant chain that comes back to life receives a restrained kintsugi-gold connection—a symbol of renewal, never a ranking or premium advantage.
-
-## Built for trust
-
-| Principle | Product behavior |
+| Tab | Purpose |
 | --- | --- |
-| **Private by default** | Evidence is organizer-only and remains separate from community-story consent. |
-| **Equal visual weight** | Every verified act creates the same-size tile; purchases never make a contribution more prominent. |
-| **Invitation only** | V1 challenges are unlisted and entered through a private link, QR code, or short code. |
-| **Consent-aware memories** | Identity, reveal inclusion, and recap/export consent are independent decisions. |
-| **Accessible ceremony** | VoiceOver, Dynamic Type, Reduce Motion, Reduce Transparency, and non-color states are first-class behavior. |
-| **Attributable impact** | The receipt separates verified, confirmed, and self-attested outcomes instead of using vague claims. |
+| **Mosaics** | Active and completed events, Create, Join, activities, artwork, kindness, gallery, and recap entry. |
+| **Camera** | Event selector, viewfinder, film look, shots remaining, review/retake, and the photographer's sealed roll. |
+| **You** | Display name, joined events, support, blocked users, sign out, and account deletion. |
+
+The shipping target lives in `MosaicV3/`. The prior hackathon implementation remains in `Mosaic/` only to preserve the pre-existing dirty working tree; `project.yml` excludes it except for the reviewed design system, disposable-film processor, fonts, art, and music assets.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Participant["Participant"] --> App["SwiftUI app"]
-    Organizer["Organizer"] --> App
-    App --> Auth["Supabase Auth"]
-    App --> Functions["Authenticated Edge Functions"]
-    Functions --> Database[("Postgres + RLS")]
-    App --> Storage["Private Storage"]
-    Database --> Realtime["Membership-scoped Realtime invalidations"]
-    Realtime --> App
-    App --> Apple["Widgets · Live Activities · Calendar · Notifications"]
-    App --> Recap["On-device recap renderer"]
+    Apple["Sign in with Apple"] --> Session["SessionStore"]
+    Session --> Billing["BillingStore"]
+    Billing --> RCSDK["RevenueCat Purchases SDK"]
+    Session --> Root["Typed SwiftUI router"]
+    Root --> Library["MosaicLibraryStore"]
+    Root --> Detail["MosaicDetailStore"]
+    Root --> Camera["CameraStore"]
+    Library --> API["Supabase v3 API"]
+    Detail --> API
+    Camera --> Safety["On-device sensitive-content check"]
+    Safety --> Develop["Permanent film development"]
+    Develop --> API
+    API --> DB[("Postgres + RLS")]
+    API --> Storage["Private event-photos bucket"]
+    API --> BillingRPC["Billing RPCs + Edge Functions"]
+    BillingRPC --> RCV2["RevenueCat API v2 + PASS ledger"]
+    API --> Reveal["Private encrypted artwork package"]
+    Reveal --> Decrypt["SHA-256 + AES-GCM reveal cache"]
+    Root --> Recap["On-device photo recap renderer"]
 ```
 
-The client never promotes itself through lifecycle states. Authenticated Edge Functions authorize transitions, Postgres constraints preserve invariants, and Row Level Security isolates challenges, organizations, evidence, identities, memories, and billing state. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`SECURITY.md`](SECURITY.md) for the complete trust model.
+The app uses Swift 6, SwiftUI, Observation, AVFoundation, Sensitive Content Analysis, PhotoKit add-only access, Supabase Swift, and RevenueCat Purchases 5.82.0. RevenueCatUI is intentionally not included: the “Make room for more people” Living Kiln paywall is native SwiftUI and all package prices and periods come from RevenueCat. Networking, photo storage, safety analysis, billing, and recap rendering are isolated behind actors; UI stores are `@MainActor @Observable`.
 
-## Quick start
+The intentionally destructive v3 migration is [`supabase/migrations/20260824235234_mosaic_v3_core_rebuild.sql`](supabase/migrations/20260824235234_mosaic_v3_core_rebuild.sql). It preserves migration history but replaces the non-production product schema. Back up any linked project before applying it. It is not automatically pushed by this repository.
 
-### Judge in 60 seconds
+The focused billing migration is [`supabase/migrations/20260826061805_v3_revenuecat_billing.sql`](supabase/migrations/20260826061805_v3_revenuecat_billing.sql). It captures `free`, `organizer_plus`, or `event_pass` on each Mosaic, mirrors server-confirmed billing state, and implements idempotent PASS reservation and webhook replay protection. Participants are always free. Free organizers receive one unrevealed Mosaic, 9–25 tiles, 12 shots per member, and Sunwashed. Plus or one PASS unlocks 36–100 tiles, 24/36 shots, and all film looks; Plus also allows multiple active Mosaics. Captured event access never expires mid-event.
 
-Requirements: **Xcode 26+** and an iPhone Simulator.
+After the hosted migration, run [`scripts/prepare_v3_artwork_packages.mjs`](scripts/prepare_v3_artwork_packages.mjs) with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the environment. It encrypts pending reviewed JPEGs with per-Mosaic AES-256-GCM keys, uploads ciphertext to the private bucket, and registers release material through service-role-only RPCs. Never place the service-role key in the app or repository.
 
-```sh
-git clone https://github.com/shellcat-com/Mosaic.git
-cd Mosaic
-open Mosaic.xcodeproj
-```
+## Build and verification
 
-Select the shared **Mosaic Shipaton** scheme and run it on an iPhone Simulator. Choose **Explore Demo**. No Docker, Supabase CLI, local server, or credentials are required for the participant and reveal showcase. If first-launch connectivity fails, Mosaic opens its clearly labeled bundled read-only showcase and retries the cloud when the app becomes active.
-
-The RevenueCat purchase proof uses a Test Store public SDK key. Copy `Config/Local.xcconfig.example` to the ignored `Config/Local.xcconfig`, set `REVENUECAT_TEST_STORE_PUBLIC_KEY`, then use **Create a Mosaic** → **Organizer Plus**. The original billing-disabled **Mosaic Hackathon** scheme remains available as the archived Reverie build. Follow [`docs/SHIPATON_DEMO_SCRIPT.md`](docs/SHIPATON_DEMO_SCRIPT.md) for the complete judging path.
-
-The stable showcase invitation code is **KIND42**. The convenience landing page is [shellcat-com.github.io/Mosaic/?join=KIND42](https://shellcat-com.github.io/Mosaic/?join=KIND42); the code remains the source of truth if a browser cannot open the custom app scheme.
-
-### Backend development (maintainers only)
-
-Additional requirements: XcodeGen, Docker, Supabase CLI, `curl`, and `jq`.
-
-```sh
-supabase start
-supabase db reset
-supabase functions serve
-```
-
-Normal Debug, Hackathon, Shipaton, and Release builds use the hosted judging backend. A maintainer may override the public URL/key at build time with another hosted HTTPS Supabase project; localhost and unresolved configuration are rejected by the app.
-
-Run the two-user lifecycle check in another terminal:
-
-```sh
-./supabase/functions/tests/integration.sh
-```
-
-## Verification
-
-```sh
-xcodebuild \
-  -project Mosaic.xcodeproj \
-  -scheme 'Mosaic Shipaton' \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  test
-
-supabase test db
-supabase db lint --local
-```
-
-After editing `project.yml`, regenerate the Xcode project with:
+Requirements: Xcode 26+, iOS 18+, XcodeGen, Supabase CLI, and Docker for local database tests. Copy `Config/Local.xcconfig.example` to the ignored `Config/Local.xcconfig` and provide only the RevenueCat Test Store **public** SDK key. Server secrets belong in Supabase secrets as `REVENUECAT_PROJECT_ID`, `REVENUECAT_SECRET_API_KEY`, and `REVENUECAT_WEBHOOK_SECRET`; never put them in an xcconfig.
 
 ```sh
 xcodegen generate
+xcodebuild -project Mosaic.xcodeproj -scheme 'Mosaic Shipaton Debug' \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
+
+supabase start
+supabase db reset
+supabase test db
+supabase db lint --local --schema public --schema private
+deno test --config supabase/functions/refresh-billing/deno.json \
+  supabase/functions/_shared/revenuecat_test.ts
+deno test --config supabase/functions/revenuecat-webhook/deno.json \
+  supabase/functions/revenuecat-webhook/index_test.ts
 ```
 
-## Hosted judging backend
+RevenueCat catalog contract: offering `organizer_plus_v1`, entitlement `organizer_plus`, products `organizer_monthly`, `organizer_annual`, and `mosaic_event_pass_v2`, and virtual currency `PASS`. The iOS client uses the lowercase Supabase UUID as RevenueCat `appUserID`. CustomerInfo can show purchase progress, but premium controls unlock only after `refresh-billing` reconciles the server snapshot.
 
-The repository is preconfigured for `https://lmemddtpwfbkawlkwthf.supabase.co`. Its committed publishable key is a public client identifier protected by explicit grants and RLS. Never add a secret key, service-role key, database password, Apple credential, or CLI/access token to the app or repository.
+Current automated results and the remaining device/release gates are recorded in [`docs/V3_ACCEPTANCE_STATUS.md`](docs/V3_ACCEPTANCE_STATUS.md), with requirement-level traceability in [`docs/V3_REQUIREMENT_EVIDENCE.md`](docs/V3_REQUIREMENT_EVIDENCE.md).
 
-```sh
-xcodebuild \
-  -project Mosaic.xcodeproj \
-  -scheme Mosaic \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  SUPABASE_URL='https://YOUR_MAINTAINER_PROJECT.supabase.co' \
-  SUPABASE_PUBLISHABLE_KEY='sb_publishable_YOUR_PUBLIC_KEY'
-```
+Native Sign in with Apple must be enabled for `com.biswaskhatiwada.mosaicapp`, and the same Apple client ID must be enabled in Supabase Auth. Anonymous sign-in and manual identity linking are disabled in [`supabase/config.toml`](supabase/config.toml).
 
-For contributor-only values, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig`; that destination is ignored by Git. Production push, Live Activity, RevenueCat, and Apple authentication setup are documented under [`docs/`](docs). Only public client identifiers belong in an app build; RevenueCat `sk_` keys, webhook secrets, service-role keys, and database credentials remain server-side.
+## Safety and privacy
 
-<details>
-<summary><strong>Implemented product and platform capabilities</strong></summary>
+Mosaic is invitation-only by invariant. Nonmembers cannot read event content or media. Before reveal, members can see shared tile progress but only their own notes and photos; organizers receive no extra access. After reveal, only members who joined in time can read eligible contributions and photos. A photo report quarantines the photo immediately, blocking filters its creator from that member's gallery and recap choices, and photographers may delete their own photos. See [`docs/APP_STORE_DISCLOSURES.md`](docs/APP_STORE_DISCLOSURES.md) and the public pages under [`site/`](site/).
 
-- Anonymous guest onboarding with name and identity-privacy choices.
-- Native Sign in with Apple linking that preserves the anonymous Supabase UUID and contributions.
-- Owner, admin, and reviewer workspaces; seven-day single-use invites; organization switching.
-- RevenueCat Paywall V2, Test Store purchase and restore, server-derived Organizer Plus state, and atomic non-expiring PASS redemption.
-- Synthetic read-only showcase plus a deterministic per-installation organizer sandbox.
-- Reflection, photo, video, receipt, and organizer-approval evidence paths.
-- Private evidence and memory storage with signed upload and download access.
-- Independent memory inclusion, identity display, and export-consent controls.
-- Separate organizer decisions for evidence and memories.
-- Atomic tile placement, private Realtime invalidations, and synchronized manual or scheduled reveal.
-- Membership-scoped event agenda with upcoming, active, reveal, and retained recap states.
-- Exact reveal times, revision-aware reminders, Apple Calendar editing, and deep links.
-- App Group caching, Home Screen and Lock Screen widgets, and Live Activity infrastructure.
-- Privacy-safe recap thumbnails and consent-aware vertical recap export.
-- Cached read-only recovery and retryable local drafts when writes fail.
-- RLS, explicit Data API grants, pgTAP policies, Edge Functions, seed data, and minute-level reveal cron.
+## Design and attribution
 
-Partner confirmation is intentionally labeled as future work and is not required by judged missions. Push and Live Activity delivery require the Apple and Supabase production credentials described in [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md); local reminders, Calendar editing, widgets, cached recaps, and the bundled showcase work without them.
+The visual language is Mosaic's own Living Kiln system. [Bubbbly by Ann Nguyen](https://www.bubbbly.com/) informed warmth, tactile object-first presentation, and retro-camera personality. The supplied Filmera/Tailii flows informed the mechanics of invitations, disposable rolls, shared galleries, and personal recap creation. No code, branding, assets, copy, or layouts were copied from either reference.
 
-</details>
-
-## Project map
-
-| Path | Purpose |
-| --- | --- |
-| [`Mosaic/`](Mosaic) | SwiftUI application, design system, domain models, repositories, and Supabase adapters. |
-| [`MosaicWidgets/`](MosaicWidgets) | Home Screen, Lock Screen, and Live Activity presentation. |
-| [`MosaicTests/`](MosaicTests) | UI-state, lifecycle, transport, consent, theme, and design-system tests. |
-| [`supabase/migrations/`](supabase/migrations) | Schema, RLS, Storage, Realtime, cron, and atomic state transitions. |
-| [`supabase/functions/`](supabase/functions) | Authenticated server-side lifecycle and organization operations. |
-| [`supabase/tests/`](supabase/tests) | pgTAP isolation, billing, theme, recap, notification, and lifecycle tests. |
-| [`design/`](design) | Living Kiln direction, vector identity, concept boards, and reproducible marketing assets. |
-
-## Documentation
-
-- [`PRODUCT_BLUEPRINT.md`](PRODUCT_BLUEPRINT.md) — product thesis, roles, lifecycle, privacy, and v1 boundary.
-- [`design/DESIGN_DIRECTION.md`](design/DESIGN_DIRECTION.md) — Living Kiln visual system and interaction principles.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — trust boundaries and data flow.
-- [`docs/SHIPATON_DEMO_SCRIPT.md`](docs/SHIPATON_DEMO_SCRIPT.md) — sub-two-minute Shipaton judging walkthrough.
-- [`docs/SHIPATON_SUBMISSION.md`](docs/SHIPATON_SUBMISSION.md) — ready-to-paste Next Gen, Peace Prize, and Design Award copy.
-- [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) — three-minute Reverie Hacks judging walkthrough.
-- [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — Apple capabilities, Edge Function secrets, and scheduling.
-- [`docs/MONETIZATION_SETUP.md`](docs/MONETIZATION_SETUP.md) — RevenueCat, App Store Connect, webhooks, and Apple auth.
-
-Public launch pages: [Marketing](https://shellcat-com.github.io/Mosaic/) · [Support](https://shellcat-com.github.io/Mosaic/support/) · [Privacy](https://shellcat-com.github.io/Mosaic/privacy/) · [Terms](https://shellcat-com.github.io/Mosaic/terms/) · [Account deletion](https://shellcat-com.github.io/Mosaic/account-deletion/) · [Community guidelines](https://shellcat-com.github.io/Mosaic/community-guidelines/)
-
-The App Store URL mapping and final production review gates are documented in [`docs/APP_STORE_WEB_CHECKLIST.md`](docs/APP_STORE_WEB_CHECKLIST.md).
-
-## License and credits
-
-Source code is available under the [MIT License](LICENSE). Fraunces and all third-party or public-domain artwork credits are documented in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+Artwork, typeface, and music licensing is recorded in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Design rationale is documented in [`design/DESIGN_DIRECTION.md`](design/DESIGN_DIRECTION.md).

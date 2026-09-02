@@ -32,9 +32,16 @@ struct OrganizerDashboardView: View {
                 if store.selectedOrganization?.role.canManageChallenges != false {
                     organizerSection("Artwork & invitation", icon: .mosaic) {
                         VStack(alignment: .leading, spacing: 14) {
-                            KinderArtworkView(selection: store.challenge.theme, phase: .invitation, cornerRadius: 22, showsTitle: true)
-                                .frame(height: 210)
-                            Text("Choose from all 120 handmade Kinder Block artworks. The selection locks when the first tile is placed.")
+                            if store.challenge.artworkMode == .museum {
+                                MosaicBoardView(challenge: store.challenge)
+                                    .frame(maxWidth: 260)
+                            } else {
+                                KinderArtworkView(selection: store.challenge.theme, phase: .invitation, cornerRadius: 22, showsTitle: true)
+                                    .frame(height: 210)
+                            }
+                            Text(store.challenge.artworkMode == .museum
+                                ? "The selected museum artwork is encrypted. Participants see only its collection and sealed palette; artwork and board size lock after the first accepted tile."
+                                : "This legacy Mosaic keeps its original procedural artwork unchanged.")
                                 .font(.footnote)
                                 .foregroundStyle(MosaicTheme.muted)
                             Button(store.challenge.contributions.isEmpty ? "Design this Kinder Block" : "Artwork locked") {
@@ -42,8 +49,9 @@ struct OrganizerDashboardView: View {
                             }
                             .buttonStyle(PrimaryButtonStyle(color: MosaicTheme.persimmon))
                             .disabled(!store.challenge.contributions.isEmpty)
-                            Button("Review all 120 artworks") {
-                                showCatalogReview = true
+                            Button(store.challenge.artworkMode == .museum ? "Review museum catalog" : "Review legacy catalog") {
+                                if store.challenge.artworkMode == .museum { showCreation = true }
+                                else { showCatalogReview = true }
                             }
                             .buttonStyle(SecondaryButtonStyle())
                         }
@@ -65,7 +73,7 @@ struct OrganizerDashboardView: View {
                 if store.selectedOrganization?.role.canManageChallenges != false {
                     organizerSection("Invitation", icon: .chain) {
                     VStack(spacing: 0) {
-                        row("Challenge code", trailing: store.challenge.invitationCode)
+                        row("Mosaic code", trailing: store.challenge.invitationCode)
                         Divider().overlay(MosaicTheme.border)
                         ShareLink(item: MosaicBuildConfiguration.invitationShareText(challengeName: store.challenge.name, code: store.challenge.invitationCode)) {
                             actionRow("Share invitation", systemImage: "square.and.arrow.up")
@@ -81,7 +89,7 @@ struct OrganizerDashboardView: View {
                         }
                         Divider().overlay(MosaicTheme.border)
                         NavigationLink { SharedMomentReviewQueueView() } label: {
-                            navigationRow("Shared moments awaiting approval", count: store.challenge.sharedMoments.filter { $0.lifecycle == .sealedPendingReview }.count)
+                            navigationRow("Memories awaiting approval", count: store.challenge.sharedMoments.filter { $0.lifecycle == .sealedPendingReview }.count)
                         }
                         Divider().overlay(MosaicTheme.border)
                         row("Reports", trailing: "0")
@@ -110,11 +118,19 @@ struct OrganizerDashboardView: View {
                         }
                         Button("Start reveal ceremony") {
                             Task {
-                                await store.startReveal()
-                                dismiss()
+                                if await store.startReveal() { dismiss() }
                             }
                         }
                         .buttonStyle(PrimaryButtonStyle())
+                        .disabled(store.challenge.artworkMode == .museum
+                            && !["awaiting_reveal", "revealed"].contains(store.challenge.serverStatus))
+                        if store.challenge.artworkMode == .museum,
+                           store.challenge.serverStatus != "awaiting_reveal",
+                           store.challenge.serverStatus != "revealed" {
+                            Text("Manual reveal becomes available after every tile is placed.")
+                                .font(.footnote)
+                                .foregroundStyle(MosaicTheme.muted)
+                        }
                     }
                 }
                 }
@@ -122,7 +138,7 @@ struct OrganizerDashboardView: View {
                 if MosaicBuildConfiguration.billingEnabled {
                     organizerSection("Organizer Plus", icon: .spark) {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Custom artwork, recap approval, poster export, and high-resolution artwork.")
+                            Text("Recap approval, poster export, and high-resolution artwork. Custom artwork upload is coming later and is not included as an immediately usable benefit.")
                                 .font(.subheadline)
                                 .foregroundStyle(MosaicTheme.muted)
                             HStack {
@@ -141,7 +157,7 @@ struct OrganizerDashboardView: View {
                                 if store.accessSnapshot.plusActive {
                                     store.accountMessage = "Open Billing from Profile to manage your Apple subscription."
                                 } else {
-                                    store.requestPremium(.customArtwork)
+                                    store.requestPremium(.posterExport)
                                 }
                             }
                                 .buttonStyle(SecondaryButtonStyle())
@@ -180,8 +196,13 @@ struct OrganizerDashboardView: View {
     private var challengeSummary: some View {
         OrganicPanel(variant: .leaningLeft, tint: MosaicTheme.persimmon.opacity(0.08)) {
             VStack(alignment: .leading, spacing: 10) {
-                KinderArtworkView(selection: store.challenge.theme, phase: .sealed, cornerRadius: 22)
-                    .frame(height: 170)
+                if store.challenge.artworkMode == .museum {
+                    MosaicBoardView(challenge: store.challenge)
+                        .frame(maxWidth: 220)
+                } else {
+                    KinderArtworkView(selection: store.challenge.theme, phase: .sealed, cornerRadius: 22)
+                        .frame(height: 170)
+                }
                 Text(store.challenge.name)
                     .font(MosaicTheme.display(30, weight: .semibold))
                 Text(store.challenge.purpose)
@@ -246,21 +267,21 @@ private struct SharedMomentReviewQueueView: View {
     var body: some View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 20) {
-                MosaicSectionHeader(title: "Shared roll", eyebrow: "Private moderation", icon: .memory)
+                MosaicSectionHeader(title: "Memories", eyebrow: "Private moderation", icon: .memory)
                 if pending.isEmpty {
-                    ContentUnavailableView("Roll review is clear", systemImage: "envelope.open", description: Text("Newly sealed moments will appear here."))
+                    ContentUnavailableView("Memory review is clear", systemImage: "envelope.open", description: Text("Newly added memories will appear here."))
                         .porcelainCard()
                 }
                 ForEach(pending) { moment in
                     OrganicPanel(variant: .leaningLeft, tint: MosaicTheme.claySurface) {
                         VStack(alignment: .leading, spacing: 13) {
                             HStack {
-                                Label("Sealed moment", systemImage: "envelope.fill").font(.headline)
+                                Label("\(moment.mediaKind.rawValue.capitalized) memory", systemImage: mediaIcon(moment.mediaKind)).font(.headline)
                                 Spacer()
                                 Text("PRIVATE").font(MosaicTheme.caption(.bold)).foregroundStyle(MosaicTheme.persimmon)
                             }
                             if let note = moment.note { Text(note).font(.subheadline).lineLimit(3) }
-                            Text("Approval adds this social memory to the reveal. It never creates an action or tile.")
+                            Text("Approval adds this memory to the reveal. It does not create an act or tile.")
                                 .font(.footnote).foregroundStyle(MosaicTheme.muted)
                             HStack {
                                 Button("Approve") { Task { await store.moderateSharedMoment(moment.id, approved: true) } }
@@ -273,8 +294,16 @@ private struct SharedMomentReviewQueueView: View {
                 }
             }
         }
-        .navigationTitle("Shared moments")
+        .navigationTitle("Memories")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func mediaIcon(_ kind: SharedMomentMediaKind) -> String {
+        switch kind {
+        case .photo: "photo.fill"
+        case .video: "video.fill"
+        case .note: "text.quote"
+        }
     }
 }
 
@@ -306,7 +335,7 @@ private struct ReviewQueueView: View {
                             }
                             Text(contribution.mission.title)
                                 .font(.subheadline.weight(.semibold))
-                            Text("Evidence is visible only to this challenge’s organizer. Story approval remains separate.")
+                            Text("Evidence is visible only to this Mosaic’s organizers. Story approval remains separate.")
                                 .font(.footnote)
                                 .foregroundStyle(MosaicTheme.muted)
                             HStack {

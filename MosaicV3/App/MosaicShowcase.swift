@@ -361,7 +361,12 @@ struct MosaicShowcaseRoot: View {
                     MosaicReducedMotionRevealShowcase()
                 }
             case .photos:
-                NavigationStack { MosaicEventView(eventID: MosaicShowcaseFixtures.revealedID, path: $path) }
+                NavigationStack(path: $path) {
+                    MosaicEventView(eventID: MosaicShowcaseFixtures.revealedID, path: $path)
+                        .navigationDestination(for: MosaicRoute.self) { route in
+                            MosaicDestinationView(route: route, path: $path)
+                        }
+                }
                     .task { model.detail.selectedOutcome = .photos }
             case .recap:
                 NavigationStack {

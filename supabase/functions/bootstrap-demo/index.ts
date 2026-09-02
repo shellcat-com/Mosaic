@@ -13,7 +13,7 @@ import {
 type RequestBody = { displayName?: string; privacy?: string };
 
 const challengeColumns =
-  "id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled";
+  "id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,experience_version,film_look_id";
 
 async function stableUUID(seed: string): Promise<string> {
   const digest = new Uint8Array(
@@ -96,14 +96,6 @@ export default {
       }, { onConflict: "organization_id,user_id" });
       if (organizationMemberError) throw organizationMemberError;
 
-      const { error: billingError } = await admin.from("billing_accounts")
-        .upsert({
-          organization_id: organizationID,
-          owner_user_id: uid,
-          revenuecat_customer_id: `demo:${uid}`,
-        }, { onConflict: "organization_id" });
-      if (billingError) throw billingError;
-
       let { data: sandbox, error: sandboxLookupError } = await admin
         .from("challenges")
         .select(challengeColumns)
@@ -131,6 +123,8 @@ export default {
           invitation_code: invitationCode,
           is_showcase: false,
           camera_roll_enabled: true,
+          experience_version: 2,
+          film_look_id: "sunwashed",
         }).select(challengeColumns).single();
         if (createError) {
           // A concurrent retry may have won the deterministic insert.

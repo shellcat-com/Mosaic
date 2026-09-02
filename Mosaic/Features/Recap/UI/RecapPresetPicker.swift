@@ -6,27 +6,36 @@ struct RecapPresetPicker: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 ForEach(RecapPresetCatalog.all) { preset in
                     Button { select(preset) } label: {
-                        VStack(alignment: .leading, spacing: 9) {
+                        VStack(alignment: .leading, spacing: 8) {
                             RecapPresetThumbnail(preset: preset, isSelected: selected.id == preset.id)
-                            .frame(width: 154, height: 205)
-                            Text(preset.name).font(MosaicTheme.display(18, weight: .semibold)).foregroundStyle(MosaicTheme.ink)
+                                .frame(width: 132, height: 176)
+                            Text(preset.name)
+                                .font(MosaicTheme.body(.semibold))
+                                .foregroundStyle(MosaicTheme.ink)
+                                .lineLimit(1)
                             Text("\(Int(preset.nominalMontageDuration)) sec montage")
-                                .font(MosaicTheme.caption()).foregroundStyle(MosaicTheme.muted)
+                                .font(MosaicTheme.caption())
+                                .foregroundStyle(MosaicTheme.muted)
                         }
-                        .padding(10)
-                        .background(selected.id == preset.id ? MosaicTheme.indigo.opacity(0.1) : MosaicTheme.paper,
-                                    in: OrganicPanelShape(variant: .softRectangle))
-                        .overlay { OrganicPanelShape(variant: .softRectangle).stroke(selected.id == preset.id ? MosaicTheme.indigo : MosaicTheme.border, lineWidth: selected.id == preset.id ? 2 : 1) }
+                        .padding(8)
+                        .frame(width: 148, alignment: .leading)
+                        .background(MosaicTheme.paper, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(selected.id == preset.id ? MosaicTheme.indigo : MosaicTheme.border,
+                                        lineWidth: selected.id == preset.id ? 2 : 1)
+                        }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(preset.visualStyle == .standard ? preset.name : "New template, \(preset.name)")
+                    .accessibilityLabel(preset.name)
                     .accessibilityAddTraits(selected.id == preset.id ? .isSelected : [])
                 }
             }
-            .padding(.horizontal, 2).padding(.vertical, 6)
+            .padding(.horizontal, 2)
+            .padding(.vertical, 4)
         }
     }
 
@@ -45,27 +54,17 @@ private struct RecapPresetThumbnail: View {
                 case .kilnTape: tapePreview
                 case .pocketKiln: pocketPreview
                 }
-                if preset.visualStyle != .standard {
-                    Text("NEW")
-                        .font(.system(size: 9, weight: .black, design: .rounded))
-                        .tracking(0.8)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 7).padding(.vertical, 4)
-                        .background(MosaicTheme.persimmon, in: Capsule())
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(8)
-                }
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 21, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+                        .background(Color.black.opacity(0.28), in: Circle())
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                        .padding(9)
+                        .padding(8)
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 

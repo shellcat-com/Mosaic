@@ -29,6 +29,13 @@ final class CameraStore {
         reviewJPEG = nil
     }
 
+    func clearPrivateState() async {
+        select(nil)
+        isProcessing = false
+        message = nil
+        try? await diskStore.clearAll()
+    }
+
     func synchronize(with event: MosaicEvent) {
         selectedEvent = event.summary
         ownPhotos = event.photos.filter(\.isMine)

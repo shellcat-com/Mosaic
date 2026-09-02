@@ -15,6 +15,7 @@ struct EvidenceView: View {
     @State private var showingMediaPicker = false
     @State private var showingMosaicCamera = false
     @State private var pickerSource: UIImagePickerController.SourceType = .camera
+    @State private var pendingCameraPhoto: Data?
 
     init(mission: Mission) {
         self.mission = mission
@@ -101,11 +102,9 @@ struct EvidenceView: View {
             }
             .ignoresSafeArea()
         }
-        .fullScreenCover(isPresented: $showingMosaicCamera) {
+        .fullScreenCover(isPresented: $showingMosaicCamera, onDismiss: finishCameraCapture) {
             EvidenceCameraView(mission: mission) { data in
-                photoData = UIImage(data: data)?.jpegData(compressionQuality: 0.88)
-                videoDuration = nil
-                mediaError = nil
+                pendingCameraPhoto = UIImage(data: data)?.jpegData(compressionQuality: 0.88)
             }
         }
         .task(id: selectedPhoto) {
@@ -138,6 +137,15 @@ struct EvidenceView: View {
                 mediaError = error.localizedDescription
             }
         }
+    }
+
+    private func finishCameraCapture() {
+        guard let pendingCameraPhoto else { return }
+        photoData = pendingCameraPhoto
+        self.pendingCameraPhoto = nil
+        videoDuration = nil
+        mediaError = nil
+        proceed = true
     }
 
     @ViewBuilder
@@ -251,7 +259,7 @@ struct EvidenceView: View {
                 }
             }
         case .partner:
-            ContentUnavailableView("Partner confirmation is coming later", systemImage: "person.badge.clock", description: Text("This post-hackathon method is not part of the judged mission flow. Choose another evidence method."))
+            ContentUnavailableView("Partner confirmation is coming later", systemImage: "person.badge.clock", description: Text("This post-hackathon method is not part of the judged act flow. Choose another evidence method."))
                 .frame(minHeight: 230)
         case .organizer:
             ContentUnavailableView("Organizer approval", systemImage: "checkmark.seal", description: Text("Your contribution will reserve an unfired clay position while it waits for review."))

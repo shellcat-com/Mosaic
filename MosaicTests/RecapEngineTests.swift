@@ -25,7 +25,7 @@ struct RecapEngineTests {
         #expect(RecapPresetCatalog.pocketKiln.visualStyle == .pocketKiln)
         #expect(RecapPresetCatalog.pocketKiln.nominalClipCount == 8)
         #expect(RecapPresetCatalog.pocketKiln.defaultMusicID == "spark")
-        #expect(RecapFrameRenderer.version == 2)
+        #expect(RecapFrameRenderer.version == 3)
     }
 
     @Test func timelineHasFixedStorySectionsAndDeterministicTiming() {
@@ -123,6 +123,33 @@ struct RecapEngineTests {
     @Test func onePhotoAppearsOnceWithoutDuplication() {
         let result = timeline(sources: [source(index: 0)])
         #expect(result.segments.filter { $0.phase == .memory }.count == 1)
+    }
+
+    @Test func videoMemoryRendersMovingFramesInsideTheRecap() async throws {
+        let videoURL = try await makeVideoFixture()
+        defer { try? FileManager.default.removeItem(at: videoURL) }
+        let videoSource = source(
+            index: 0,
+            content: .video(
+                asset: .init(localURL: videoURL, remotePath: nil, version: 1,
+                             pixelWidth: 320, pixelHeight: 240),
+                note: nil,
+                duration: 1
+            )
+        )
+        let timeline = timeline(sources: [videoSource], reduceMotion: true)
+        let memory = try #require(timeline.segments.first { $0.phase == .memory })
+        let request = RecapRenderRequest(meta: recapMeta(), timeline: timeline, options: .init(), music: nil)
+        let renderer = RecapFrameRenderer()
+        let size = CGSize(width: 360, height: 640)
+
+        let early = try #require(renderer.makeImage(request: request, time: memory.start + memory.duration * 0.2, size: size))
+        let late = try #require(renderer.makeImage(request: request, time: memory.start + memory.duration * 0.8, size: size))
+        let earlyPixel = try rgba(early, x: 180, y: 300)
+        let latePixel = try rgba(late, x: 180, y: 300)
+
+        #expect(Int(earlyPixel.red) > Int(earlyPixel.blue) + 40)
+        #expect(Int(latePixel.blue) > Int(latePixel.red) + 40)
     }
 
     @Test func curationFiltersConsentModerationAndAuthorization() {
@@ -466,5 +493,86 @@ struct RecapEngineTests {
             .appendingPathComponent("mosaic-recap-fixture-\(UUID().uuidString).jpg")
         try data.write(to: url, options: .atomic)
         return url
+    }
+
+    private func makeVideoFixture() async throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mosaic-recap-video-\(UUID().uuidString).mov")
+        let writer = try AVAssetWriter(outputURL: url, fileType: .mov)
+        let input = AVAssetWriterInput(
+            mediaType: .video,
+            outputSettings: [
+                AVVideoCodecKey: AVVideoCodecType.h264,
+                AVVideoWidthKey: 320,
+                AVVideoHeightKey: 240
+            ]
+        )
+        let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+            assetWriterInput: input,
+            sourcePixelBufferAttributes: [
+                kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
+                kCVPixelBufferWidthKey as String: 320,
+                kCVPixelBufferHeightKey as String: 240,
+                kCVPixelBufferIOSurfacePropertiesKey as String: [:]
+            ]
+        )
+        try #require(writer.canAdd(input))
+        writer.add(input)
+        try #require(writer.startWriting())
+        writer.startSession(atSourceTime: .zero)
+
+        for frame in 0..<30 {
+            while !input.isReadyForMoreMediaData { await Task.yield() }
+            let color: (red: UInt8, green: UInt8, blue: UInt8) = frame < 15
+                ? (240, 28, 24)
+                : (22, 42, 240)
+            let buffer = try makePixelBuffer(width: 320, height: 240, color: color)
+            try #require(adaptor.append(buffer, withPresentationTime: CMTime(value: Int64(frame), timescale: 30)))
+        }
+        input.markAsFinished()
+        await withCheckedContinuation { continuation in
+            writer.finishWriting { continuation.resume() }
+        }
+        try #require(writer.status == .completed)
+        return url
+    }
+
+    private func makePixelBuffer(
+        width: Int,
+        height: Int,
+        color: (red: UInt8, green: UInt8, blue: UInt8)
+    ) throws -> CVPixelBuffer {
+        var optionalBuffer: CVPixelBuffer?
+        let status = CVPixelBufferCreate(
+            kCFAllocatorDefault,
+            width,
+            height,
+            kCVPixelFormatType_32BGRA,
+            [kCVPixelBufferIOSurfacePropertiesKey as String: [:]] as CFDictionary,
+            &optionalBuffer
+        )
+        try #require(status == kCVReturnSuccess)
+        let buffer = try #require(optionalBuffer)
+        CVPixelBufferLockBaseAddress(buffer, [])
+        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
+        let bytes = try #require(CVPixelBufferGetBaseAddress(buffer)?.assumingMemoryBound(to: UInt8.self))
+        let rowBytes = CVPixelBufferGetBytesPerRow(buffer)
+        for y in 0..<height {
+            for x in 0..<width {
+                let offset = y * rowBytes + x * 4
+                bytes[offset] = color.blue
+                bytes[offset + 1] = color.green
+                bytes[offset + 2] = color.red
+                bytes[offset + 3] = 255
+            }
+        }
+        return buffer
+    }
+
+    private func rgba(_ image: CGImage, x: Int, y: Int) throws -> (red: UInt8, green: UInt8, blue: UInt8, alpha: UInt8) {
+        let data = try #require(image.dataProvider?.data)
+        let bytes = CFDataGetBytePtr(data)
+        let offset = y * image.bytesPerRow + x * 4
+        return (bytes![offset], bytes![offset + 1], bytes![offset + 2], bytes![offset + 3])
     }
 }

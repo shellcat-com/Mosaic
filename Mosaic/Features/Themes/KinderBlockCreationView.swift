@@ -54,6 +54,16 @@ struct KinderBlockCreationView: View {
             .onChange(of: draft) { _, newValue in
                 KinderBlockDraftStore.save(newValue)
             }
+            .task {
+                await store.loadMuseumCatalog()
+                if let first = filteredMuseumArtworks.first, draft.artworkID == nil {
+                    draft.artworkID = first.id
+                } else if store.museumCatalog.isEmpty {
+                    // The bundled procedural catalog is the intentional offline fallback.
+                    draft.usesMuseumArtwork = false
+                    await store.trackMuseumReveal(.legacyFallbackUsed)
+                }
+            }
         }
     }
 
@@ -71,7 +81,9 @@ struct KinderBlockCreationView: View {
             MosaicProgressRail(
                 current: step + 1,
                 total: stepTitles.count,
-                tint: draft.selection.theme.signatureHex.first.map { Color(hex: $0) } ?? MosaicTheme.indigo
+                tint: selectedArtwork?.dominantColors.first.map { Color(museumHex: $0) }
+                    ?? draft.selection.theme.signatureHex.first.map { Color(hex: $0) }
+                    ?? MosaicTheme.indigo
             )
         }
         .padding(.horizontal, 22)
@@ -85,7 +97,7 @@ struct KinderBlockCreationView: View {
                 wizardHeading(
                     eyebrow: "Begin with what they love",
                     title: "What feels like your community?",
-                    copy: "Choose up to three interests. We’ll bring the most fitting handmade artwork to the front."
+                    copy: "Choose up to three interests. We’ll bring relevant public-domain museum artworks to the front."
                 )
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -105,7 +117,7 @@ struct KinderBlockCreationView: View {
                                 Text(collection.title)
                                     .font(MosaicTheme.display(18, weight: .semibold))
                                     .multilineTextAlignment(.leading)
-                                Text("10 artworks")
+                                Text("\(store.museumCatalog.filter { $0.collection == collection }.count) artworks")
                                     .font(.caption.weight(.semibold))
                                     .opacity(0.68)
                             }
@@ -123,7 +135,7 @@ struct KinderBlockCreationView: View {
                     }
                 }
 
-                Button("Show all 120 artworks") {
+                Button("Show all museum artworks") {
                     draft.interests = []
                     step = 1
                 }
@@ -136,15 +148,19 @@ struct KinderBlockCreationView: View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 18) {
                 wizardHeading(
-                    eyebrow: "120 original themes",
-                    title: "Choose the artwork they’ll remember.",
-                    copy: "Every piece has its own composition, surface, palette, and reveal behavior."
+                    eyebrow: draft.usesMuseumArtwork
+                        ? (store.museumCatalog.isEmpty ? "Reviewed museum works" : "\(store.museumCatalog.count) reviewed museum works")
+                        : "Offline collection",
+                    title: "Choose the artwork they’ll reveal.",
+                    copy: draft.usesMuseumArtwork
+                        ? "Public-domain works from the Art Institute of Chicago, with an approved square crop and full attribution."
+                        : "The original procedural collection remains available as the offline fallback."
                 )
 
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(MosaicTheme.muted)
-                    TextField("Search themes", text: $searchText)
+                    TextField("Search title or artist", text: $searchText)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                     if !searchText.isEmpty {
@@ -159,23 +175,43 @@ struct KinderBlockCreationView: View {
                 .overlay { HandDrawnCapsule(inset: 1).stroke(MosaicTheme.border, lineWidth: 1) }
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
-                    ForEach(filteredThemes) { theme in
-                        ThemeGalleryCard(
-                            theme: theme,
-                            selected: draft.selection.themeID == theme.id
-                        ) {
-                            draft.selection = ThemeSelection(
-                                themeID: theme.id,
-                                paletteID: .signature,
-                                seed: theme.seed,
-                                revision: KinderThemeCatalog.revision
-                            )
+                    if draft.usesMuseumArtwork {
+                        ForEach(filteredMuseumArtworks) { artwork in
+                            MuseumArtworkGalleryCard(
+                                artwork: artwork,
+                                selected: draft.artworkID == artwork.id
+                            ) { draft.artworkID = artwork.id }
+                        }
+                    } else {
+                        ForEach(filteredThemes) { theme in
+                            ThemeGalleryCard(
+                                theme: theme,
+                                selected: draft.selection.themeID == theme.id
+                            ) {
+                                draft.selection = ThemeSelection(
+                                    themeID: theme.id,
+                                    paletteID: .signature,
+                                    seed: theme.seed,
+                                    revision: KinderThemeCatalog.revision
+                                )
+                            }
                         }
                     }
                 }
 
-                if filteredThemes.isEmpty {
-                    ContentUnavailableView("No artwork found", systemImage: "paintpalette", description: Text("Try another theme name or interest."))
+                if draft.usesMuseumArtwork && store.isLoadingMuseumCatalog {
+                    ProgressView("Loading the reviewed catalog…")
+                        .frame(maxWidth: .infinity)
+                        .porcelainCard()
+                } else if (draft.usesMuseumArtwork ? filteredMuseumArtworks.isEmpty : filteredThemes.isEmpty) {
+                    ContentUnavailableView("No artwork found", systemImage: "paintpalette", description: Text("Try another title, artist, or interest."))
+                        .porcelainCard()
+                }
+
+                if !store.museumCreationEnabled, !store.museumCatalog.isEmpty {
+                    Label("Museum-art creation is staged behind the rollout flag. You can review the complete experience now; creation enables after package telemetry is healthy.", systemImage: "clock.badge.checkmark")
+                        .font(.footnote)
+                        .foregroundStyle(MosaicTheme.muted)
                         .porcelainCard()
                 }
             }
@@ -185,56 +221,51 @@ struct KinderBlockCreationView: View {
     private var previewStep: some View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 22) {
-                wizardHeading(
-                    eyebrow: draft.selection.theme.collection.title,
-                    title: draft.selection.theme.name,
-                    copy: draft.selection.theme.tagline
-                )
+                if let artwork = selectedArtwork {
+                    wizardHeading(
+                        eyebrow: artwork.collection.title,
+                        title: artwork.title,
+                        copy: "\(artwork.artistDisplay) · \(artwork.dateDisplay)"
+                    )
 
-                KinderArtworkView(
-                    selection: draft.selection,
-                    phase: .invitation,
-                    cornerRadius: 32,
-                    showsTitle: true
-                )
-                .frame(height: 390)
+                    MuseumArtworkRemoteImage(artwork: artwork)
+                        .frame(maxWidth: .infinity)
+                        .aspectRatio(1, contentMode: .fit)
+                        .clipShape(.rect(cornerRadius: 24))
+                        .accessibilityLabel(artwork.altText)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("CHOOSE A FINISH")
-                        .font(MosaicTheme.caption(.bold))
-                        .tracking(0.9)
-                        .foregroundStyle(MosaicTheme.muted)
-
-                    HStack(spacing: 10) {
-                        ForEach(KinderThemePaletteID.allCases) { palette in
-                            Button {
-                                draft.selection.paletteID = palette
-                            } label: {
-                                VStack(spacing: 7) {
-                                    ThemePalettePreview(theme: draft.selection.theme, paletteID: palette)
-                                    Text(palette.title)
-                                        .font(.caption.weight(.semibold))
-                                }
-                                .foregroundStyle(MosaicTheme.ink)
-                                .padding(9)
-                                .frame(maxWidth: .infinity)
-                                .background(MosaicTheme.paper, in: OrganicPanelShape(variant: .softRectangle))
-                                .overlay {
-                                    OrganicPanelShape(variant: .softRectangle)
-                                        .stroke(draft.selection.paletteID == palette ? MosaicTheme.indigo : MosaicTheme.border, lineWidth: draft.selection.paletteID == palette ? 2 : 1)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityAddTraits(draft.selection.paletteID == palette ? .isSelected : [])
-                        }
+                    Link(destination: artwork.sourceURL) {
+                        Label("View artwork at the Art Institute of Chicago", systemImage: "arrow.up.right.square")
                     }
+                    .font(.footnote.weight(.semibold))
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("WHAT PARTICIPANTS SEE")
+                            .font(MosaicTheme.caption(.bold))
+                            .tracking(0.9)
+                            .foregroundStyle(MosaicTheme.muted)
+                        MosaicBoardView(challenge: museumPreviewChallenge)
+                            .frame(maxWidth: 330)
+                        Text("Only the collection and this sealed palette are shared before reveal. No artwork fragment is exposed.")
+                            .font(.footnote)
+                            .foregroundStyle(MosaicTheme.muted)
+                    }
+                    .porcelainCard()
+                } else {
+                    wizardHeading(
+                        eyebrow: draft.selection.theme.collection.title,
+                        title: draft.selection.theme.name,
+                        copy: draft.selection.theme.tagline
+                    )
+                    KinderArtworkView(selection: draft.selection, phase: .invitation, cornerRadius: 32, showsTitle: true)
+                        .frame(height: 390)
                 }
 
                 OrganicPanel(variant: .leaningLeft, tint: MosaicTheme.sage.opacity(0.1)) {
                     HStack(spacing: 13) {
                         Image(systemName: "lock.fill")
                             .foregroundStyle(MosaicTheme.sage)
-                        Text("Guests see this handmade teaser. The complete composition stays sealed until the reveal.")
+                        Text("Guests see a safe sealed state. The artwork and attribution unlock only when the reveal is authorized.")
                             .font(.footnote)
                             .foregroundStyle(MosaicTheme.muted)
                     }
@@ -297,8 +328,37 @@ struct KinderBlockCreationView: View {
                             Text("\(draft.goal)")
                                 .font(MosaicTheme.display(34, weight: .semibold))
                         }
-                        Stepper("Kindness goal", value: $draft.goal, in: 1...10_000, step: draft.goal < 100 ? 5 : 25)
-                            .labelsHidden()
+                        if draft.usesMuseumArtwork {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 58))], spacing: 10) {
+                                ForEach(MuseumBoardSize.sides, id: \.self) { side in
+                                    let capacity = side * side
+                                    Button("\(capacity)") {
+                                        draft.boardSide = side
+                                        draft.goal = capacity
+                                    }
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(draft.boardSide == side ? .white : MosaicTheme.ink)
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                                    .background(
+                                        draft.boardSide == side ? MosaicTheme.indigo : MosaicTheme.paper,
+                                        in: .rect(cornerRadius: 12)
+                                    )
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(draft.boardSide == side ? .clear : MosaicTheme.border)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("\(side) by \(side) board, \(capacity) tiles")
+                                    .accessibilityAddTraits(draft.boardSide == side ? .isSelected : [])
+                                }
+                            }
+                            Text("\(draft.boardSide) × \(draft.boardSide) equal tiles")
+                                .font(.caption)
+                                .foregroundStyle(MosaicTheme.muted)
+                        } else {
+                            Stepper("Kindness goal", value: $draft.goal, in: 1...10_000, step: draft.goal < 100 ? 5 : 25)
+                                .labelsHidden()
+                        }
                     }
                 }
 
@@ -332,8 +392,17 @@ struct KinderBlockCreationView: View {
                         copy: "The artwork locks when the first tile is placed, so everyone builds toward the same reveal."
                     )
 
-                    KinderArtworkView(selection: draft.selection, phase: .invitation, cornerRadius: 30, showsTitle: true)
-                        .frame(height: 320)
+                    if let artwork = selectedArtwork {
+                        MuseumArtworkRemoteImage(artwork: artwork)
+                            .aspectRatio(1, contentMode: .fit)
+                            .clipShape(.rect(cornerRadius: 24))
+                        Text("\(artwork.title) — \(artwork.artistDisplay)")
+                            .font(.footnote)
+                            .foregroundStyle(MosaicTheme.muted)
+                    } else {
+                        KinderArtworkView(selection: draft.selection, phase: .invitation, cornerRadius: 30, showsTitle: true)
+                            .frame(height: 320)
+                    }
 
                     OrganicPanel(variant: .leaningRight) {
                         VStack(spacing: 0) {
@@ -354,6 +423,11 @@ struct KinderBlockCreationView: View {
 
                     if creationFailed {
                         Label("The draft is safe. Check your connection and try again.", systemImage: "arrow.clockwise.circle.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(MosaicTheme.persimmon)
+                    }
+                    if draft.usesMuseumArtwork && !store.museumCreationEnabled {
+                        Label("Museum-art creation is not enabled for this server rollout yet. This reviewed draft stays saved.", systemImage: "lock.circle.fill")
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(MosaicTheme.persimmon)
                     }
@@ -394,8 +468,13 @@ struct KinderBlockCreationView: View {
                 title: challenge.name,
                 copy: "Your handmade invitation is ready to share."
             )
-            KinderArtworkView(selection: challenge.theme, phase: .invitation, cornerRadius: 30, showsTitle: true)
-                .frame(height: 330)
+            if challenge.artworkMode == .museum {
+                MosaicBoardView(challenge: challenge)
+                    .frame(maxWidth: 330)
+            } else {
+                KinderArtworkView(selection: challenge.theme, phase: .invitation, cornerRadius: 30, showsTitle: true)
+                    .frame(height: 330)
+            }
             ShareLink(item: MosaicBuildConfiguration.invitationShareText(challengeName: challenge.name, code: challenge.invitationCode)) {
                 Label("Share invitation", systemImage: "square.and.arrow.up")
             }
@@ -455,18 +534,60 @@ struct KinderBlockCreationView: View {
         }
     }
 
+    private var selectedArtwork: ArtworkCatalogItem? {
+        guard draft.usesMuseumArtwork, let artworkID = draft.artworkID else { return nil }
+        return store.museumCatalog.first { $0.id == artworkID }
+    }
+
+    private var filteredMuseumArtworks: [ArtworkCatalogItem] {
+        let interests = draft.interests
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return store.museumCatalog.filter { artwork in
+            (interests.isEmpty || interests.contains(artwork.collection))
+                && (query.isEmpty
+                    || artwork.title.lowercased().contains(query)
+                    || artwork.artistDisplay.lowercased().contains(query)
+                    || artwork.collection.title.lowercased().contains(query))
+        }
+    }
+
+    private var museumPreviewChallenge: KindnessChallenge {
+        let artwork = selectedArtwork
+        return KindnessChallenge(
+            name: draft.name.isEmpty ? "A Kinder Block" : draft.name,
+            purpose: draft.purpose,
+            goal: draft.boardSide * draft.boardSide,
+            revealDate: draft.revealDate,
+            invitationCode: "PREVIEW",
+            contributions: [],
+            artworkMode: .museum,
+            sealedArtwork: SealedArtwork(
+                collection: artwork?.collection ?? .community,
+                palette: artwork?.dominantColors ?? ["#7A74C9", "#D49A68", "#ECE4D6"],
+                boardSide: draft.boardSide
+            ),
+            artworkCatalogRevision: artwork?.catalogRevision
+        )
+    }
+
     private var canContinue: Bool {
         switch step {
         case 0: draft.interests.count <= 3
-        case 1, 2: true
+        case 1, 2: !draft.usesMuseumArtwork || draft.artworkID != nil
         case 3:
             !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 && !draft.groupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 && !draft.purpose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 && draft.name.count <= 100
                 && draft.purpose.count <= 500
-        case 4: draft.goal > 0 && draft.goal <= 10_000 && draft.revealDate > draft.startDate
-        case 5: draft.isReadyToCreate
+        case 4:
+            draft.goal > 0
+                && draft.goal <= 10_000
+                && draft.revealDate > draft.startDate
+                && (!draft.usesMuseumArtwork
+                    || (MuseumBoardSize.isSupported(side: draft.boardSide)
+                        && draft.goal == draft.boardSide * draft.boardSide))
+        case 5: draft.isReadyToCreate && (!draft.usesMuseumArtwork || store.museumCreationEnabled)
         default: false
         }
     }
@@ -524,6 +645,70 @@ private struct ThemeGalleryCard: View {
     }
 }
 
+private struct MuseumArtworkGalleryCard: View {
+    let artwork: ArtworkCatalogItem
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 10) {
+                MuseumArtworkRemoteImage(artwork: artwork)
+                    .aspectRatio(1, contentMode: .fit)
+                    .clipShape(.rect(cornerRadius: 16))
+                Text(artwork.title)
+                    .font(MosaicTheme.display(17, weight: .semibold))
+                    .foregroundStyle(MosaicTheme.ink)
+                    .lineLimit(2)
+                Text(artwork.artistDisplay)
+                    .font(.caption)
+                    .foregroundStyle(MosaicTheme.muted)
+                    .lineLimit(1)
+                Text(artwork.collection.title.uppercased())
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .tracking(0.7)
+                    .foregroundStyle(MosaicTheme.muted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .background(MosaicTheme.paper, in: .rect(cornerRadius: 20))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(selected ? MosaicTheme.indigo : MosaicTheme.border, lineWidth: selected ? 2.4 : 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(artwork.title), by \(artwork.artistDisplay), \(artwork.dateDisplay)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+private struct MuseumArtworkRemoteImage: View {
+    let artwork: ArtworkCatalogItem
+    @State private var image: UIImage?
+
+    var body: some View {
+        ZStack {
+            Rectangle().fill(Color(.secondarySystemBackground))
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ProgressView()
+            }
+        }
+        .clipped()
+        .task(id: artwork.thumbnailURL) {
+            guard let url = artwork.thumbnailURL,
+                  let (data, _) = try? await URLSession.shared.data(from: url),
+                  let source = UIImage(data: data),
+                  let cropped = MuseumArtworkImage.crop(source, to: artwork.crop) else { return }
+            image = cropped
+        }
+    }
+}
+
 private struct ThemePalettePreview: View {
     let theme: KinderTheme
     let paletteID: KinderThemePaletteID
@@ -566,5 +751,17 @@ private enum KinderBlockDraftStore {
 
     static func clear() {
         UserDefaults.standard.removeObject(forKey: key)
+    }
+}
+
+private extension Color {
+    init(museumHex: String) {
+        let normalized = museumHex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        let value = UInt64(normalized, radix: 16) ?? 0x7A74C9
+        self.init(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
     }
 }

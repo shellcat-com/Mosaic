@@ -1,5 +1,6 @@
 import CoreGraphics
 import CoreImage
+import AVFoundation
 import Foundation
 import UIKit
 
@@ -11,10 +12,11 @@ struct RecapRenderRequest: Sendable {
 }
 
 final class RecapFrameRenderer: @unchecked Sendable {
-    static let version = 2
+    static let version = 3
 
     private let ciContext = CIContext(options: [.cacheIntermediates: false])
     private let imageCache = NSCache<NSURL, UIImage>()
+    private let videoGeneratorCache = NSCache<NSURL, AVAssetImageGenerator>()
 
     func makeImage(request: RecapRenderRequest, time: TimeInterval, size: CGSize) -> CGImage? {
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
@@ -304,7 +306,7 @@ final class RecapFrameRenderer: @unchecked Sendable {
         style: RecapPreset.VisualStyle,
         context: CGContext
     ) {
-        if let asset = firstPhotoAsset(in: request.timeline.sources), let image = normalizedImage(for: asset) {
+        if let image = firstVisualImage(in: request.timeline.sources) {
             drawAspectFill(image, in: viewport, context: context)
         }
         let darkStyle = style == .kilnTape || style == .pocketKiln
@@ -357,6 +359,31 @@ final class RecapFrameRenderer: @unchecked Sendable {
             } else {
                 drawEmptyMemory(viewport: viewport, style: style, context: context)
             }
+            if let note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let caption = CGRect(x: viewport.minX + viewport.width * 0.055,
+                                     y: viewport.maxY - viewport.height * 0.2,
+                                     width: viewport.width * 0.89, height: viewport.height * 0.14)
+                context.setFillColor(templateCaptionBackground(style).cgColor)
+                context.addPath(UIBezierPath(roundedRect: caption, cornerRadius: viewport.width * 0.025).cgPath)
+                context.fillPath()
+                drawFittedText(note, in: caption.insetBy(dx: caption.width * 0.055, dy: caption.height * 0.16),
+                               maximumSize: viewport.width * 0.046, minimumSize: viewport.width * 0.024,
+                               weight: .semibold, color: templateInk(style), context: context, display: true)
+            }
+        case let .video(asset, note, duration):
+            if let image = videoFrame(for: asset, progress: frame.progress, duration: duration) {
+                drawAspectFill(image, in: viewport, context: context)
+                drawGradeOverlay(request.timeline.preset.grade, in: viewport, context: context)
+            } else {
+                drawEmptyMemory(viewport: viewport, style: style, context: context)
+            }
+            drawMetadataPill(
+                "VIDEO",
+                in: CGRect(x: viewport.maxX - viewport.width * 0.23, y: viewport.minY + viewport.height * 0.055,
+                           width: viewport.width * 0.18, height: viewport.height * 0.055),
+                style: style,
+                context: context
+            )
             if let note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 let caption = CGRect(x: viewport.minX + viewport.width * 0.055,
                                      y: viewport.maxY - viewport.height * 0.2,
@@ -705,11 +732,18 @@ final class RecapFrameRenderer: @unchecked Sendable {
         return (current, max(memories.count, 1))
     }
 
-    private func firstPhotoAsset(in sources: [RecapSource]) -> RecapMediaAsset? {
-        sources.lazy.compactMap { source in
-            if case let .photo(asset, _) = source.content { return asset }
-            return nil
-        }.first
+    private func firstVisualImage(in sources: [RecapSource]) -> CGImage? {
+        for source in sources {
+            switch source.content {
+            case let .photo(asset, _):
+                if let image = normalizedImage(for: asset) { return image }
+            case let .video(asset, _, duration):
+                if let image = videoFrame(for: asset, progress: 0, duration: duration) { return image }
+            case .reflection, .tileOnly:
+                continue
+            }
+        }
+        return nil
     }
 
     private func normalizedImage(for asset: RecapMediaAsset) -> CGImage? {
@@ -730,6 +764,31 @@ final class RecapFrameRenderer: @unchecked Sendable {
         }
         imageCache.setObject(normalized, forKey: key)
         return normalized.cgImage
+    }
+
+    private func videoFrame(
+        for asset: RecapMediaAsset,
+        progress: Double,
+        duration: TimeInterval?
+    ) -> CGImage? {
+        guard let url = asset.localURL else { return nil }
+        let key = url as NSURL
+        let generator: AVAssetImageGenerator
+        if let cached = videoGeneratorCache.object(forKey: key) {
+            generator = cached
+        } else {
+            generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+            generator.appliesPreferredTrackTransform = true
+            generator.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 30)
+            generator.requestedTimeToleranceAfter = CMTime(value: 1, timescale: 30)
+            videoGeneratorCache.setObject(generator, forKey: key)
+        }
+        let available = max((duration ?? 3) - (1 / 30), 0)
+        let seconds = min(max(progress, 0), 1) * available
+        return try? generator.copyCGImage(
+            at: CMTime(seconds: seconds, preferredTimescale: 600),
+            actualTime: nil
+        )
     }
 
     private func eventYear(_ meta: RecapMeta) -> String {
@@ -821,6 +880,24 @@ final class RecapFrameRenderer: @unchecked Sendable {
             if let note {
                 drawPaperCaption(note, source: source, request: request, context: context, size: size)
             }
+        case let .video(asset, note, duration):
+            let card = CGRect(x: 58, y: 160, width: size.width - 116, height: size.height * 0.64)
+            if let image = videoFrame(for: asset, progress: frame.progress, duration: duration) {
+                context.saveGState()
+                context.addPath(UIBezierPath(roundedRect: card, cornerRadius: 36).cgPath)
+                context.clip()
+                drawAspectFill(image, in: card, context: context)
+                context.restoreGState()
+                drawGradeOverlay(request.timeline.preset.grade, in: card, context: context)
+            } else {
+                context.setFillColor(UIColor.white.withAlphaComponent(0.16).cgColor)
+                context.fill(card)
+                drawText("VIDEO DEVELOPING", in: card.insetBy(dx: 50, dy: 80),
+                         font: .systemFont(ofSize: 34, weight: .bold), color: .white, context: context)
+            }
+            if let note {
+                drawPaperCaption(note, source: source, request: request, context: context, size: size)
+            }
         case let .reflection(text):
             drawText("“\(text)”", in: CGRect(x: 92, y: 330, width: size.width - 184, height: 650),
                      font: displayFont(58, weight: .semibold), color: ink(for: request.timeline.preset.grade), context: context)
@@ -844,6 +921,21 @@ final class RecapFrameRenderer: @unchecked Sendable {
     }
 
     private func drawMosaic(_ request: RecapRenderRequest, progress: Double, context: CGContext, size: CGSize, hero: Bool) {
+        if request.meta.artworkMode == .museum,
+           let side = request.meta.boardSide,
+           MuseumBoardSize.isSupported(side: side),
+           let artwork = museumArtwork(for: request.meta) {
+            drawMuseumMosaic(
+                artwork,
+                side: side,
+                request: request,
+                progress: progress,
+                context: context,
+                size: size,
+                hero: hero
+            )
+            return
+        }
         let count = max(request.meta.goal, request.timeline.sources.count)
         let columns = 5
         let tile: CGFloat = hero ? 130 : 90
@@ -880,6 +972,83 @@ final class RecapFrameRenderer: @unchecked Sendable {
                 context.strokePath()
             }
         }
+    }
+
+    private func drawMuseumMosaic(
+        _ artwork: CGImage,
+        side: Int,
+        request: RecapRenderRequest,
+        progress: Double,
+        context: CGContext,
+        size: CGSize,
+        hero: Bool
+    ) {
+        let geometry = BoardGeometry(side: side)
+        let dimension = min(size.width - 120, hero ? size.height * 0.56 : size.width * 0.68)
+        let board = CGRect(
+            x: (size.width - dimension) / 2,
+            y: hero ? 310 : 720,
+            width: dimension,
+            height: dimension
+        )
+        let spacing = max(2, dimension * 0.004)
+
+        context.setFillColor(UIColor(red: 0.93, green: 0.90, blue: 0.84, alpha: 1).cgColor)
+        context.addPath(UIBezierPath(roundedRect: board.insetBy(dx: -18, dy: -18), cornerRadius: 30).cgPath)
+        context.fillPath()
+
+        for position in 0..<geometry.capacity {
+            let rect = geometry.tileFrame(for: position, in: board, spacing: spacing)
+            let local = geometry.localRevealProgress(for: position, globalProgress: progress)
+            let source = request.timeline.sources.first { $0.tile?.finalPosition == position }
+
+            context.saveGState()
+            context.addPath(UIBezierPath(roundedRect: rect, cornerRadius: max(2, rect.width * 0.1)).cgPath)
+            context.clip()
+            if local > 0.5 {
+                drawAspectFill(artwork, in: board, context: context)
+            } else {
+                context.setFillColor(tileColor(source?.tile?.emotion).cgColor)
+                context.fill(rect)
+            }
+            context.restoreGState()
+
+            context.setStrokeColor(UIColor.white.withAlphaComponent(0.34).cgColor)
+            context.setLineWidth(max(1, spacing * 0.35))
+            context.addPath(UIBezierPath(roundedRect: rect, cornerRadius: max(2, rect.width * 0.1)).cgPath)
+            context.strokePath()
+
+            if source?.tile?.isRevived == true, local > 0.5 {
+                context.setStrokeColor(UIColor(red: 0.84, green: 0.66, blue: 0.22, alpha: 1).cgColor)
+                context.setLineWidth(max(1.5, rect.width * 0.025))
+                context.move(to: CGPoint(x: rect.minX + rect.width * 0.1, y: rect.maxY - rect.height * 0.2))
+                context.addLine(to: CGPoint(x: rect.midX, y: rect.midY))
+                context.addLine(to: CGPoint(x: rect.maxX - rect.width * 0.1, y: rect.minY + rect.height * 0.2))
+                context.strokePath()
+            }
+        }
+    }
+
+    private func museumArtwork(for meta: RecapMeta) -> CGImage? {
+        guard let url = meta.artworkFileURL else { return nil }
+        let key = url as NSURL
+        let image: UIImage
+        if let cached = imageCache.object(forKey: key) {
+            image = cached
+        } else {
+            guard let loaded = UIImage(contentsOfFile: url.path) else { return nil }
+            imageCache.setObject(loaded, forKey: key)
+            image = loaded
+        }
+        guard let source = image.cgImage else { return nil }
+        let crop = meta.artworkCrop ?? .full
+        let rect = CGRect(
+            x: crop.x * Double(source.width),
+            y: crop.y * Double(source.height),
+            width: crop.width * Double(source.width),
+            height: crop.height * Double(source.height)
+        ).integral.intersection(CGRect(x: 0, y: 0, width: source.width, height: source.height))
+        return source.cropping(to: rect)
     }
 
     private func drawThemeField(_ selection: ThemeSelection, progress: Double, in rect: CGRect, context: CGContext) {

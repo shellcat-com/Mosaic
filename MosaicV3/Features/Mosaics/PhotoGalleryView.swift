@@ -56,10 +56,17 @@ struct PhotoThumbnail: View {
 }
 
 struct EventPhotoDetailView: View {
+    private enum SafetyPrompt {
+        case deletePhoto
+        case reportPhoto
+        case blockPerson
+    }
+
     @Environment(MosaicAppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     let photoID: UUID
     @State private var message: String?
+    @State private var safetyPrompt: SafetyPrompt?
 
     private var photo: EventPhoto? { model.detail.event?.photos.first { $0.id == photoID } }
 
@@ -67,30 +74,96 @@ struct EventPhotoDetailView: View {
         MosaicPage {
             if let photo {
                 VStack(alignment: .leading, spacing: 18) {
-                    PhotoThumbnail(photo: photo).aspectRatio(CGFloat(photo.pixelWidth) / CGFloat(max(1, photo.pixelHeight)), contentMode: .fit)
+                    photoDetailImage(photo)
                     Label(photo.photographerDisplayName, systemImage: "person.crop.circle")
                     Label(photo.capturedAt.formatted(date: .abbreviated, time: .shortened), systemImage: "clock")
                     if photo.isMine {
-                        Button("Delete photo", role: .destructive) { Task { await delete(photo) } }.buttonStyle(MosaicSecondaryButtonStyle())
+                        Button("Delete photo", role: .destructive) { safetyPrompt = .deletePhoto }
+                            .buttonStyle(MosaicSecondaryButtonStyle())
                     } else {
-                        Button("Report photo", systemImage: "exclamationmark.bubble", role: .destructive) { Task { await report(photo) } }.buttonStyle(MosaicSecondaryButtonStyle())
-                        Button("Block \(photo.photographerDisplayName)", role: .destructive) { Task { await block(photo) } }.buttonStyle(MosaicSecondaryButtonStyle())
+                        Button("Report photo", systemImage: "exclamationmark.bubble", role: .destructive) { safetyPrompt = .reportPhoto }
+                            .buttonStyle(MosaicSecondaryButtonStyle())
+                        Button("Block \(photo.photographerDisplayName)", role: .destructive) { safetyPrompt = .blockPerson }
+                            .buttonStyle(MosaicSecondaryButtonStyle())
                     }
                     if let message { Text(message).font(.footnote).foregroundStyle(.red) }
                 }
             }
         }
         .navigationTitle("Photo")
+        .alert(
+            safetyPromptTitle,
+            isPresented: safetyPromptBinding
+        ) {
+            if let photo, let safetyPrompt {
+                switch safetyPrompt {
+                case .deletePhoto:
+                    Button("Delete photo", role: .destructive) { Task { await delete(photo) } }
+                case .reportPhoto:
+                    reportButton("Sensitive or sexual content", photo: photo)
+                    reportButton("Harassment or hateful content", photo: photo)
+                    reportButton("Spam or unrelated content", photo: photo)
+                    reportButton("Something else", photo: photo)
+                case .blockPerson:
+                    Button("Block person", role: .destructive) { Task { await block(photo) } }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(safetyPromptMessage)
+        }
         .mosaicAccessibilityAnnouncement(message)
+    }
+
+    private var safetyPromptBinding: Binding<Bool> {
+        Binding(
+            get: { safetyPrompt != nil },
+            set: { if !$0 { safetyPrompt = nil } }
+        )
+    }
+
+    private var safetyPromptTitle: String {
+        switch safetyPrompt {
+        case .deletePhoto: "Delete this photo?"
+        case .reportPhoto: "Why are you reporting this photo?"
+        case .blockPerson: "Block \(photo?.photographerDisplayName ?? "this person")?"
+        case nil: "Photo action"
+        }
+    }
+
+    private var safetyPromptMessage: String {
+        switch safetyPrompt {
+        case .deletePhoto:
+            "This removes the photo from the event and cannot be undone."
+        case .reportPhoto:
+            "The photo is quarantined from the shared gallery while the report is reviewed."
+        case .blockPerson:
+            "Their photos will be hidden from your gallery and recap choices. You can unblock them from You."
+        case nil:
+            ""
+        }
     }
 
     private func delete(_ photo: EventPhoto) async {
         do { try await model.detail.deletePhoto(photo.id); dismiss() } catch { message = error.localizedDescription }
     }
-    private func report(_ photo: EventPhoto) async {
-        do { try await model.detail.reportPhoto(photo.id, reason: "Inappropriate shared photo"); dismiss() } catch { message = error.localizedDescription }
+    private func report(_ photo: EventPhoto, reason: String) async {
+        do { try await model.detail.reportPhoto(photo.id, reason: reason); dismiss() } catch { message = error.localizedDescription }
     }
     private func block(_ photo: EventPhoto) async {
         do { try await model.detail.block(photo.photographerID); dismiss() } catch { message = error.localizedDescription }
+    }
+
+    private func reportButton(_ reason: String, photo: EventPhoto) -> some View {
+        Button(reason, role: .destructive) { Task { await report(photo, reason: reason) } }
+    }
+
+    private func photoDetailImage(_ photo: EventPhoto) -> some View {
+        let ratio = CGFloat(photo.pixelWidth) / CGFloat(max(1, photo.pixelHeight))
+        return GeometryReader { proxy in
+            PhotoThumbnail(photo: photo)
+                .frame(width: proxy.size.width, height: proxy.size.width / ratio)
+        }
+        .aspectRatio(ratio, contentMode: .fit)
     }
 }

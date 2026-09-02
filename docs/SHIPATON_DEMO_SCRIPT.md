@@ -1,41 +1,39 @@
-# Mosaic Shipaton demo — 1 minute 50 seconds
+# Mosaic Next Gen demo — target 1:45
 
-**Hard limit:** keep the uploaded YouTube or Vimeo video below 2:00.
+The uploaded public YouTube or Vimeo video must stay below two minutes. Use English captions and licensed/original audio only.
 
-**Target:** 1:45–1:55, English narration and captions, no unlicensed music.
+## Recording setup
 
-## Capture checklist
-
-- Use the `Mosaic Shipaton` scheme on an iPhone Simulator or device.
-- Supply the RevenueCat Test Store public SDK key through `Config/Local.xcconfig`.
-- Sign in with Apple and create a recoverable organizer workspace before recording the purchase.
-- Clear or reset Test Store purchase state so the Free → Organizer Plus transition is visible.
-- Record raw app footage. Do not use generated product UI in place of the running app.
+- Build `Mosaic Shipaton Debug` with an ignored RevenueCat Test Store public key.
+- Use a signed-in organizer whose RevenueCat `appUserID` visibly matches the lowercase Supabase UUID in debug logs.
+- Start free with no active Mosaic and reset the chosen Test Store product so the purchase transition is genuine.
+- Record the running V3 app without a device frame or generated replacement UI.
 
 ## Timeline
 
 | Time | Picture | Narration |
 | --- | --- | --- |
-| 0:00–0:12 | Home mosaic growing from equal-size tiles | “Small acts of kindness often disappear. Mosaic gives each verified act one equal place in a story a community reveals together.” |
-| 0:12–0:32 | Invitation, mission, private evidence, consent | “An invited participant chooses an approachable mission. Evidence is private to organizers, while identity, memory inclusion, and recap consent remain separate choices.” |
-| 0:32–0:48 | Tile creation and placement | “Emotion, mission, and verification shape a ceramic tile. Every tile is the same size—there are no rankings, likes, or paid visual advantages.” |
-| 0:48–1:02 | Organizer moderation and final reveal | “Organizers verify outcomes without exposing proof. At the scheduled reveal, approved memories and an attributable Impact Receipt open with the shared artwork.” |
-| 1:02–1:30 | Free plan, RevenueCat Paywall V2, Test Store purchase, success modal | “Participants contribute for free. Organizers fund larger community events through Organizer Plus. This is a real RevenueCat Test Store purchase, attached to the organizer’s Supabase identity.” |
-| 1:30–1:40 | Organizer Plus active, 25 → 250 people, premium controls enabled | “RevenueCat returns the entitlement, Mosaic synchronizes it server-side, and organizer capacity and creation tools unlock immediately.” |
-| 1:40–1:50 | Architecture/privacy card and repository hero | “SwiftUI, RevenueCat, and a Supabase backend keep billing authoritative and community evidence private. Mosaic: small acts, one shared story.” |
+| 0:00–0:12 | V3 home and equal ceramic tiles | “Mosaic turns small acts of kindness into one artwork a group reveals together—without rankings, likes, or larger tiles for paying users.” |
+| 0:12–0:30 | Create a free 25-tile Mosaic with Sunwashed and 12 shots | “Participants are always free. Every contribution receives equal weight, while a free organizer can run one unrevealed Mosaic.” |
+| 0:30–0:48 | Invitation, join, kindness activity, disposable photo roll | “Members join privately, choose an act, and share a sealed disposable roll. Attribution and reveal access never depend on payment.” |
+| 0:48–1:03 | Tap a locked 100-tile goal; Living Kiln paywall opens | “Organizer Plus makes room for larger groups: up to 100 tiles, 36 shots per member, every film look, and multiple active Mosaics.” |
+| 1:03–1:21 | Live annual/monthly/Event Pass cards and genuine Test Store purchase | “These localized options come from RevenueCat. Annual and monthly unlock Plus; a one-event pass grants one server-tracked PASS.” |
+| 1:21–1:34 | ‘Confirming access’ then server-confirmed Plus card | “The client never authorizes itself. Supabase reconciles RevenueCat API v2 before premium controls unlock.” |
+| 1:34–1:46 | Return to creation and select 100 tiles/all looks | “The new Mosaic captures premium access permanently, so a future expiry can block new premium events without damaging this one.” |
+| 1:46–1:50 | Public repository and Mosaic mark | “Mosaic is student-built, open source, and ready for Next Gen.” |
 
-## Required proof frames
+## Proof frames
 
-1. RevenueCat offering and prices load.
-2. The Test Store purchase success control is tapped on camera.
-3. The paywall closes and `Organizer Plus` appears.
-4. The participant limit changes from 25 to 250 or a gated organizer capability becomes enabled.
-5. The final frame shows `github.com/shellcat-com/Mosaic`.
+1. Custom “Make room for more people” paywall with three live packages.
+2. Genuine RevenueCat Test Store confirmation.
+3. Server synchronization progress followed by confirmed Plus state.
+4. Visible 100-tile option unlocked after reconciliation.
+5. Public `github.com/shellcat-com/Mosaic` repository and MIT license.
 
 ## Export acceptance
 
-- H.264 video with AAC narration, 1080p or higher.
-- Duration reported by `ffprobe` is less than 120 seconds.
-- Captions are reviewed for names, technical terms, and timing.
-- Public visibility is confirmed in a signed-out browser before adding the URL to Devpost.
+- 100–110 seconds preferred; always less than 120 seconds.
+- 1920×1080 H.264 with AAC narration, or higher.
+- Captions reviewed for Mosaic, RevenueCat, Organizer Plus, Supabase, and PASS.
+- Public/unlisted playback verified while signed out.
 - `./scripts/validate_shipaton_submission.sh --require-video` passes before upload.

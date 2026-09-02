@@ -2,10 +2,10 @@ import SwiftUI
 
 struct EventDetailView: View {
     @Environment(AppStore.self) private var store
+    @Environment(MosaicRouter.self) private var router
     let summary: ChallengeSummary
     @State private var showingCalendar = false
     @State private var showingReminders = false
-    @State private var showingRecap = false
     @State private var liveMessage: String?
 
     private var event: ChallengeSummary { store.summary(for: summary.id) ?? summary }
@@ -15,15 +15,16 @@ struct EventDetailView: View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 22) {
                 hero
+                contributionActions
+                progress
                 timing
                 if store.calendarUpdateRequired.contains(event.id) {
                     scheduleChanged
                 }
-                progress
-                actions
+                scheduleActions
             }
         }
-        .navigationTitle("Event")
+        .navigationTitle("Mosaic")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingCalendar) {
             CalendarEventSheet(summary: event) {
@@ -39,9 +40,6 @@ struct EventDetailView: View {
                 }
             }
                 .presentationDetents([.medium, .large])
-        }
-        .fullScreenCover(isPresented: $showingRecap) {
-            RecapEditorView(challenge: store.challenge)
         }
         .task { await store.openChallenge(event.id) }
     }
@@ -111,7 +109,7 @@ struct EventDetailView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Label("The reveal time changed", systemImage: "calendar.badge.exclamationmark")
                     .font(.headline)
-                Text("Mosaic rescheduled your reminders. If you previously added this event to Calendar, open the editor to update your copy.")
+                Text("Mosaic rescheduled your reminders. If you previously added this Mosaic to Calendar, open the editor to update your copy.")
                     .font(.footnote)
                     .foregroundStyle(MosaicTheme.muted)
                 Button("Update Calendar") { showingCalendar = true }
@@ -132,23 +130,41 @@ struct EventDetailView: View {
                 }
                 ProgressView(value: event.progress)
                     .tint(MosaicTheme.persimmon)
-                    .accessibilityLabel("Challenge progress")
+                    .accessibilityLabel("Mosaic progress")
                     .accessibilityValue("\(event.contributionCount) of \(event.goal) acts")
             }
         }
     }
 
     @ViewBuilder
-    private var actions: some View {
-        if phase == .completed {
-            VStack(spacing: 12) {
-                Button {
-                    Task {
-                        await store.openChallenge(event.id)
-                        showingRecap = true
+    private var contributionActions: some View {
+        if event.isShowcase {
+            OrganicPanel(variant: .leaningRight, tint: MosaicTheme.indigo.opacity(0.08)) {
+                VStack(alignment: .leading, spacing: 14) {
+                    MosaicSectionHeader(title: "Read-only showcase", eyebrow: "Example Mosaic", icon: .kintsugi)
+                    Text("This shared example cannot accept evidence or memories.")
+                        .font(.subheadline)
+                        .foregroundStyle(MosaicTheme.muted)
+                    if let challengeID = store.writableContributionChallengeID {
+                        Button("Create in my private Mosaic") {
+                            router.showMissions(for: challengeID)
+                        }
+                        .buttonStyle(PrimaryButtonStyle(color: MosaicTheme.persimmon))
                     }
-                } label: {
-                    Label("Watch recap", systemImage: "play.rectangle.fill")
+                }
+            }
+        } else {
+            contributionActions(for: phase)
+        }
+    }
+
+    @ViewBuilder
+    private func contributionActions(for phase: ChallengePhase) -> some View {
+        switch phase {
+        case .completed:
+            VStack(spacing: 12) {
+                Button { router.showRecap(for: event.id) } label: {
+                    Label("Open recap", systemImage: "play.rectangle.fill")
                 }
                 .buttonStyle(PrimaryButtonStyle())
 
@@ -165,7 +181,49 @@ struct EventDetailView: View {
                 }
                 .buttonStyle(SecondaryButtonStyle())
             }
-        } else {
+        case .reveal:
+            OrganicPanel(variant: .leaningRight, tint: MosaicTheme.gold.opacity(0.12)) {
+                VStack(alignment: .leading, spacing: 14) {
+                    MosaicSectionHeader(title: "Your Mosaic is ready", eyebrow: "Reveal", icon: .kintsugi)
+                    Text("Contributions are closed. Open the artwork and approved memories together.")
+                        .font(.subheadline)
+                        .foregroundStyle(MosaicTheme.muted)
+                    Button("Open reveal") { router.showReveal(for: event.id) }
+                        .buttonStyle(PrimaryButtonStyle())
+                }
+            }
+        case .upcoming:
+            OrganicPanel(variant: .leaningRight, tint: MosaicTheme.sky.opacity(0.12)) {
+                VStack(alignment: .leading, spacing: 12) {
+                    MosaicSectionHeader(title: "Contributions open soon", eyebrow: "Get ready", icon: .spark)
+                    Text("Beginning \(event.startAt.formatted(date: .abbreviated, time: .shortened)), you can complete an act or add a memory here.")
+                        .font(.subheadline)
+                        .foregroundStyle(MosaicTheme.muted)
+                }
+            }
+        case .active:
+            OrganicPanel(variant: .leaningRight, tint: MosaicTheme.indigo.opacity(0.08)) {
+                VStack(alignment: .leading, spacing: 16) {
+                    MosaicSectionHeader(title: "Add to this Mosaic", eyebrow: "Two ways to contribute", icon: .spark)
+                    Text("Complete an act to create a tile, or add a memory for the reveal and recap.")
+                        .font(.subheadline)
+                        .foregroundStyle(MosaicTheme.muted)
+                    Button("Complete an act") {
+                        router.showMissions(for: event.id)
+                    }
+                    .buttonStyle(PrimaryButtonStyle(color: MosaicTheme.persimmon))
+                    Button("Add a memory") {
+                        router.showMemoryComposer(for: event.id)
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var scheduleActions: some View {
+        if phase != .completed {
             VStack(spacing: 12) {
                 Button { showingReminders = true } label: {
                     Label("Remind me", systemImage: "bell.badge")
@@ -225,7 +283,7 @@ struct EventDetailView: View {
 
     private var timingTitle: String {
         switch phase {
-        case .upcoming: "The challenge begins soon"
+        case .upcoming: "This Mosaic begins soon"
         case .active: "The mosaic is still growing"
         case .reveal: "The reveal is open"
         case .completed: "Revealed together"
@@ -247,7 +305,7 @@ struct ReminderPreferencesView: View {
         NavigationStack {
             Form {
                 Section("Helpful reminders") {
-                    Toggle("Challenge begins", isOn: $preferences.challengeStart)
+                    Toggle("Mosaic begins", isOn: $preferences.challengeStart)
                     Toggle("24 hours before reveal", isOn: $preferences.revealDayBefore)
                     Toggle("1 hour before reveal", isOn: $preferences.revealHourBefore)
                     Toggle("Reveal begins", isOn: $preferences.revealNow)

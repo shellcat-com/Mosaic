@@ -6,13 +6,7 @@ final class SupabaseMosaicRepository: MosaicRepository {
     private let client: SupabaseClient
 
     init(configuration: SupabaseConfiguration) {
-        client = SupabaseClient(
-            supabaseURL: configuration.url,
-            supabaseKey: configuration.publishableKey,
-            options: SupabaseClientOptions(
-                functions: .init(decoder: MosaicJSONDecoder.make())
-            )
-        )
+        client = MosaicSupabaseClientFactory.make(configuration: configuration)
     }
 
     init(client: SupabaseClient) {
@@ -20,9 +14,7 @@ final class SupabaseMosaicRepository: MosaicRepository {
     }
 
     func prepareDemo(displayName: String?, privacy: ParticipantPrivacy) async throws -> DemoBootstrapResponse {
-        if client.auth.currentSession == nil {
-            _ = try await client.auth.signInAnonymously()
-        }
+        _ = try await client.restoreOrCreateMosaicSession()
         struct Body: Encodable { let displayName: String?; let privacy: String }
         let response: DemoBootstrapResponse = try await client.functions.invoke(
             "bootstrap-demo",
@@ -78,6 +70,10 @@ final class SupabaseMosaicRepository: MosaicRepository {
             let themePaletteId: KinderThemePaletteID
             let themeSeed: Int
             let themeRevision: Int
+            let artworkId: UUID?
+            let boardSide: Int?
+            let experienceVersion: MosaicExperienceVersion
+            let filmLookId: FilmLookID
         }
         let response: ChallengeResponse = try await client.functions.invoke(
             "configure-challenge",
@@ -92,10 +88,41 @@ final class SupabaseMosaicRepository: MosaicRepository {
                 themeId: draft.selection.themeID,
                 themePaletteId: draft.selection.paletteID,
                 themeSeed: draft.selection.seed,
-                themeRevision: draft.selection.revision
+                themeRevision: draft.selection.revision,
+                artworkId: draft.usesMuseumArtwork ? draft.artworkID : nil,
+                boardSide: draft.usesMuseumArtwork ? draft.boardSide : nil,
+                experienceVersion: draft.experienceVersion,
+                filmLookId: draft.filmLookID
             ))
         )
         return response.challenge
+    }
+
+    func listArtworks(
+        collection: KinderThemeCollection?,
+        search: String?
+    ) async throws -> ArtworkCatalogResponse {
+        struct Body: Encodable { let collection: String?; let search: String? }
+        return try await client.functions.invoke(
+            "list-artworks",
+            options: FunctionInvokeOptions(body: Body(collection: collection?.rawValue, search: search))
+        )
+    }
+
+    func prefetchRevealArtwork(challengeID: UUID) async throws -> RevealArtworkPrefetch {
+        struct Body: Encodable { let challengeId: UUID }
+        return try await client.functions.invoke(
+            "prefetch-reveal-artwork",
+            options: FunctionInvokeOptions(body: Body(challengeId: challengeID))
+        )
+    }
+
+    func getRevealedArtwork(challengeID: UUID) async throws -> RevealedArtworkResponse {
+        struct Body: Encodable { let challengeId: UUID }
+        return try await client.functions.invoke(
+            "get-revealed-artwork",
+            options: FunctionInvokeOptions(body: Body(challengeId: challengeID))
+        )
     }
 
     func loadChallenge(id: UUID) async throws -> (KindnessChallenge, [Mission]) {
@@ -150,9 +177,16 @@ final class SupabaseMosaicRepository: MosaicRepository {
             recapAvailability: recapAvailability(for: challenge, records: recaps),
             recapThumbnailFilename: thumbnailFilename,
             invitationCode: challenge.invitationCode,
+            isShowcase: challenge.isShowcase,
             contributions: contributions,
             theme: challenge.themeSelection,
-            cameraRollEnabled: challenge.cameraRollEnabled ?? false
+            artworkMode: challenge.effectiveArtworkMode,
+            sealedArtwork: challenge.sealedArtwork,
+            artworkCatalogRevision: challenge.artworkCatalogRevision,
+            artworkPackageRevision: challenge.artworkPackageRevision,
+            cameraRollEnabled: challenge.cameraRollEnabled ?? false,
+            experienceVersion: challenge.effectiveExperienceVersion,
+            filmLookID: challenge.effectiveFilmLookID
         )
         return (value, missions)
     }
@@ -167,7 +201,12 @@ final class SupabaseMosaicRepository: MosaicRepository {
             .select("challenge_id")
             .execute()
             .value
-        let counts = Dictionary(grouping: contributionRows, by: \.challengeId).mapValues(\.count)
+        let legacyCounts = Dictionary(grouping: contributionRows, by: \.challengeId).mapValues(\.count)
+        let rollRows: [SharedRollCountRecord] = try await client.from("shared_roll_counts")
+            .select("challenge_id,sealed_count")
+            .execute()
+            .value
+        let rollCounts = Dictionary(uniqueKeysWithValues: rollRows.map { ($0.challengeId, $0.sealedCount) })
         let recaps = try await recapRecords()
         var thumbnailFilenames: [UUID: String] = [:]
         for challenge in challenges {
@@ -186,11 +225,20 @@ final class SupabaseMosaicRepository: MosaicRepository {
                 revealedAt: challenge.revealedAt,
                 serverStatus: challenge.status,
                 scheduleRevision: challenge.scheduleRevision ?? 1,
-                contributionCount: counts[challenge.id, default: 0],
+                contributionCount: challenge.effectiveExperienceVersion == .kindnessRoll
+                    ? rollCounts[challenge.id, default: 0]
+                    : legacyCounts[challenge.id, default: 0],
                 goal: challenge.goal,
                 recapAvailability: recapAvailability(for: challenge, records: recaps),
                 recapThumbnailFilename: thumbnailFilenames[challenge.id],
+                isShowcase: challenge.isShowcase,
                 theme: challenge.themeSelection,
+                artworkMode: challenge.effectiveArtworkMode,
+                sealedArtwork: challenge.sealedArtwork,
+                artworkCatalogRevision: challenge.artworkCatalogRevision,
+                artworkPackageRevision: challenge.artworkPackageRevision,
+                experienceVersion: challenge.effectiveExperienceVersion,
+                filmLookID: challenge.effectiveFilmLookID,
                 organizationID: challenge.organizationId
             )
         }
@@ -208,20 +256,25 @@ final class SupabaseMosaicRepository: MosaicRepository {
             let fileSize: Int?
             let durationSeconds: Double?
         }
-        let prepared: PrepareContributionResponse = try await client.functions.invoke(
-            "prepare-contribution",
-            options: FunctionInvokeOptions(body: PrepareBody(
-                contributionId: draft.id,
-                challengeId: draft.challengeID,
-                missionId: draft.missionID,
-                emotion: draft.emotion,
-                evidenceMethod: draft.method,
-                reflection: draft.reflection,
-                mimeType: draft.mimeType,
-                fileSize: draft.mediaData?.count,
-                durationSeconds: draft.durationSeconds
-            ))
-        )
+        let prepared: PrepareContributionResponse
+        do {
+            prepared = try await client.functions.invoke(
+                "prepare-contribution",
+                options: FunctionInvokeOptions(body: PrepareBody(
+                    contributionId: draft.id,
+                    challengeId: draft.challengeID,
+                    missionId: draft.missionID,
+                    emotion: draft.emotion,
+                    evidenceMethod: draft.method,
+                    reflection: draft.reflection,
+                    mimeType: draft.mimeType,
+                    fileSize: draft.mediaData?.count,
+                    durationSeconds: draft.durationSeconds
+                ))
+            )
+        } catch {
+            throw Self.functionError(from: error)
+        }
 
         if let upload = prepared.upload, let mediaData = draft.mediaData {
             try await client.storage.from("evidence-private").uploadToSignedURL(
@@ -239,16 +292,21 @@ final class SupabaseMosaicRepository: MosaicRepository {
             let exportConsent: Bool
             let storyText: String?
         }
-        let finalized: ContributionResponse = try await client.functions.invoke(
-            "finalize-contribution",
-            options: FunctionInvokeOptions(body: FinalizeBody(
-                contributionId: draft.id,
-                includeMemory: draft.includeMemory,
-                showIdentity: draft.showIdentity,
-                exportConsent: draft.exportConsent,
-                storyText: draft.reflection
-            ))
-        )
+        let finalized: ContributionResponse
+        do {
+            finalized = try await client.functions.invoke(
+                "finalize-contribution",
+                options: FunctionInvokeOptions(body: FinalizeBody(
+                    contributionId: draft.id,
+                    includeMemory: draft.includeMemory,
+                    showIdentity: draft.showIdentity,
+                    exportConsent: draft.exportConsent,
+                    storyText: draft.reflection
+                ))
+            )
+        } catch {
+            throw Self.functionError(from: error)
+        }
         return finalized.contribution
     }
 
@@ -409,7 +467,15 @@ final class SupabaseMosaicRepository: MosaicRepository {
         }
     }
 
-    private static let challengeColumns = "id,organization_id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,theme_id,theme_palette_id,theme_seed,theme_revision"
+    private static let challengeColumns = "id,organization_id,name,group_name,purpose,goal,start_at,reveal_at,revealed_at,status,schedule_revision,featured_recap_export_id,invitation_code,is_showcase,camera_roll_enabled,theme_id,theme_palette_id,theme_seed,theme_revision,artwork_mode,board_side,artwork_collection,artwork_palette,artwork_catalog_revision,artwork_package_revision,artwork_locked_at,experience_version,film_look_id"
+
+    private static func functionError(from error: Error) -> Error {
+        guard case FunctionsError.httpError(_, let data) = error,
+              let payload = try? JSONDecoder().decode(FunctionErrorPayload.self, from: data) else {
+            return error
+        }
+        return EdgeFunctionRepositoryError(message: payload.error)
+    }
 }
 
 private struct FunctionErrorPayload: Decodable {
@@ -417,6 +483,11 @@ private struct FunctionErrorPayload: Decodable {
 }
 
 private struct InvitationRepositoryError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
+}
+
+private struct EdgeFunctionRepositoryError: LocalizedError {
     let message: String
     var errorDescription: String? { message }
 }

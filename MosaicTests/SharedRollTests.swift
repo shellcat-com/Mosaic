@@ -3,6 +3,95 @@ import Testing
 @testable import Mosaic
 
 struct SharedRollTests {
+    @Test @MainActor func navigationKeepsThreeStableTabsWhilePresentingDestinations() {
+        let router = MosaicRouter()
+        let challengeID = UUID()
+
+        router.select(.camera)
+        router.showMemoryComposer(for: challengeID)
+        #expect(router.selection == .camera)
+        #expect(router.cover?.id == "memory-\(challengeID.uuidString)")
+
+        router.showRecap(for: challengeID)
+        #expect(router.selection == .camera)
+        #expect(router.cover?.id == "recap-\(challengeID.uuidString)")
+        #expect(AppTab.allCases.map(\.rawValue) == ["Groups", "Camera", "You"])
+    }
+
+    @Test func kindnessRollSealsOneLinkedMomentAtOnePosition() async throws {
+        let mission = Mission(
+            title: "Leave a note", detail: "Encourage someone", category: .encouragement,
+            minutes: 5, effort: "Easy", evidence: [.reflection]
+        )
+        let draft = KindnessMomentDraft(
+            challengeID: UUID(), creatorID: UUID(), mission: mission,
+            payload: .note, caption: "You made today lighter.", exportConsent: true
+        )
+        let repository = LocalSharedMomentRepository()
+        let receipt = try await repository.sealKindnessMoment(
+            draft, filmLook: .garden, predictedPosition: 4
+        )
+
+        #expect(receipt.contributionID == draft.id)
+        #expect(receipt.tilePosition == 4)
+        #expect(receipt.moment.contributionID == draft.id)
+        #expect(receipt.moment.filmLookID == .garden)
+        #expect(receipt.moment.lifecycle == .sealed)
+        #expect(receipt.moment.mediaKind == .note)
+    }
+
+    @Test func photoVideoAndNoteMemoriesReachTheRecapWithoutCreatingTiles() async throws {
+        let challengeID = UUID()
+        let creatorID = UUID()
+        let moments = [
+            SharedMoment(
+                challengeID: challengeID, creatorID: creatorID, note: "A photo memory",
+                remoteMediaPath: "moments/photo.jpg", mediaKind: .photo, mediaMimeType: "image/jpeg",
+                revealConsent: true, exportConsent: true, lifecycle: .approved
+            ),
+            SharedMoment(
+                challengeID: challengeID, creatorID: creatorID, note: "A moving memory",
+                remoteMediaPath: "moments/video.mov", mediaKind: .video, mediaMimeType: "video/quicktime",
+                durationSeconds: 4.5, revealConsent: true, exportConsent: true, lifecycle: .approved
+            ),
+            SharedMoment(
+                challengeID: challengeID, creatorID: creatorID, note: "A note-only memory",
+                mediaKind: .note, revealConsent: true, exportConsent: true, lifecycle: .approved
+            )
+        ]
+        let challenge = KindnessChallenge(
+            id: challengeID, name: "Three ways to remember", purpose: "Test", goal: 8,
+            revealDate: .now, revealedAt: .now, serverStatus: "revealed",
+            invitationCode: "MEM123", contributions: [], sharedMoments: moments
+        )
+
+        let (meta, sources) = try await AppStoreRecapAdapter(challenge: challenge).loadRecap(challengeID: challengeID)
+        #expect(meta.impact.acceptedActions == 0)
+        #expect(sources.count == 3)
+        #expect(sources.allSatisfy { $0.origin == .sharedMoment && $0.tile == nil && $0.contributionID == nil })
+        #expect(sources.contains { if case .photo = $0.content { true } else { false } })
+        #expect(sources.contains { if case .video(_, _, let duration) = $0.content { duration == 4.5 } else { false } })
+        #expect(sources.contains { if case .reflection("A note-only memory") = $0.content { true } else { false } })
+    }
+
+    @Test func legacyPhotoDraftsDecodeWithTheNewMemoryModel() throws {
+        let original = SharedMoment(
+            challengeID: UUID(), creatorID: UUID(), note: "Still compatible",
+            localAssetName: "legacy.jpg", mediaKind: .photo, mediaMimeType: "image/jpeg"
+        )
+        let encoded = try JSONEncoder().encode(original)
+        var object = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object.removeValue(forKey: "mediaKind")
+        object.removeValue(forKey: "mediaMimeType")
+        object.removeValue(forKey: "durationSeconds")
+        let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+        let decoded = try JSONDecoder().decode(SharedMoment.self, from: legacyData)
+        #expect(decoded.mediaKind == .photo)
+        #expect(decoded.localAssetName == "legacy.jpg")
+        #expect(decoded.note == "Still compatible")
+    }
+
     @Test func standaloneMomentsNeverInflateVerifiedImpact() async throws {
         let participant = UUID()
         let mission = Mission(title: "Help", detail: "Help", category: .community, minutes: 5,

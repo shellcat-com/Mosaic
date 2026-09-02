@@ -30,7 +30,9 @@ export default {
       if (error) {
         if (
           error.message.includes("not ready") ||
-          error.message.includes("not owned")
+          error.message.includes("not owned") ||
+          error.message.includes("closed") ||
+          error.message.includes("capacity")
         ) {
           throw new HttpError(409, error.message);
         }

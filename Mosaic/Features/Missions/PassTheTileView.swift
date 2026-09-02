@@ -3,8 +3,7 @@ import SwiftUI
 struct PassTheTileView: View {
     let contribution: TileContribution
     @Environment(AppStore.self) private var store
-    @Environment(\.dismiss) private var dismiss
-    @State private var showShare = false
+    @Environment(MosaicRouter.self) private var router
 
     private var invitationText: String {
         "I added an act of kindness to \(store.challenge.name). Pass the Tile with code \(store.challenge.invitationCode): \(MosaicBuildConfiguration.invitationLandingURL(code: store.challenge.invitationCode).absoluteString)"
@@ -37,8 +36,22 @@ struct PassTheTileView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
 
-                Button("Not now") { dismiss() }
-                    .buttonStyle(SecondaryButtonStyle(color: MosaicTheme.ink))
+                Button {
+                    router.finishFlow(at: .groups)
+                } label: {
+                    Label("View my Mosaic", systemImage: "square.grid.2x2.fill")
+                }
+                .buttonStyle(SecondaryButtonStyle(color: MosaicTheme.indigo))
+
+                Button {
+                    router.finishFlow(at: .groups)
+                } label: {
+                    Label("Back to home", systemImage: "house.fill")
+                }
+                .buttonStyle(.plain)
+                .font(MosaicTheme.body(.semibold))
+                .foregroundStyle(MosaicTheme.indigo)
+                .frame(maxWidth: .infinity, minHeight: MosaicTheme.minimumHitTarget)
             }
             .padding(20)
             Spacer(minLength: 10)

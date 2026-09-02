@@ -2,9 +2,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppStore.self) private var store
-    @State private var showMissions = false
-    @State private var showOrganizer = false
-    @State private var presentedEvent: ChallengeSummary?
+    @Environment(MosaicRouter.self) private var router
     @State private var calendarEvent: ChallengeSummary?
     @State private var reminderEvent: ChallengeSummary?
     @State private var liveMessage: String?
@@ -23,20 +21,15 @@ struct HomeView: View {
                 nextUpCard
                 if store.challenge.cameraRollEnabled { developingRollCard }
                 mosaicHero
-                actionCard
+                if store.challenge.serverStatus == "active" {
+                    actionCard
+                } else if store.challenge.serverStatus == "awaiting_reveal" {
+                    closedGoalCard
+                }
                 momentum
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .fullScreenCover(isPresented: $showMissions) {
-            NavigationStack { MissionLibraryView() }
-        }
-        .sheet(isPresented: $showOrganizer) {
-            NavigationStack { OrganizerDashboardView() }
-        }
-        .sheet(item: $presentedEvent) { summary in
-            NavigationStack { EventDetailView(summary: summary) }
-        }
         .sheet(item: $calendarEvent) { summary in
             CalendarEventSheet(summary: summary)
         }
@@ -50,12 +43,6 @@ struct HomeView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        .onChange(of: showOrganizer) { _, isPresented in
-            if !isPresented { Task { await store.returnToShowcase() } }
-        }
-        .fullScreenCover(isPresented: Binding(get: { store.showReveal }, set: { store.showReveal = $0 })) {
-            RevealView()
-        }
     }
 
     private var organizerSandboxCard: some View {
@@ -67,13 +54,14 @@ struct HomeView: View {
                     .foregroundStyle(MosaicTheme.indigo)
                 Text("Try the complete organizer experience")
                     .font(MosaicTheme.display(24, weight: .semibold))
-                Text("Review synthetic evidence, configure the private challenge, share its code, place tiles, and trigger the reveal.")
+                Text("Review synthetic evidence, configure the private Mosaic, share its code, place tiles, and trigger the reveal.")
                     .font(.subheadline)
                     .foregroundStyle(MosaicTheme.muted)
                 Button("Open organizer sandbox") {
                     Task {
+                        let participantChallengeID = store.challenge.id
                         await store.openOrganizerSandbox()
-                        showOrganizer = true
+                        router.showOrganizer(returnTo: participantChallengeID)
                     }
                 }
                 .buttonStyle(SecondaryButtonStyle())
@@ -88,14 +76,14 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("YOUR SHARED ROLL").font(MosaicTheme.caption(.bold)).tracking(1.1).foregroundStyle(MosaicTheme.indigo)
-                        Text("Your roll is developing")
+                        Text("MEMORIES").font(MosaicTheme.caption(.bold)).tracking(1.1).foregroundStyle(MosaicTheme.indigo)
+                        Text("Your story is growing")
                             .font(MosaicTheme.display(28, weight: .semibold))
                     }
                     Spacer()
                     Image(systemName: "envelope.fill").font(.title2).foregroundStyle(MosaicTheme.indigo)
                 }
-                Text("No previews before reveal—just the quiet promise of moments waiting together.")
+                Text("Photos, videos, and notes remain private until the reveal.")
                     .font(.subheadline).foregroundStyle(MosaicTheme.muted)
                 HStack(spacing: 10) {
                     MetricPill(icon: "camera.fill", text: "\(mine) yours")
@@ -104,9 +92,9 @@ struct HomeView: View {
                     Text(store.challenge.revealDate, style: .relative)
                         .font(MosaicTheme.caption(.bold)).foregroundStyle(MosaicTheme.persimmon)
                 }
-                Button("Capture a moment") { store.openSharedCamera() }
+                Button("Add a memory") { router.showMemoryComposer(for: store.challenge.id) }
                     .buttonStyle(PrimaryButtonStyle())
-                Button("View your sealed roll") { store.showSealedRoll = true }
+                Button("View your memories") { router.showMemories() }
                     .buttonStyle(.plain)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(MosaicTheme.indigo)
@@ -121,7 +109,7 @@ struct HomeView: View {
         if let next = store.nextChallenge {
             OrganicPanel(variant: .leaningRight, tint: MosaicTheme.sky.opacity(0.11)) {
                 VStack(alignment: .leading, spacing: 13) {
-                    Button { presentedEvent = next } label: {
+                    Button { router.showEvent(next) } label: {
                         VStack(alignment: .leading, spacing: 13) {
                             HStack {
                                 Label("NEXT UP", systemImage: "calendar.badge.clock")
@@ -152,7 +140,7 @@ struct HomeView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("Open event details")
+                    .accessibilityHint("Open Mosaic details")
 
                     HStack(spacing: 8) {
                         nextUpAction("Remind me", icon: "bell.badge") {
@@ -223,18 +211,22 @@ struct HomeView: View {
             Spacer()
             Button {
                 Task {
+                    let participantChallengeID = store.challenge.id
                     await store.openOrganizerSandbox()
-                    showOrganizer = true
+                    router.showOrganizer(returnTo: participantChallengeID)
                 }
             } label: {
-                DoodleIcon(icon: .profile, color: MosaicTheme.indigo, lineWidth: 2.4)
-                    .frame(width: 27, height: 27)
-                    .frame(width: 48, height: 48)
-                    .background(MosaicTheme.paper, in: Circle())
-                    .overlay(Circle().stroke(MosaicTheme.border, lineWidth: 1))
+                Label("Organizer", systemImage: "person.2.fill")
+                    .font(MosaicTheme.caption(.bold))
+                    .foregroundStyle(MosaicTheme.indigo)
+                    .padding(.horizontal, 14)
+                    .frame(height: 44)
+                    .background(MosaicTheme.paper, in: Capsule())
+                    .overlay(Capsule().stroke(MosaicTheme.border, lineWidth: 1))
                     .shadow(color: Color.black.opacity(0.08), radius: 8, y: 4)
             }
-            .accessibilityLabel("Open organizer dashboard")
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open organizer tools")
         }
         .overlay(alignment: .bottomLeading) {
 #if DEBUG
@@ -271,18 +263,26 @@ struct HomeView: View {
                         .accessibilityLabel("Final mosaic sealed")
                 }
 
-                KinderArtworkView(selection: store.challenge.theme, phase: .sealed, cornerRadius: 24, showsTitle: true)
-                    .frame(height: 230)
-
-                MosaicBoard(contributions: Array(store.challenge.contributions.prefix(20)), columns: 5, tileSize: 50)
-                    .frame(maxWidth: .infinity)
+                if store.challenge.artworkMode == .museum {
+                    MosaicBoardView(challenge: store.challenge, mode: .sealed)
+                        .frame(maxWidth: 340)
+                } else {
+                    KinderArtworkView(selection: store.challenge.theme, phase: .sealed, cornerRadius: 24, showsTitle: true)
+                        .frame(height: 230)
+                    MosaicBoard(contributions: Array(store.challenge.contributions.prefix(20)), columns: 5, tileSize: 50)
+                        .frame(maxWidth: .infinity)
+                }
 
                 ProgressView(value: progress)
                     .tint(MosaicTheme.persimmon)
-                    .accessibilityLabel("Challenge progress")
+                    .accessibilityLabel("Mosaic progress")
                     .accessibilityValue("\(store.challenge.contributions.count) of \(store.challenge.goal) acts")
                 HStack {
-                    Label("\(store.challenge.goal - store.challenge.contributions.count) spaces", systemImage: "square.dashed")
+                    if store.challenge.serverStatus == "awaiting_reveal" {
+                        Label("Goal reached", systemImage: "checkmark.seal.fill")
+                    } else {
+                        Label("\(max(0, store.challenge.goal - store.challenge.contributions.count)) spaces", systemImage: "square.dashed")
+                    }
                     Spacer()
 #if DEBUG
                     if MarketingPreviewScene.current == .home {
@@ -315,13 +315,26 @@ struct HomeView: View {
                             .foregroundStyle(MosaicTheme.muted)
                     }
                 }
-                Button("Choose a mission") {
-                    Task {
-                        await store.openOrganizerSandbox()
-                        showMissions = true
-                    }
+                Button("Choose an act") {
+                    router.select(.camera)
                 }
                     .buttonStyle(PrimaryButtonStyle(color: MosaicTheme.persimmon))
+            }
+        }
+    }
+
+    private var closedGoalCard: some View {
+        OrganicPanel(variant: .leaningRight, tint: MosaicTheme.sage.opacity(0.1)) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("BOARD COMPLETE", systemImage: "checkmark.seal.fill")
+                    .font(MosaicTheme.caption(.bold))
+                    .tracking(1)
+                    .foregroundStyle(MosaicTheme.sage)
+                Text("Every tile has a place.")
+                    .font(MosaicTheme.display(24, weight: .semibold))
+                Text("The artwork remains sealed until \(store.challenge.revealDate.formatted(date: .abbreviated, time: .shortened)).")
+                    .font(.subheadline)
+                    .foregroundStyle(MosaicTheme.muted)
             }
         }
     }

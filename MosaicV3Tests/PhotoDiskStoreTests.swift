@@ -36,4 +36,36 @@ struct PhotoDiskStoreTests {
         let cleared = try await firstStore.pendingPhotos(mosaicID: mosaicID)
         #expect(cleared.isEmpty)
     }
+
+    @Test
+    func clearingPrivateStateRemovesPhotosAndPendingManifest() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appending(path: "MosaicPhotoDiskStoreTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = PhotoDiskStore(baseDirectory: root)
+        let mosaicID = UUID()
+        let photoID = UUID()
+        let localURL = try await store.save(Data([0xFF, 0xD8, 0xFF, 0xD9]), id: photoID)
+        let pending = EventPhoto(
+            id: photoID,
+            mosaicID: mosaicID,
+            photographerID: UUID(),
+            photographerDisplayName: "You",
+            filmLookID: .sunwashed,
+            capturedAt: .now,
+            state: .uploadPending,
+            storagePath: nil,
+            localURL: localURL,
+            signedURL: nil,
+            pixelWidth: 100,
+            pixelHeight: 100,
+            isMine: true
+        )
+        try await store.savePending(pending)
+
+        try await store.clearAll()
+
+        #expect(!FileManager.default.fileExists(atPath: localURL.path()))
+        #expect(try await store.pendingPhotos(mosaicID: mosaicID).isEmpty)
+    }
 }

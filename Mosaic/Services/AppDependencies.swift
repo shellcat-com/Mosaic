@@ -13,13 +13,7 @@ final class AppDependencies {
     let sharedMoments: SupabaseSharedMomentRepository
 
     init(configuration: SupabaseConfiguration) {
-        let client = SupabaseClient(
-            supabaseURL: configuration.url,
-            supabaseKey: configuration.publishableKey,
-            options: SupabaseClientOptions(
-                functions: .init(decoder: MosaicJSONDecoder.make())
-            )
-        )
+        let client = MosaicSupabaseClientFactory.make(configuration: configuration)
         let workspace = SupabaseWorkspaceService(client: client)
         self.client = client
         self.auth = SupabaseAuthService(client: client)
@@ -32,6 +26,30 @@ final class AppDependencies {
         )
         self.sharedMoments = SupabaseSharedMomentRepository(client: client)
         Self.live = self
+    }
+}
+
+enum MosaicSupabaseClientFactory {
+    static func make(configuration: SupabaseConfiguration) -> SupabaseClient {
+        SupabaseClient(
+            supabaseURL: configuration.url,
+            supabaseKey: configuration.publishableKey,
+            options: SupabaseClientOptions(
+                auth: .init(emitLocalSessionAsInitialSession: true),
+                functions: .init(decoder: MosaicJSONDecoder.make())
+            )
+        )
+    }
+}
+
+extension SupabaseClient {
+    /// Returns a usable stored session or creates the guest session Mosaic
+    /// needs for invitation-based participation.
+    func restoreOrCreateMosaicSession() async throws -> Session {
+        if let current = auth.currentSession {
+            return current.isExpired ? try await auth.session : current
+        }
+        return try await auth.signInAnonymously()
     }
 }
 

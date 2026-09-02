@@ -14,12 +14,9 @@ final class SupabaseAuthService: AuthServicing {
     var clientUserID: UUID? { client.auth.currentSession?.user.id }
 
     func restoreOrCreateGuest() async throws -> AppSessionState {
-        let session: Session
-        if let current = client.auth.currentSession {
-            session = current
-        } else {
-            session = try await client.auth.signInAnonymously()
-        }
+        // Local-first delivery may return an expired stored session, so the
+        // shared policy refreshes it before the app proceeds.
+        let session = try await client.restoreOrCreateMosaicSession()
         return Self.state(for: session)
     }
 

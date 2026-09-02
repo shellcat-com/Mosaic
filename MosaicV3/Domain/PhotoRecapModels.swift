@@ -105,4 +105,12 @@ struct PhotoRecapProject: Identifiable, Codable, Hashable, Sendable {
         self.music = music
         self.musicTrimOffset = musicTrimOffset
     }
+
+    var estimatedDuration: TimeInterval {
+        Double(selection.orderedPhotoIDs.count) * template.secondsPerPhoto
+    }
+
+    var hasEdits: Bool {
+        !selection.orderedPhotoIDs.isEmpty || template != .porcelainPrint || music != .anywhere || musicTrimOffset != 0
+    }
 }

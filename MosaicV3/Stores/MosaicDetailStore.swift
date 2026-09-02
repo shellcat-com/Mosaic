@@ -67,6 +67,16 @@ final class MosaicDetailStore {
         placedTilePosition = nil
     }
 
+    func clearPrivateState() async {
+        event = nil
+        isLoading = false
+        placedTilePosition = nil
+        revealedArtworkURL = nil
+        message = nil
+        selectedOutcome = .artwork
+        try? await artworkCache.clearAll()
+    }
+
     func updateNote(contributionID: UUID, note: String?) async throws {
         let updated = try await api.updateContribution(contributionID, note: note)
         if let index = event?.contributions.firstIndex(where: { $0.id == contributionID }) {

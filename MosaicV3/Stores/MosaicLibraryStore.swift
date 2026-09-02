@@ -4,6 +4,7 @@ import Observation
 @MainActor @Observable
 final class MosaicLibraryStore {
     private let api: any MosaicAPI
+    @ObservationIgnored private var pendingPremiumCreateRequestID: UUID?
     private(set) var mosaics: [MosaicSummary] = []
     private(set) var isLoading = false
     var message: String?
@@ -30,8 +31,12 @@ final class MosaicLibraryStore {
         let event: MosaicEvent
         if draft.requiresPremiumAccess && !billingSnapshot.plusActive {
             guard billingSnapshot.passBalance > 0 else { throw MosaicAPIError.premiumRequired }
-            event = try await api.createPremiumMosaic(draft, requestID: UUID())
+            let requestID = pendingPremiumCreateRequestID ?? UUID()
+            pendingPremiumCreateRequestID = requestID
+            event = try await api.createPremiumMosaic(draft, requestID: requestID)
+            pendingPremiumCreateRequestID = nil
         } else {
+            pendingPremiumCreateRequestID = nil
             event = try await api.createMosaic(draft)
         }
         replace(event.summary)
@@ -50,6 +55,13 @@ final class MosaicLibraryStore {
 
     func remove(id: UUID) {
         mosaics.removeAll { $0.id == id }
+    }
+
+    func clearPrivateState() {
+        mosaics = []
+        isLoading = false
+        message = nil
+        pendingPremiumCreateRequestID = nil
     }
 
     func replace(_ summary: MosaicSummary) {

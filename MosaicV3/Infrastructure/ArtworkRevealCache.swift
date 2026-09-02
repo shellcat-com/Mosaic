@@ -41,6 +41,12 @@ actor ArtworkRevealCache {
         return destination
     }
 
+    func clearAll() throws {
+        if fileManager.fileExists(atPath: directory.path()) {
+            try fileManager.removeItem(at: directory)
+        }
+    }
+
     private static func sha256(_ data: Data) -> String {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }

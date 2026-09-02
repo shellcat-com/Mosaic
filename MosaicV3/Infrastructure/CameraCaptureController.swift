@@ -21,11 +21,13 @@ enum CameraCaptureError: LocalizedError {
 
 @MainActor @Observable
 final class CameraCaptureController: NSObject, AVCapturePhotoCaptureDelegate {
-    let session = AVCaptureSession()
-    private let output = AVCapturePhotoOutput()
+    private let captureSession = CameraCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "com.mosaic.camera-session", qos: .userInitiated)
     private var continuation: CheckedContinuation<Data, any Error>?
     private(set) var permissionDenied = false
     private(set) var isReady = false
+
+    var session: AVCaptureSession { captureSession.session }
 
     func start() async throws {
         let authorized: Bool
@@ -39,12 +41,15 @@ final class CameraCaptureController: NSObject, AVCapturePhotoCaptureDelegate {
             throw CameraCaptureError.permissionDenied
         }
         permissionDenied = false
-        if !isReady { try configure() }
-        if !session.isRunning { session.startRunning() }
+        if !isReady {
+            try await performSessionWork { [captureSession] in try captureSession.configure() }
+            isReady = true
+        }
+        try await performSessionWork { [captureSession] in captureSession.start() }
     }
 
     func stop() {
-        if session.isRunning { session.stopRunning() }
+        sessionQueue.async { [captureSession] in captureSession.stop() }
     }
 
     func capture() async throws -> Data {
@@ -52,7 +57,7 @@ final class CameraCaptureController: NSObject, AVCapturePhotoCaptureDelegate {
         let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
-            output.capturePhoto(with: settings, delegate: self)
+            captureSession.output.capturePhoto(with: settings, delegate: self)
         }
     }
 
@@ -67,7 +72,27 @@ final class CameraCaptureController: NSObject, AVCapturePhotoCaptureDelegate {
         }
     }
 
-    private func configure() throws {
+    private func performSessionWork(_ work: @escaping @Sendable () throws -> Void) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            sessionQueue.async {
+                do {
+                    try work()
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
+
+private final class CameraCaptureSession: @unchecked Sendable {
+    let session = AVCaptureSession()
+    let output = AVCapturePhotoOutput()
+    private var configured = false
+
+    func configure() throws {
+        guard !configured else { return }
         guard let camera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
             throw CameraCaptureError.cameraUnavailable
         }
@@ -78,7 +103,15 @@ final class CameraCaptureController: NSObject, AVCapturePhotoCaptureDelegate {
         guard session.canAddInput(input), session.canAddOutput(output) else { throw CameraCaptureError.configurationFailed }
         session.addInput(input)
         session.addOutput(output)
-        isReady = true
+        configured = true
+    }
+
+    func start() {
+        if !session.isRunning { session.startRunning() }
+    }
+
+    func stop() {
+        if session.isRunning { session.stopRunning() }
     }
 }
 

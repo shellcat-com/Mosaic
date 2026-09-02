@@ -82,7 +82,12 @@ struct MosaicEventView: View {
                             .font(.title2).foregroundStyle(activity.participantCompleted ? MosaicTheme.sage : MosaicTheme.accentForeground)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(activity.title).font(.headline).foregroundStyle(MosaicTheme.ink)
-                            if !activity.purpose.isEmpty { Text(activity.purpose).font(.subheadline).foregroundStyle(MosaicTheme.muted).lineLimit(2) }
+                            if !activity.purpose.isEmpty {
+                                Text(activity.purpose)
+                                    .font(.subheadline)
+                                    .foregroundStyle(MosaicTheme.muted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                         Spacer(); Image(systemName: "chevron.right").foregroundStyle(MosaicTheme.muted)
                     }.porcelainCard()

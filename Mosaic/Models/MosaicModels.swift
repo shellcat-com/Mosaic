@@ -191,12 +191,19 @@ struct KindnessChallenge: Identifiable, Sendable {
     var recapAvailability: RecapAvailability
     var recapThumbnailFilename: String?
     var invitationCode: String
+    var isShowcase: Bool
     var contributions: [TileContribution]
     var theme: ThemeSelection
+    var artworkMode: ArtworkMode
+    var sealedArtwork: SealedArtwork?
+    var artworkCatalogRevision: Int?
+    var artworkPackageRevision: Int?
     var cameraRollEnabled: Bool
     var sharedMoments: [SharedMoment]
     var mosaicVersion: Int
     var impactReceiptVersion: Int
+    var experienceVersion: MosaicExperienceVersion
+    var filmLookID: FilmLookID
 
     init(
         id: UUID = UUID(),
@@ -212,12 +219,19 @@ struct KindnessChallenge: Identifiable, Sendable {
         recapAvailability: RecapAvailability = .unavailable,
         recapThumbnailFilename: String? = nil,
         invitationCode: String,
+        isShowcase: Bool = false,
         contributions: [TileContribution],
         theme: ThemeSelection = .fallback,
+        artworkMode: ArtworkMode = .legacy,
+        sealedArtwork: SealedArtwork? = nil,
+        artworkCatalogRevision: Int? = nil,
+        artworkPackageRevision: Int? = nil,
         cameraRollEnabled: Bool = true,
         sharedMoments: [SharedMoment] = [],
         mosaicVersion: Int = 1,
-        impactReceiptVersion: Int = 1
+        impactReceiptVersion: Int = 1,
+        experienceVersion: MosaicExperienceVersion = .legacy,
+        filmLookID: FilmLookID = .sunwashed
     ) {
         self.id = id
         self.name = name
@@ -232,12 +246,19 @@ struct KindnessChallenge: Identifiable, Sendable {
         self.recapAvailability = recapAvailability
         self.recapThumbnailFilename = recapThumbnailFilename
         self.invitationCode = invitationCode
+        self.isShowcase = isShowcase
         self.contributions = contributions
         self.theme = theme
+        self.artworkMode = artworkMode
+        self.sealedArtwork = sealedArtwork
+        self.artworkCatalogRevision = artworkCatalogRevision
+        self.artworkPackageRevision = artworkPackageRevision
         self.cameraRollEnabled = cameraRollEnabled
         self.sharedMoments = sharedMoments
         self.mosaicVersion = mosaicVersion
         self.impactReceiptVersion = impactReceiptVersion
+        self.experienceVersion = experienceVersion
+        self.filmLookID = filmLookID
     }
 
     var summary: ChallengeSummary {
@@ -255,7 +276,14 @@ struct KindnessChallenge: Identifiable, Sendable {
             goal: goal,
             recapAvailability: recapAvailability,
             recapThumbnailFilename: recapThumbnailFilename,
-            theme: theme
+            isShowcase: isShowcase,
+            theme: theme,
+            artworkMode: artworkMode,
+            sealedArtwork: sealedArtwork,
+            artworkCatalogRevision: artworkCatalogRevision,
+            artworkPackageRevision: artworkPackageRevision,
+            experienceVersion: experienceVersion,
+            filmLookID: filmLookID
         )
     }
 }

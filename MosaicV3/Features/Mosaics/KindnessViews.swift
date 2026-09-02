@@ -5,7 +5,7 @@ struct KindnessActivityView: View {
     let activityID: UUID
     @State private var note = ""
     @State private var isWorking = false
-    @State private var message: String?
+    @State private var feedback: MosaicFeedback?
 
     private var activity: KindnessActivity? { model.detail.event?.activities.first { $0.id == activityID } }
     private var contribution: KindnessContribution? { model.detail.event?.contributions.first { $0.activityID == activityID && $0.isMine } }
@@ -31,7 +31,7 @@ struct KindnessActivityView: View {
                     } else {
                         ContentUnavailableView("Contributions closed", systemImage: "checkmark.seal", description: Text(event.phase == .full ? "The board is full. The camera stays open until reveal." : "This Mosaic is no longer accepting kindness confirmations."))
                     }
-                    if let message { Text(message).font(.footnote).foregroundStyle(.red) }
+                    if let feedback { MosaicFeedbackView(feedback: feedback) }
                 }
             }
         }
@@ -39,7 +39,7 @@ struct KindnessActivityView: View {
         .navigationTitle("Activity")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { note = contribution?.note ?? "" }
-        .mosaicAccessibilityAnnouncement(message)
+        .mosaicAccessibilityAnnouncement(feedback?.message)
         .overlay {
             if let position = model.detail.placedTilePosition,
                let event = model.detail.event {
@@ -56,18 +56,18 @@ struct KindnessActivityView: View {
 
     private func complete(_ activity: KindnessActivity) async {
         isWorking = true; defer { isWorking = false }
-        do { try await model.detail.complete(activity, note: note); message = nil }
-        catch { message = error.localizedDescription }
+        do { try await model.detail.complete(activity, note: note); feedback = nil }
+        catch { feedback = .init(message: error.localizedDescription, kind: .error) }
     }
     private func update(_ contribution: KindnessContribution) async {
         isWorking = true; defer { isWorking = false }
-        do { try await model.detail.updateNote(contributionID: contribution.id, note: note); message = "Note saved." }
-        catch { message = error.localizedDescription }
+        do { try await model.detail.updateNote(contributionID: contribution.id, note: note); feedback = .init(message: "Note saved.", kind: .success) }
+        catch { feedback = .init(message: error.localizedDescription, kind: .error) }
     }
     private func undo(_ contribution: KindnessContribution) async {
         isWorking = true; defer { isWorking = false }
-        do { try await model.detail.undo(contributionID: contribution.id); note = ""; message = "Contribution withdrawn." }
-        catch { message = error.localizedDescription }
+        do { try await model.detail.undo(contributionID: contribution.id); note = ""; feedback = .init(message: "Contribution withdrawn.", kind: .success) }
+        catch { feedback = .init(message: error.localizedDescription, kind: .error) }
     }
 }
 

@@ -30,6 +30,20 @@ struct RepositoryStateTests {
         #expect(repository.demoPreparationCount == 0)
     }
 
+    @Test func restoredDemoPrefersWritableSandboxOverActiveShowcase() async {
+        let repository = MockMosaicRepository()
+        repository.challengeSummaries = [
+            repository.summary(id: repository.showcaseID, showcase: true),
+            repository.summary(id: repository.sandboxID)
+        ]
+        let store = AppStore(repository: repository)
+
+        await store.bootstrap()
+
+        #expect(store.challenge.id == repository.sandboxID)
+        #expect(!store.challenge.isShowcase)
+    }
+
     @Test func joiningWaitsForConfirmationAndKeepsFailuresOnJoinScreen() async {
         let repository = MockMosaicRepository()
         repository.joinError = MockFailure.offline
@@ -116,6 +130,32 @@ struct RepositoryStateTests {
         #expect(repository.submissionCount == 2)
         #expect(store.pendingContribution?.status == .selfAttested)
     }
+
+    @Test func readOnlyShowcaseNeverCallsSubmissionEndpoint() async {
+        let repository = MockMosaicRepository()
+        let store = AppStore(repository: repository)
+        await store.openChallenge(repository.showcaseID)
+        let mission = store.missions[0]
+        let contribution = TileContribution(
+            id: UUID(), mission: mission, emotion: .hopeful, evidence: .reflection,
+            contributor: nil, sharedMemory: false, isRevived: false, status: .selfAttested
+        )
+
+        let succeeded = await store.submitContribution(
+            contribution,
+            reflection: "Must remain local",
+            mediaData: nil,
+            mimeType: nil,
+            durationSeconds: nil,
+            includeMemory: false,
+            showIdentity: false,
+            exportConsent: false
+        )
+
+        #expect(!succeeded)
+        #expect(repository.submissionCount == 0)
+        #expect(store.backendMessage == "This showcase is read-only. Open your private sandbox to create a tile.")
+    }
 }
 
 private enum MockFailure: Error {
@@ -171,10 +211,10 @@ private final class MockMosaicRepository: MosaicRepository {
 
     func listChallenges() async throws -> [ChallengeSummary] { challengeSummaries }
 
-    func summary(id: UUID) -> ChallengeSummary {
+    func summary(id: UUID, showcase: Bool = false) -> ChallengeSummary {
         ChallengeSummary(
             id: id,
-            name: "Mock Sandbox",
+            name: showcase ? "Mock Showcase" : "Mock Sandbox",
             groupName: "Mock Group",
             purpose: "State tests",
             startAt: .now.addingTimeInterval(-60),
@@ -185,7 +225,8 @@ private final class MockMosaicRepository: MosaicRepository {
             contributionCount: 0,
             goal: 4,
             recapAvailability: .unavailable,
-            recapThumbnailFilename: nil
+            recapThumbnailFilename: nil,
+            isShowcase: showcase
         )
     }
 
@@ -202,6 +243,7 @@ private final class MockMosaicRepository: MosaicRepository {
                 goal: 4,
                 revealDate: .now.addingTimeInterval(3_600),
                 invitationCode: id == showcaseID ? "KIND42" : "MOCK123",
+                isShowcase: id == showcaseID,
                 contributions: []
             ),
             [mission]

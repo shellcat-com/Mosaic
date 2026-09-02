@@ -53,12 +53,12 @@ struct MosaicPaywallView: View {
 
     private var contextCopy: String {
         switch store.paywallContext {
-        case .customArtwork: "Bring your own artwork to this Mosaic."
+        case .customArtwork: "Custom artwork upload is coming later and is not available for purchase yet."
         case .collaborators: "Invite trusted admins and reviewers."
         case .additionalChallenge: "Run another active Mosaic alongside this one."
         case .recapEditor: "Approve and shape the community recap."
         case .hdArtwork, .posterExport: "Export the finished work at presentation quality."
-        default: "More participants, custom missions, collaboration, and beautiful exports."
+        default: "More participants, custom acts, collaboration, and beautiful exports. Custom artwork upload is coming later."
         }
     }
 }
@@ -119,11 +119,11 @@ struct BillingManagementView: View {
                 .buttonStyle(SecondaryButtonStyle())
 
                 if store.accessSnapshot.passBalance > 0 && !store.accessSnapshot.currentChallengeHasEventPass {
-                    Button("Apply one Pass to this challenge") { Task { await store.redeemEventPass() } }
+                    Button("Apply one Pass to this Mosaic") { Task { await store.redeemEventPass() } }
                         .buttonStyle(PrimaryButtonStyle())
                 }
 
-                Text("A Mosaic Pass is a purchased, non-expiring credit. Applying it is permanent for that challenge. Deleting your Mosaic account does not cancel an Apple subscription.")
+                Text("A Mosaic Pass is a purchased, non-expiring credit. Applying it is permanent for that Mosaic. Deleting your Mosaic account does not cancel an Apple subscription.")
                     .font(.footnote).foregroundStyle(MosaicTheme.muted)
                 HStack {
                     Link("Privacy", destination: MosaicBuildConfiguration.privacyPolicyURL)
@@ -166,8 +166,8 @@ struct WorkspaceSettingsView: View {
                 if store.selectedOrganization?.role.canManageChallenges == true {
                     OrganicPanel {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Challenge controls").font(.headline)
-                            Label("Create and edit challenges", systemImage: "checkmark.circle")
+                            Text("Mosaic controls").font(.headline)
+                            Label("Create and edit Mosaics", systemImage: "checkmark.circle")
                             Label("Manage participant invitations", systemImage: "checkmark.circle")
                         }
                     }
@@ -233,7 +233,7 @@ struct WorkspaceSettingsView: View {
         }
         .navigationTitle("Workspace")
         .navigationBarTitleDisplayMode(.inline)
-        .confirmationDialog("Delete this workspace and all of its challenges?", isPresented: $showDeleteWorkspace) {
+        .confirmationDialog("Delete this workspace and all of its Mosaics?", isPresented: $showDeleteWorkspace) {
             Button("Delete workspace", role: .destructive) { Task { await store.deleteSelectedOrganization() } }
         } message: {
             Text("This cannot be undone. Deleting a workspace does not cancel an App Store subscription.")
