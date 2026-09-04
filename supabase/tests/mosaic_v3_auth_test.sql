@@ -1,6 +1,6 @@
 begin;
 set local search_path = public, extensions, auth;
-select plan(8);
+select plan(9);
 
 insert into auth.users(id,email,raw_user_meta_data,is_anonymous) values
   ('90000000-0000-4000-8000-000000000001','apple-v3@mosaic.test','{}',false),
@@ -18,6 +18,11 @@ select throws_ok(
   $$select public.v3_auth_profile()$$,
   '42501','apple_account_required',
   'anonymous users cannot enter the V3 account boundary'
+);
+select throws_ok(
+  $$insert into public.mosaic_v3_profiles(id,display_name) values ('90000000-0000-4000-8000-000000000002','Bypass')$$,
+  '42501','permission denied for table mosaic_v3_profiles',
+  'anonymous sessions cannot bypass Apple validation with a direct profile insert'
 );
 
 select set_config('request.jwt.claims','{"sub":"90000000-0000-4000-8000-000000000003","role":"authenticated","is_anonymous":false}',true);

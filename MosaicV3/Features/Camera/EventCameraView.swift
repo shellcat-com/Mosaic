@@ -3,6 +3,7 @@ import SwiftUI
 struct EventCameraView: View {
     @Environment(MosaicAppModel.self) private var model
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.scenePhase) private var scenePhase
     @State private var controller = CameraCaptureController()
     @State private var message: String?
     @State private var isCapturing = false
@@ -34,6 +35,13 @@ struct EventCameraView: View {
             await model.camera.retryPendingUploads()
         }
         .onDisappear { controller.stop() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await start() }
+            } else if phase == .background {
+                controller.stop()
+            }
+        }
         .onAppear {
             if let requestedID = model.router.consumeCameraRequest(),
                let requested = model.library.active.first(where: { $0.id == requestedID && $0.phase.acceptsPhotos }) {
@@ -439,7 +447,8 @@ private struct CameraFlashWindow: View {
                 .font(.system(size: 7, weight: .bold, design: .monospaced))
         }
         .foregroundStyle(MosaicTheme.ink.opacity(0.7))
-        .accessibilityHidden(true)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Flash indicator")
     }
 }
 
@@ -460,7 +469,8 @@ private struct FilmAdvanceWheel: View {
                 .font(.system(size: 8, weight: .bold, design: .monospaced))
         }
         .foregroundStyle(MosaicTheme.ink.opacity(0.7))
-        .accessibilityHidden(true)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Film advance indicator")
     }
 }
 

@@ -10,6 +10,8 @@ struct CreateMosaicView: View {
     @State private var created: MosaicEvent?
     @State private var isSaving = false
     @State private var message: String?
+    @State private var selectedPresetID: String?
+    @State private var restoredDraft = false
 
     private let stepTitles = ["Basics", "Activities", "Artwork", "Camera", "Timing", "Invite"]
 
@@ -19,6 +21,7 @@ struct CreateMosaicView: View {
                 MosaicTitle(stepTitles[step], eyebrow: "Create Mosaic · \(step + 1) of 6", detail: subtitle)
                     .accessibilityIdentifier("wizard.step.\(stepTitles[step].lowercased())")
                 WizardProgress(current: step + 1, total: stepTitles.count)
+                if step > 0 && step < 5 { creationPromise }
                 stepContent
                 if let message { Text(message).font(.footnote).foregroundStyle(.red) }
                 controls
@@ -27,6 +30,10 @@ struct CreateMosaicView: View {
         .id(step)
         .navigationTitle("Create")
         .navigationBarTitleDisplayMode(.inline)
+        .task { restoreDraftIfNeeded() }
+        .onChange(of: draft) { _, _ in saveDraft() }
+        .onChange(of: step) { _, _ in saveDraft() }
+        .onChange(of: selectedPresetID) { _, _ in saveDraft() }
     }
 
     private var subtitle: String {
@@ -53,12 +60,80 @@ struct CreateMosaicView: View {
     }
 
     private var basics: some View {
-        VStack(spacing: 14) {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Start with a shape").font(.headline)
+            Text("Pick a starting point, then make every word yours.")
+                .font(.footnote).foregroundStyle(MosaicTheme.muted)
+            presetChoices
+            creationFields
+            Label("Your draft is kept while you browse this signed-in session.", systemImage: "checkmark.circle")
+                .font(.footnote).foregroundStyle(MosaicTheme.muted)
+        }
+    }
+
+    private var presetChoices: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 10) {
+                ForEach(MosaicCreationPreset.all) { preset in
+                    presetButton(preset)
+                }
+            }
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private var creationFields: some View {
+        Group {
             TextField("Mosaic name", text: $draft.name).mosaicField()
             TextField("Community or group", text: $draft.communityName).mosaicField()
             TextField("What brings everyone together?", text: $draft.description, axis: .vertical)
                 .lineLimit(3...7).mosaicField()
         }
+    }
+
+    private func presetButton(_ preset: MosaicCreationPreset) -> some View {
+        let selected = selectedPresetID == preset.id
+        return Button { apply(preset) } label: {
+            VStack(alignment: .leading, spacing: 7) {
+                Image(systemName: preset.symbol).font(.title2)
+                Text(preset.title).font(.subheadline.weight(.semibold))
+                Text(preset.detail)
+                    .font(.caption)
+                    .foregroundStyle(MosaicTheme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(width: 142, alignment: .leading)
+            .frame(minHeight: 112, alignment: .leading)
+            .padding(12)
+            .foregroundStyle(MosaicTheme.ink)
+            .background(selected ? MosaicTheme.sky.opacity(0.18) : MosaicTheme.raisedPaper,
+                        in: RoundedRectangle(cornerRadius: 14))
+            .overlay {
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(selected ? MosaicTheme.deepGlaze : MosaicTheme.border, lineWidth: selected ? 2 : 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(preset.title) starting point, \(preset.detail)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("creation.preset.\(preset.id)")
+    }
+
+    private var creationPromise: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "sparkles.rectangle.stack.fill")
+                .font(.title3).foregroundStyle(MosaicTheme.accentForeground)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("What guests will experience").font(.subheadline.weight(.semibold))
+                Text("\(filledActivityCount) kindness \(filledActivityCount == 1 ? "choice" : "choices") · \(draft.shotLimit) photo exposures · shared art reveals \(draft.revealAt.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.footnote).foregroundStyle(MosaicTheme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .background(MosaicTheme.sky.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("creation.outcomePreview")
     }
 
     private var activities: some View {
@@ -261,6 +336,32 @@ struct CreateMosaicView: View {
 
     private var hasPremiumChoiceAccess: Bool { model.billing.snapshot.canStartPremiumMosaic }
 
+    private var filledActivityCount: Int {
+        max(1, draft.activities.filter { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }.count)
+    }
+
+    private func apply(_ preset: MosaicCreationPreset) {
+        selectedPresetID = preset.id
+        draft.name = preset.name
+        draft.description = preset.description
+        draft.activities = preset.activities.map { .init(title: $0.title, purpose: $0.purpose) }
+        draft.revealAt = max(draft.startAt.addingTimeInterval(preset.duration), Date.now.addingTimeInterval(preset.duration))
+    }
+
+    private func restoreDraftIfNeeded() {
+        guard !restoredDraft else { return }
+        restoredDraft = true
+        guard let workspace = model.creativeDrafts.creation else { return }
+        draft = workspace.draft
+        step = min(max(0, workspace.step), stepTitles.count - 1)
+        selectedPresetID = workspace.selectedPresetID
+    }
+
+    private func saveDraft() {
+        guard restoredDraft, created == nil else { return }
+        model.creativeDrafts.saveCreation(draft: draft, step: step, selectedPresetID: selectedPresetID)
+    }
+
     private func chooseFilmLook(_ look: FilmLookID) {
         guard look == .sunwashed || hasPremiumChoiceAccess else {
             model.billing.present(.creationChoice)
@@ -290,6 +391,7 @@ struct CreateMosaicView: View {
         defer { isSaving = false }
         do {
             created = try await model.library.create(draft, billingSnapshot: model.billing.snapshot)
+            model.creativeDrafts.clearCreation()
             if draft.requiresPremiumAccess && !model.billing.snapshot.plusActive {
                 await model.billing.refreshServer()
             }
@@ -300,6 +402,55 @@ struct CreateMosaicView: View {
             }
         }
     }
+}
+
+private struct MosaicCreationPreset: Identifiable {
+    struct Activity {
+        let title: String
+        let purpose: String
+    }
+
+    let id: String
+    let title: String
+    let detail: String
+    let symbol: String
+    let name: String
+    let description: String
+    let duration: TimeInterval
+    let activities: [Activity]
+
+    static let all: [Self] = [
+        .init(
+            id: "community", title: "Community care", detail: "Neighbors or local groups", symbol: "person.3.fill",
+            name: "Community Kindness Week", description: "Small acts of care that help our community feel more connected.",
+            duration: 60 * 60 * 24 * 7,
+            activities: [
+                .init(title: "Check in on someone", purpose: "Make room for a real conversation."),
+                .init(title: "Share something useful", purpose: "Offer time, knowledge, or a needed item."),
+                .init(title: "Leave a place better", purpose: "Care for a space everyone shares.")
+            ]
+        ),
+        .init(
+            id: "classroom", title: "Classroom care", detail: "Students, teachers, or clubs", symbol: "book.closed.fill",
+            name: "Classroom Kindness Mosaic", description: "A week of thoughtful actions that make our learning space warmer for everyone.",
+            duration: 60 * 60 * 24 * 5,
+            activities: [
+                .init(title: "Help someone learn", purpose: "Offer patient support without taking over."),
+                .init(title: "Invite someone in", purpose: "Make a group or conversation easier to join."),
+                .init(title: "Thank a helper", purpose: "Notice the work that often goes unseen.")
+            ]
+        ),
+        .init(
+            id: "celebration", title: "Celebration", detail: "Birthdays, teams, or milestones", symbol: "party.popper.fill",
+            name: "A Mosaic for Someone Special", description: "Celebrate this moment through thoughtful actions we can do together.",
+            duration: 60 * 60 * 24 * 3,
+            activities: [
+                .init(title: "Share a favorite memory", purpose: "Name a moment that still makes you smile."),
+                .init(title: "Do one thoughtful thing", purpose: "Turn appreciation into a small action."),
+                .init(title: "Pass the kindness on", purpose: "Help the celebration reach someone else.")
+            ]
+        )
+    ]
 }
 
 struct WizardProgress: View {

@@ -6,6 +6,10 @@ struct AppStoreRecapAdapter: RecapDataProviding {
     let challenge: KindnessChallenge
 
     func loadRecap(challengeID: UUID) async throws -> (RecapMeta, [RecapSource]) {
+        let museumAsset = await cachedMuseumAsset(
+            challengeID: challenge.id,
+            revision: challenge.artworkPackageRevision
+        )
         let accepted = challenge.contributions.filter { [.verified, .placed, .revealed, .selfAttested].contains($0.status) }
         let participantCount = Set(accepted.map(\.participantID)).count
         let missionTotals = Dictionary(grouping: accepted, by: { RecapMissionCategory(rawValue: $0.mission.category.rawValue) ?? .community })
@@ -30,7 +34,11 @@ struct AppStoreRecapAdapter: RecapDataProviding {
             mosaicVersion: challenge.mosaicVersion,
             localeIdentifier: Locale.current.identifier,
             timeZoneIdentifier: TimeZone.current.identifier,
-            theme: challenge.theme
+            theme: challenge.theme,
+            artworkMode: challenge.artworkMode,
+            boardSide: challenge.sealedArtwork?.boardSide,
+            artworkCrop: museumAsset.crop,
+            artworkFileURL: museumAsset.url
         )
         let sources = challenge.contributions.compactMap { contribution -> RecapSource? in
             let memory = contribution.memory
@@ -87,8 +95,18 @@ struct AppStoreRecapAdapter: RecapDataProviding {
             let url = ProtectedSharedMomentStore.localURL(for: moment.localAssetName)
             let asset = RecapMediaAsset(localURL: url, remotePath: moment.remoteMediaPath,
                                         version: moment.mediaVersion, pixelWidth: nil, pixelHeight: nil)
-            let content: RecapMemoryContent = .photo(asset: asset, note: moment.note)
-            let image = url.flatMap { UIImage(contentsOfFile: $0.path)?.cgImage }
+            let content: RecapMemoryContent
+            switch moment.mediaKind {
+            case .photo:
+                content = .photo(asset: asset, note: moment.note)
+            case .video:
+                content = .video(asset: asset, note: moment.note, duration: moment.durationSeconds)
+            case .note:
+                guard let note = moment.note else { return nil }
+                content = .reflection(note)
+            }
+            let image = moment.mediaKind == .photo ? url.flatMap { UIImage(contentsOfFile: $0.path)?.cgImage } : nil
+            let mediaExists = moment.mediaKind == .note ? moment.note != nil : (url != nil || moment.remoteMediaPath != nil)
             return RecapSource(
                 id: moment.id, origin: .sharedMoment, contributionID: nil,
                 participantID: moment.creatorID, participantDisplayName: nil,
@@ -96,7 +114,7 @@ struct AppStoreRecapAdapter: RecapDataProviding {
                 category: moment.editorialCategory.flatMap { RecapMissionCategory(rawValue: $0.rawValue) },
                 acceptedAt: moment.createdAt, content: content, tile: nil,
                 eligibility: RecapEligibility(
-                    accepted: true, recapConsent: moment.exportConsent, mediaExists: url != nil,
+                    accepted: true, recapConsent: moment.exportConsent, mediaExists: mediaExists,
                     isDeleted: false, isReported: false, contributorIsBlocked: false, viewerIsAuthorized: true
                 ),
                 mediaVersion: moment.mediaVersion, consentVersion: moment.consentVersion,
@@ -106,13 +124,26 @@ struct AppStoreRecapAdapter: RecapDataProviding {
         }
         return (meta, sources + sharedSources)
     }
+
+    private func cachedMuseumAsset(
+        challengeID: UUID,
+        revision: Int?
+    ) async -> (url: URL?, crop: NormalizedArtworkCrop?) {
+        guard let revision else { return (nil, nil) }
+        let cache = RevealArtworkCache()
+        let exportURL = await cache.cachedExportURL(challengeID: challengeID, revision: revision)
+        let displayURL = await cache.cachedDisplayURL(challengeID: challengeID, revision: revision)
+        let url = exportURL ?? displayURL
+        let metadata = try? await cache.cachedMetadata(challengeID: challengeID, revision: revision)
+        return (url, metadata?.crop)
+    }
 }
 
 actor SupabaseRecapAdapter: RecapDataProviding, RecapExportRecording, RecapCloudPublishing {
     private let client: SupabaseClient
 
     init(configuration: SupabaseConfiguration) {
-        client = SupabaseClient(supabaseURL: configuration.url, supabaseKey: configuration.publishableKey)
+        client = MosaicSupabaseClientFactory.make(configuration: configuration)
     }
 
     init(client: SupabaseClient) {
@@ -120,9 +151,9 @@ actor SupabaseRecapAdapter: RecapDataProviding, RecapExportRecording, RecapCloud
     }
 
     func loadRecap(challengeID: UUID) async throws -> (RecapMeta, [RecapSource]) {
-        if client.auth.currentSession == nil { _ = try await client.auth.signInAnonymously() }
+        _ = try await client.restoreOrCreateMosaicSession()
         let challenge: RecapChallengeRecord = try await client.from("challenges")
-            .select("id,name,group_name,goal,start_at,reveal_at,status,mosaic_version,impact_receipt_version,theme_id,theme_palette_id,theme_seed,theme_revision")
+            .select("id,name,group_name,goal,start_at,reveal_at,status,mosaic_version,impact_receipt_version,theme_id,theme_palette_id,theme_seed,theme_revision,artwork_mode,board_side,artwork_package_revision")
             .eq("id", value: challengeID.uuidString).single().execute().value
         let impact: RecapImpactRecord? = try? await client.from("impact_receipts")
             .select().eq("challenge_id", value: challengeID.uuidString).single().execute().value
@@ -133,7 +164,14 @@ actor SupabaseRecapAdapter: RecapDataProviding, RecapExportRecording, RecapCloud
         for record in records {
             let localURL = try await downloadMemoryIfPresent(record)
             let content: RecapMemoryContent
-            if record.mediaPath != nil {
+            if record.resolvedMediaKind == .video, record.mediaPath != nil {
+                content = .video(
+                    asset: RecapMediaAsset(localURL: localURL, remotePath: record.mediaPath,
+                                           version: record.mediaVersion, pixelWidth: nil, pixelHeight: nil),
+                    note: record.storyText,
+                    duration: record.durationSeconds
+                )
+            } else if record.mediaPath != nil {
                 content = .photo(asset: RecapMediaAsset(localURL: localURL, remotePath: record.mediaPath,
                                                         version: record.mediaVersion, pixelWidth: nil, pixelHeight: nil), note: record.storyText)
             } else if let story = record.storyText {
@@ -141,7 +179,7 @@ actor SupabaseRecapAdapter: RecapDataProviding, RecapExportRecording, RecapCloud
             } else {
                 content = .tileOnly
             }
-            let image = localURL.flatMap { UIImage(contentsOfFile: $0.path)?.cgImage }
+            let image = record.resolvedMediaKind == .photo ? localURL.flatMap { UIImage(contentsOfFile: $0.path)?.cgImage } : nil
             sources.append(RecapSource(
                 id: record.id, origin: record.origin, contributionID: record.contributionId, participantID: record.participantId,
                 participantDisplayName: record.participantDisplayName, attributionAllowed: record.attributionAllowed,
@@ -170,12 +208,31 @@ actor SupabaseRecapAdapter: RecapDataProviding, RecapExportRecording, RecapCloud
             organizerUnits: impact?.organizerUnits.map { RecapOrganizerUnit(label: $0.label, value: $0.value) } ?? [],
             version: impact?.version ?? challenge.impactReceiptVersion
         )
+        let museumAsset = await cachedMuseumAsset(
+            challengeID: challenge.id,
+            revision: challenge.artworkPackageRevision
+        )
         let meta = RecapMeta(challengeID: challenge.id, challengeName: challenge.name, groupName: challenge.groupName,
                              startDate: challenge.startAt, endDate: challenge.revealAt, goal: challenge.goal,
                              revealed: challenge.status == "revealed", impact: receipt, mosaicVersion: challenge.mosaicVersion,
                              localeIdentifier: Locale.current.identifier, timeZoneIdentifier: TimeZone.current.identifier,
-                             theme: challenge.themeSelection)
+                             theme: challenge.themeSelection, artworkMode: challenge.artworkMode ?? .legacy,
+                             boardSide: challenge.boardSide, artworkCrop: museumAsset.crop,
+                             artworkFileURL: museumAsset.url)
         return (meta, sources)
+    }
+
+    private func cachedMuseumAsset(
+        challengeID: UUID,
+        revision: Int?
+    ) async -> (url: URL?, crop: NormalizedArtworkCrop?) {
+        guard let revision else { return (nil, nil) }
+        let cache = RevealArtworkCache()
+        let exportURL = await cache.cachedExportURL(challengeID: challengeID, revision: revision)
+        let displayURL = await cache.cachedDisplayURL(challengeID: challengeID, revision: revision)
+        let url = exportURL ?? displayURL
+        let metadata = try? await cache.cachedMetadata(challengeID: challengeID, revision: revision)
+        return (url, metadata?.crop)
     }
 
     func record(_ status: RecapExportStatus, request: RecapExportRequest, progress: Double, outputPath: String?, error: String?) async throws {
@@ -265,7 +322,8 @@ actor SupabaseRecapAdapter: RecapDataProviding, RecapExportRecording, RecapCloud
         } else if let path = record.mediaPath {
             data = try await client.storage.from("recap-memories").download(path: path)
         } else { return nil }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("recap-memory-\(record.id.uuidString).jpg")
+        let fileExtension = record.resolvedMediaKind == .video ? "mov" : "jpg"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("recap-memory-\(record.id.uuidString).\(fileExtension)")
         try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         return url
     }
@@ -283,6 +341,7 @@ private struct RecapChallengeRecord: Decodable {
     let id: UUID; let name: String; let groupName: String; let goal: Int; let startAt: Date; let revealAt: Date
     let status: String; let mosaicVersion: Int; let impactReceiptVersion: Int
     let themeId: String?; let themePaletteId: String?; let themeSeed: Int?; let themeRevision: Int?
+    let artworkMode: ArtworkMode?; let boardSide: Int?; let artworkPackageRevision: Int?
     var themeSelection: ThemeSelection {
         guard let id = themeId,
               KinderThemeCatalog.all.contains(where: { $0.id == id }),
@@ -297,6 +356,8 @@ private struct RecapChallengeRecord: Decodable {
         case mosaicVersion = "mosaic_version"; case impactReceiptVersion = "impact_receipt_version"
         case themeId = "theme_id"; case themePaletteId = "theme_palette_id"
         case themeSeed = "theme_seed"; case themeRevision = "theme_revision"
+        case artworkMode = "artwork_mode"; case boardSide = "board_side"
+        case artworkPackageRevision = "artwork_package_revision"
     }
 }
 
@@ -315,7 +376,8 @@ private struct RecapSourceRecord: Decodable {
     let attributionAllowed: Bool; let category: RecapMissionCategory?; let acceptedAt: Date; let mediaPath: String?
     let storyText: String?; let emotion: String?; let tilePosition: Int?; let isRevived: Bool; let mediaVersion: Int
     let consentVersion: Int; let accepted: Bool; let recapConsent: Bool; let mediaExists: Bool; let isDeleted: Bool
-    let isReported: Bool; let contributorIsBlocked: Bool
+    let isReported: Bool; let contributorIsBlocked: Bool; let mediaKind: SharedMomentMediaKind?
+    let mediaMimeType: String?; let durationSeconds: Double?
     enum CodingKeys: String, CodingKey {
         case id, origin, category, emotion, accepted
         case contributionId = "contribution_id"; case participantId = "participant_id"
@@ -324,6 +386,13 @@ private struct RecapSourceRecord: Decodable {
         case tilePosition = "tile_position"; case isRevived = "is_revived"; case mediaVersion = "media_version"
         case consentVersion = "consent_version"; case recapConsent = "recap_consent"; case mediaExists = "media_exists"
         case isDeleted = "is_deleted"; case isReported = "is_reported"; case contributorIsBlocked = "contributor_is_blocked"
+        case mediaKind = "media_kind"; case mediaMimeType = "media_mime_type"; case durationSeconds = "duration_seconds"
+    }
+
+    var resolvedMediaKind: SharedMomentMediaKind {
+        if let mediaKind { return mediaKind }
+        guard let mediaPath else { return .note }
+        return mediaPath.lowercased().hasSuffix(".mov") || mediaPath.lowercased().hasSuffix(".mp4") ? .video : .photo
     }
 }
 

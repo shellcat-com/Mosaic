@@ -45,4 +45,28 @@ struct AppStoreTests {
 
         #expect(verified + selfAttested == store.challenge.contributions.count)
     }
+
+    @Test func leavingOrganizerToolsRestoresParticipantModeForTheSameMosaic() async {
+        let store = AppStore()
+        store.isOrganizer = true
+
+        await store.openChallenge(store.challenge.id)
+
+        #expect(!store.isOrganizer)
+    }
+
+    @Test func finishingAFlowReturnsToAStableAppDestination() {
+        let router = MosaicRouter()
+        router.selection = .camera
+        router.cover = .missions(nil)
+        router.sheet = .memories
+        let previousGeneration = router.navigationGeneration
+
+        router.finishFlow(at: .groups)
+
+        #expect(router.selection == .groups)
+        #expect(router.cover == nil)
+        #expect(router.sheet == nil)
+        #expect(router.navigationGeneration == previousGeneration + 1)
+    }
 }

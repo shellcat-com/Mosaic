@@ -130,7 +130,7 @@ struct OrganizationSetupView: View {
                     TextField("Organizer display name", text: $organizerName)
                         .textContentType(.name)
                         .mosaicTextField()
-                    Text("You can invite admins and reviewers after setup. Participants join challenges separately and never enter the workspace.")
+                    Text("You can invite admins and reviewers after setup. Participants join Mosaics separately and never enter the workspace.")
                         .font(.footnote).foregroundStyle(MosaicTheme.muted)
                     Button(isSaving ? "Creating workspace…" : "Create workspace") {
                         isSaving = true
@@ -206,7 +206,7 @@ struct GuestRecoveryPromptView: View {
                 Text("Keep this tile")
                     .font(MosaicTheme.display(30, weight: .semibold))
             }
-            Text("Save your contribution across devices. Linking Apple keeps the same Mosaic identity and does not change how your name appears in this challenge.")
+            Text("Save your contribution across devices. Linking Apple keeps the same Mosaic identity and does not change how your name appears in this Mosaic.")
                 .foregroundStyle(MosaicTheme.muted)
             MosaicAppleSignInButton(createWorkspace: false)
             Button("Not now") { store.isShowingRecoveryPrompt = false; dismiss() }

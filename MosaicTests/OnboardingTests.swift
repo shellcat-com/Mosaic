@@ -10,9 +10,9 @@ struct OnboardingTests {
         #expect(scenes.count == 3)
         #expect(scenes.map(\.artwork.artworkID) == [27992, 16568, 28560])
         #expect(scenes.map(\.headlineAccent) == [
-            "One equal tile.",
-            "Shared by choice.",
-            "together."
+            "Make it real.",
+            "One honest memory.",
+            "made together."
         ])
         #expect(scenes.map(\.overlay) == [.equalContribution, .privacyChoice, .sharedReveal])
         #expect(scenes.last?.buttonTitle == "Choose how to begin")

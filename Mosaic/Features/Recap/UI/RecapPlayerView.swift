@@ -11,23 +11,27 @@ struct RecapPlayerView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 32)
-                .fill(LinearGradient(colors: [MosaicTheme.claySurface, MosaicTheme.paper], startPoint: .top, endPoint: .bottom))
-                .shadow(color: MosaicTheme.gold.opacity(0.25), radius: 28, y: 14)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.black)
             if let renderedImage {
                 Image(decorative: renderedImage, scale: 1)
-                    .resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 24))
-                    .padding(10)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             } else {
-                VStack(spacing: 14) {
-                    ProgressView().tint(MosaicTheme.indigo)
-                    Text("Developing your recap…").font(MosaicTheme.body(.semibold))
+                VStack(spacing: 12) {
+                    ProgressView().tint(.white)
+                    Text("Preparing preview…")
+                        .font(MosaicTheme.caption(.medium))
+                        .foregroundStyle(.white.opacity(0.72))
                 }
             }
             Button(action: onTogglePlayback) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title2).foregroundStyle(.white)
-                    .frame(width: 54, height: 54).background(.black.opacity(0.55), in: Circle())
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 52, height: 52)
+                    .background(.ultraThinMaterial, in: Circle())
             }
             .accessibilityLabel(isPlaying ? "Pause recap" : "Play recap")
         }

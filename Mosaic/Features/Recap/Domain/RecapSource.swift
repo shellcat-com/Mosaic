@@ -19,12 +19,20 @@ struct RecapMediaAsset: Codable, Hashable, Sendable {
 
 enum RecapMemoryContent: Codable, Hashable, Sendable {
     case photo(asset: RecapMediaAsset, note: String?)
+    case video(asset: RecapMediaAsset, note: String?, duration: TimeInterval?)
     case reflection(String)
     case tileOnly
 
     var hasPhoto: Bool {
         if case .photo = self { return true }
         return false
+    }
+
+    var hasVisualMedia: Bool {
+        switch self {
+        case .photo, .video: true
+        case .reflection, .tileOnly: false
+        }
     }
 }
 

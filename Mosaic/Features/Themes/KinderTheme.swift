@@ -126,18 +126,27 @@ struct ThemeSelection: Hashable, Codable, Sendable {
 struct ChallengeDraft: Hashable, Codable, Sendable {
     var interests: Set<KinderThemeCollection> = []
     var selection: ThemeSelection = .fallback
+    var usesMuseumArtwork = true
+    var artworkID: UUID?
+    var boardSide = 5
     var name = ""
     var groupName = ""
     var purpose = ""
-    var goal = 40
+    var goal = 25
     var startDate = Date.now
     var revealDate = Calendar.current.date(byAdding: .day, value: 7, to: .now) ?? .now
+    var experienceVersion: MosaicExperienceVersion = .kindnessRoll
+    var filmLookID: FilmLookID = .sunwashed
 
     var isReadyToCreate: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !groupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !purpose.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && goal > 0
+            && (!usesMuseumArtwork || (
+                artworkID != nil
+                    && (3...10).contains(boardSide)
+                    && goal == boardSide * boardSide
+            ))
             && revealDate > startDate
     }
 }

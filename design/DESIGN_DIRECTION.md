@@ -78,7 +78,7 @@ We do not copy Bubbbly's flowers, glass-card layouts, butterfly imagery, typogra
 
 ## Corrections before production screens
 
-- Use three root destinations rather than the five-tab exploration shown in the concept board: Home, Mosaics, and You.
+- Use three root destinations rather than the five-tab exploration shown in the concept board: Groups, Camera, and You.
 - Keep Persimmon as a warm accent; Kiln Indigo should remain the main interactive color for accessible consistency.
 - Impact Receipt values must be attributable. Never use vague claims such as “countless.” Separate verified and self-attested outcomes.
 - Display explicit countdown and reveal timing on active challenges.

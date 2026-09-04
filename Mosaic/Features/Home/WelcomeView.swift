@@ -338,25 +338,50 @@ private struct InvitationPreviewView: View {
     }
 
     private var invitationHeader: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(MosaicTheme.clay.opacity(0.14))
-                .frame(height: 210)
-            Image("OnboardingBedroom")
-                .resizable()
-                .scaledToFill()
-                .frame(height: 210)
-                .clipped()
-                .opacity(0.72)
-            Image(systemName: "envelope.open.fill")
-                .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(MosaicTheme.indigo)
-                .frame(width: 94, height: 94)
-                .background(MosaicTheme.paper.opacity(0.94), in: Circle())
+        Group {
+            if invitation.artworkMode == .museum, invitation.sealedArtwork != nil {
+                MosaicBoardView(challenge: invitationChallenge)
+                    .frame(maxWidth: 250)
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .fill(MosaicTheme.clay.opacity(0.14))
+                        .frame(height: 210)
+                    Image("OnboardingBedroom")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 210)
+                        .clipped()
+                        .opacity(0.72)
+                    Image(systemName: "envelope.open.fill")
+                        .font(.system(size: 48, weight: .medium))
+                        .foregroundStyle(MosaicTheme.indigo)
+                        .frame(width: 94, height: 94)
+                        .background(MosaicTheme.paper.opacity(0.94), in: Circle())
+                }
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("An invitation to \(invitation.name)")
+    }
+
+    private var invitationChallenge: KindnessChallenge {
+        KindnessChallenge(
+            id: invitation.challengeID,
+            name: invitation.name,
+            groupName: invitation.groupName,
+            purpose: invitation.purpose,
+            goal: invitation.goal,
+            startDate: invitation.startAt ?? .now,
+            revealDate: invitation.revealAt,
+            serverStatus: invitation.status,
+            invitationCode: invitation.code,
+            contributions: [],
+            theme: invitation.theme ?? .fallback,
+            artworkMode: invitation.artworkMode,
+            sealedArtwork: invitation.sealedArtwork
+        )
     }
 
     private func invitationFact(_ title: String, _ value: String, icon: String) -> some View {

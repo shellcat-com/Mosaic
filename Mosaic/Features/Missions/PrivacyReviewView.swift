@@ -8,16 +8,24 @@ struct PrivacyReviewView: View {
     let videoDuration: Double?
 
     @Environment(AppStore.self) private var store
-    @Environment(\.dismiss) private var dismiss
-    @State private var includeMemory = false
+    @Environment(MosaicRouter.self) private var router
+    @State private var sharing: StorySharing = .tileOnly
     @State private var showIdentity = false
     @State private var emotion: Emotion = .hopeful
     @State private var fireTile = false
-    @State private var exportConsent = false
     @State private var isSubmitting = false
     @State private var pendingReviewSubmitted = false
     @State private var submissionError: String?
     @State private var submittedContribution: TileContribution?
+
+    private enum StorySharing: String, CaseIterable, Identifiable {
+        case tileOnly = "Tile only"
+        case recap = "Reveal + recap"
+        var id: String { rawValue }
+    }
+
+    private var includeMemory: Bool { sharing == .recap }
+    private var exportConsent: Bool { sharing == .recap }
 
     var body: some View {
         MosaicScreen {
@@ -35,20 +43,27 @@ struct PrivacyReviewView: View {
                 }
                 .porcelainCard()
 
-                VStack(spacing: 18) {
-                    Toggle(isOn: $includeMemory) {
-                        Label("Include this memory", systemImage: "heart")
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("What should the group see?")
+                        .font(.headline)
+                    Picker("Story sharing", selection: $sharing) {
+                        ForEach(StorySharing.allCases) { option in
+                            Text(option.rawValue).tag(option)
+                        }
                     }
-                    .tint(MosaicTheme.indigo)
+                    .pickerStyle(.segmented)
+                    Text(sharing == .recap
+                         ? "After organizer approval, this memory can appear in the reveal and shareable recap."
+                         : "Only your ceramic tile joins the artwork. The evidence remains organizer-only.")
+                        .font(.footnote)
+                        .foregroundStyle(MosaicTheme.muted)
 
                     if includeMemory {
-                        Toggle("Show my name with it", isOn: $showIdentity)
-                            .tint(MosaicTheme.indigo)
-                        Text("Only this approved memory may appear during the reveal or in exports. You can change this before reveal.")
-                            .font(.footnote)
-                            .foregroundStyle(MosaicTheme.muted)
-                        Toggle("Allow this memory in exports", isOn: $exportConsent)
-                            .tint(MosaicTheme.indigo)
+                        DisclosureGroup("Name and attribution") {
+                            Toggle("Show my name with this memory", isOn: $showIdentity)
+                                .tint(MosaicTheme.indigo)
+                                .padding(.top, 8)
+                        }
                     }
                 }
                 .porcelainCard()
@@ -80,16 +95,35 @@ struct PrivacyReviewView: View {
         .navigationTitle("Privacy")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
-            Button(pendingReviewSubmitted ? "Done" : (method == .reflection ? "Create my tile" : "Submit private evidence")) {
-                if pendingReviewSubmitted { dismiss() }
-                else { Task { await submit() } }
+            Group {
+                if pendingReviewSubmitted {
+                    VStack(spacing: 12) {
+                        Button {
+                            router.finishFlow(at: .groups)
+                        } label: {
+                            Label("Back to home", systemImage: "house.fill")
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+
+                        Button {
+                            router.finishFlow(at: .groups)
+                        } label: {
+                            Label("View Mosaic status", systemImage: "square.grid.2x2.fill")
+                        }
+                        .buttonStyle(SecondaryButtonStyle(color: MosaicTheme.indigo))
+                    }
+                } else {
+                    Button(method == .reflection ? "Create my tile" : "Submit private evidence") {
+                        Task { await submit() }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(isSubmitting)
+                    .opacity(isSubmitting ? 0.65 : 1)
+                }
             }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(isSubmitting)
-                .opacity(isSubmitting ? 0.65 : 1)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
         }
         .navigationDestination(isPresented: $fireTile) {
             if let submittedContribution {
@@ -180,7 +214,7 @@ struct PrivacyReviewView: View {
             mission: mission,
             emotion: emotion,
             evidence: method,
-            contributor: showIdentity && !store.displayName.isEmpty ? store.displayName : nil,
+            contributor: includeMemory && showIdentity && !store.displayName.isEmpty ? store.displayName : nil,
             sharedMemory: includeMemory,
             isRevived: false,
             status: method == .reflection ? .selfAttested : .pendingReview,
@@ -189,7 +223,7 @@ struct PrivacyReviewView: View {
                 note: trimmedReflection,
                 localAssetName: localAssetName,
                 recapConsent: includeMemory && exportConsent,
-                attributionAllowed: showIdentity
+                attributionAllowed: includeMemory && showIdentity
             )
         )
         let mimeType: String? = switch method {
@@ -204,7 +238,7 @@ struct PrivacyReviewView: View {
             mimeType: mimeType,
             durationSeconds: videoDuration,
             includeMemory: includeMemory,
-            showIdentity: showIdentity,
+            showIdentity: includeMemory && showIdentity,
             exportConsent: exportConsent
         )
         isSubmitting = false

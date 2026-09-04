@@ -261,7 +261,8 @@ function apnsConfiguration() {
   const keyID = Deno.env.get("APNS_KEY_ID");
   const teamID = Deno.env.get("APNS_TEAM_ID");
   const privateKey = Deno.env.get("APNS_PRIVATE_KEY");
-  const bundleID = Deno.env.get("APNS_BUNDLE_ID") ?? "com.biswaskhatiwada.mosaicapp";
+  const bundleID = Deno.env.get("APNS_BUNDLE_ID") ??
+    "com.biswaskhatiwada.mosaicapp";
   if (!keyID || !teamID || !privateKey) return null;
   return { keyID, teamID, privateKey, bundleID };
 }

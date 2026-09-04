@@ -1,6 +1,7 @@
+import AVFoundation
+import AVKit
 import Photos
 import SwiftUI
-import AVKit
 
 struct PhotoRecapBuilderView: View {
     @Environment(MosaicAppModel.self) private var model
@@ -11,8 +12,14 @@ struct PhotoRecapBuilderView: View {
     @State private var exportURL: URL?
     @State private var exportProgress = 0.0
     @State private var isExporting = false
-    @State private var message: String?
+    @State private var feedback: MosaicFeedback?
+    @State private var renderTask: Task<Void, Never>?
+    @State private var musicPreviewTask: Task<Void, Never>?
+    @State private var musicPlayer: AVAudioPlayer?
+    @State private var loadedDraft = false
+    @State private var showResetConfirmation = false
     private let renderer = PhotoRecapRenderer()
+    private let shouldRestoreDraft: Bool
 
     enum Stage: String, CaseIterable, Identifiable {
         case select = "Photos"
@@ -24,6 +31,7 @@ struct PhotoRecapBuilderView: View {
 
     init(eventID: UUID, initialProject: PhotoRecapProject? = nil, initialStage: Stage = .select) {
         self.eventID = eventID
+        shouldRestoreDraft = initialProject == nil
         _project = State(initialValue: initialProject ?? PhotoRecapProject(mosaicID: eventID))
         _stage = State(initialValue: initialStage)
     }
@@ -58,12 +66,31 @@ struct PhotoRecapBuilderView: View {
                 case .style: styleView
                 case .preview: previewView
                 }
-                if let message { Text(message).font(.footnote).foregroundStyle(.red) }
+                if project.hasEdits {
+                    Label("Draft saved while you browse this signed-in session.", systemImage: "checkmark.circle")
+                        .font(.footnote).foregroundStyle(MosaicTheme.muted)
+                }
+                if let feedback { MosaicFeedbackView(feedback: feedback) }
             }
         }
         .navigationTitle("Recap")
         .navigationBarTitleDisplayMode(.inline)
-        .mosaicAccessibilityAnnouncement(message)
+        .mosaicAccessibilityAnnouncement(feedback?.message)
+        .task { restoreDraftIfNeeded() }
+        .onChange(of: project) { _, _ in saveDraft() }
+        .onChange(of: stage) { _, _ in saveDraft() }
+        .onChange(of: project.music) { _, _ in stopMusicPreview() }
+        .onChange(of: project.musicTrimOffset) { _, _ in stopMusicPreview() }
+        .onDisappear {
+            renderTask?.cancel()
+            stopMusicPreview()
+        }
+        .alert("Start this recap over?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Start over", role: .destructive) { resetProject() }
+        } message: {
+            Text("Your selected photos, order, template, and music choices will be cleared.")
+        }
     }
 
     private var selectionView: some View {
@@ -87,6 +114,12 @@ struct PhotoRecapBuilderView: View {
                 }
             }
             Button("Order photos") { stage = .order }.buttonStyle(MosaicPrimaryButtonStyle()).disabled(project.selection.orderedPhotoIDs.isEmpty)
+            if project.hasEdits {
+                Button("Start over", systemImage: "arrow.counterclockwise", role: .destructive) {
+                    showResetConfirmation = true
+                }
+                .buttonStyle(MosaicSecondaryButtonStyle())
+            }
         }
     }
 
@@ -152,9 +185,22 @@ struct PhotoRecapBuilderView: View {
                     .accessibilityAddTraits(project.music == music ? .isSelected : [])
                 }
             }
-            Link("\(project.music.license) · Music source", destination: project.music.sourceURL).font(.footnote)
+            Link("\(project.music.license) · Music source", destination: project.music.sourceURL)
+                .font(.footnote)
+                .frame(minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
             Slider(value: $project.musicTrimOffset, in: 0...15, step: 0.5) { Text("Music start") }
             Text("Starts at \(project.musicTrimOffset, format: .number.precision(.fractionLength(1))) seconds").font(.footnote).foregroundStyle(MosaicTheme.muted)
+            Button(musicPlayer?.isPlaying == true ? "Stop music preview" : "Preview music", systemImage: musicPlayer?.isPlaying == true ? "stop.fill" : "play.fill") {
+                toggleMusicPreview()
+            }
+            .buttonStyle(MosaicSecondaryButtonStyle())
+            .accessibilityIdentifier("recap.music.preview")
+            if !project.selection.orderedPhotoIDs.isEmpty {
+                Label("About \(durationText) · \(project.selection.orderedPhotoIDs.count) photos", systemImage: "clock")
+                    .font(.subheadline.weight(.semibold))
+                    .accessibilityIdentifier("recap.duration")
+            }
             Text("Templates affect layout, transitions, grading, and timing only. Reels never add artwork, names, notes, activities, captions, title cards, or statistics.")
                 .font(.footnote).foregroundStyle(MosaicTheme.muted)
             Button("Preview recap") { stage = .preview }.buttonStyle(MosaicPrimaryButtonStyle())
@@ -196,11 +242,18 @@ struct PhotoRecapBuilderView: View {
             }
             if isExporting {
                 ProgressView(value: exportProgress) { Text("Rendering on this device…") }
+                Button("Cancel render", role: .cancel) { renderTask?.cancel() }
+                    .buttonStyle(MosaicSecondaryButtonStyle())
+                    .accessibilityIdentifier("recap.render.cancel")
             } else if let exportURL {
                 ShareLink(item: exportURL) { Label("Share recap", systemImage: "square.and.arrow.up") }.buttonStyle(MosaicPrimaryButtonStyle())
                 Button("Save to Photos") { Task { await saveToPhotos(exportURL) } }.buttonStyle(MosaicSecondaryButtonStyle())
             } else {
-                Button("Render recap") { Task { await render() } }.buttonStyle(MosaicPrimaryButtonStyle())
+                Button("Render recap") { startRender() }.buttonStyle(MosaicPrimaryButtonStyle())
+            }
+            if !project.selection.orderedPhotoIDs.isEmpty {
+                Text("Estimated length: \(durationText)")
+                    .font(.footnote).foregroundStyle(MosaicTheme.muted)
             }
             Text("Photo details stay in the gallery and never appear in the video.").font(.footnote).foregroundStyle(MosaicTheme.muted)
         }
@@ -219,24 +272,95 @@ struct PhotoRecapBuilderView: View {
         guard project.selection.orderedPhotoIDs.indices.contains(destination) else { return }
         project.selection.move(from: IndexSet(integer: index), to: offset > 0 ? destination + 1 : destination)
     }
+    private var durationText: String {
+        let seconds = max(0, Int(project.estimatedDuration.rounded()))
+        return seconds >= 60 ? "\(seconds / 60)m \(seconds % 60)s" : "\(seconds)s"
+    }
+    private func startRender() {
+        renderTask?.cancel()
+        renderTask = Task { await render() }
+    }
     private func render() async {
-        isExporting = true; message = nil; exportProgress = 0
-        defer { isExporting = false }
+        isExporting = true; feedback = nil; exportProgress = 0
+        defer { isExporting = false; renderTask = nil }
         do {
             exportURL = try await renderer.render(project: project, available: photos) { value in
                 Task { @MainActor in exportProgress = value }
             }
-        } catch { message = error.localizedDescription }
+        } catch is CancellationError {
+            feedback = .init(message: "Rendering cancelled. Your recap draft is still saved.", kind: .information)
+        } catch {
+            feedback = .init(message: error.localizedDescription, kind: .error)
+        }
+    }
+    private func restoreDraftIfNeeded() {
+        guard !loadedDraft else { return }
+        loadedDraft = true
+        guard shouldRestoreDraft, let saved = model.creativeDrafts.recapProject(for: eventID) else { return }
+        project = saved
+        if let rawStage = model.creativeDrafts.recapStage(for: eventID), let savedStage = Stage(rawValue: rawStage) {
+            stage = savedStage
+        }
+        feedback = .init(message: "Your recap draft is right where you left it.", kind: .information)
+    }
+    private func saveDraft() {
+        guard loadedDraft else { return }
+        model.creativeDrafts.saveRecap(project, stage: stage.rawValue)
+    }
+    private func resetProject() {
+        renderTask?.cancel()
+        stopMusicPreview()
+        model.creativeDrafts.clearRecap(for: eventID)
+        project = PhotoRecapProject(mosaicID: eventID)
+        stage = .select
+        exportURL = nil
+        exportProgress = 0
+        feedback = .init(message: "Recap cleared. Choose a fresh set of photos.", kind: .information)
+    }
+    private func toggleMusicPreview() {
+        if musicPlayer?.isPlaying == true {
+            stopMusicPreview()
+            return
+        }
+        guard let url = Bundle.main.url(forResource: project.music.rawValue, withExtension: "mp3", subdirectory: "Music")
+                ?? Bundle.main.url(forResource: project.music.rawValue, withExtension: "mp3") else {
+            feedback = .init(message: "This music preview is unavailable.", kind: .error)
+            return
+        }
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.currentTime = min(project.musicTrimOffset, max(0, player.duration - 0.1))
+            player.prepareToPlay()
+            player.play()
+            musicPlayer = player
+            musicPreviewTask?.cancel()
+            musicPreviewTask = Task {
+                try? await Task.sleep(for: .seconds(8))
+                guard !Task.isCancelled else { return }
+                stopMusicPreview()
+            }
+        } catch {
+            feedback = .init(message: "This music preview is unavailable.", kind: .error)
+        }
+    }
+    private func stopMusicPreview() {
+        musicPreviewTask?.cancel()
+        musicPreviewTask = nil
+        musicPlayer?.stop()
+        musicPlayer = nil
     }
     private func saveToPhotos(_ url: URL) async {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { message = "Allow Add Photos access to save this recap."; return }
+        guard status == .authorized || status == .limited else {
+            feedback = .init(message: "Allow Add Photos access to save this recap.", kind: .error)
+            return
+        }
         do {
             try await PHPhotoLibrary.shared().performChanges {
                 PHAssetCreationRequest.creationRequestForAssetFromVideo(atFileURL: url)
             }
-            message = "Saved to Photos."
-        } catch { message = error.localizedDescription }
+            feedback = .init(message: "Saved to Photos.", kind: .success)
+        } catch { feedback = .init(message: error.localizedDescription, kind: .error) }
     }
 }
 

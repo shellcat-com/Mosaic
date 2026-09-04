@@ -23,6 +23,11 @@ protocol MosaicAPI: Sendable {
     func unblockUser(_ userID: UUID) async throws
     func blockedUsers() async throws -> [BlockedUser]
     func releaseArtwork(_ mosaicID: UUID) async throws -> ArtworkRevealMaterial?
+    func clearPrivateState() async
+}
+
+extension MosaicAPI {
+    func clearPrivateState() async {}
 }
 
 struct BlockedUser: Identifiable, Codable, Hashable, Sendable {

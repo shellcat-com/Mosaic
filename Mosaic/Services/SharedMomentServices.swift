@@ -41,24 +41,40 @@ actor ProtectedSharedMomentStore: SharedMomentMediaStore {
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
-    func storeDraft(_ jpegData: Data, id: UUID) async throws -> String {
-        guard let source = UIImage(data: jpegData),
-              let normalized = source.sharedMomentNormalized(maxDimension: 2_400),
-              let output = normalized.jpegData(compressionQuality: 0.88) else {
-            throw CocoaError(.fileReadCorruptFile)
-        }
-        let name = "\(id.uuidString.lowercased()).jpg"
-        try output.write(
-            to: try directory.appendingPathComponent(name),
-            options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
-        )
-        if let thumbnail = source.sharedMomentNormalized(maxDimension: 256)?.jpegData(compressionQuality: 0.72) {
-            try thumbnail.write(
-                to: try directory.appendingPathComponent("\(id.uuidString.lowercased())-analysis.jpg"),
+    func storeDraft(_ payload: SharedMomentPayload, id: UUID) async throws -> String {
+        guard let data = payload.data else { throw CocoaError(.fileNoSuchFile) }
+        switch payload.kind {
+        case .photo:
+            guard let source = UIImage(data: data),
+                  let normalized = source.sharedMomentNormalized(maxDimension: 2_400),
+                  let output = normalized.jpegData(compressionQuality: 0.88) else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+            let name = "\(id.uuidString.lowercased()).jpg"
+            try output.write(
+                to: try directory.appendingPathComponent(name),
                 options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
             )
+            if let thumbnail = source.sharedMomentNormalized(maxDimension: 256)?.jpegData(compressionQuality: 0.72) {
+                try thumbnail.write(
+                    to: try directory.appendingPathComponent("\(id.uuidString.lowercased())-analysis.jpg"),
+                    options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+                )
+            }
+            return name
+        case .video:
+            let duration = payload.durationSeconds ?? 0
+            try EvidenceUploadPolicy.validate(method: .video, byteCount: data.count, duration: duration)
+            let fileExtension = payload.mimeType == "video/mp4" ? "mp4" : "mov"
+            let name = "\(id.uuidString.lowercased()).\(fileExtension)"
+            try data.write(
+                to: try directory.appendingPathComponent(name),
+                options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+            )
+            return name
+        case .note:
+            throw CocoaError(.fileNoSuchFile)
         }
-        return name
     }
 
     func data(for localAssetName: String) async throws -> Data {
@@ -87,27 +103,67 @@ actor LocalSharedMomentRepository: SharedMomentRepository {
             .sorted { $0.createdAt < $1.createdAt }
     }
 
-    func saveDraft(_ moment: SharedMoment, jpegData: Data) async throws -> SharedMoment {
+    func saveDraft(_ moment: SharedMoment, payload: SharedMomentPayload) async throws -> SharedMoment {
         loadIfNeeded()
         var draft = moment
-        draft.localAssetName = try await mediaStore.storeDraft(jpegData, id: draft.id)
+        if payload.data != nil {
+            draft.localAssetName = try await mediaStore.storeDraft(payload, id: draft.id)
+        }
+        draft.mediaKind = payload.kind
+        draft.mediaMimeType = payload.mimeType
+        draft.durationSeconds = payload.durationSeconds
         if draft.lifecycle != .uploadPending { draft.lifecycle = .localDraft }
         items[draft.id] = draft
         persist()
         return draft
     }
 
-    func seal(_ moment: SharedMoment, jpegData: Data) async throws -> SharedMoment {
+    func seal(_ moment: SharedMoment, payload: SharedMomentPayload) async throws -> SharedMoment {
         loadIfNeeded()
         var saved = moment
-        if saved.localAssetName == nil {
-            saved.localAssetName = try await mediaStore.storeDraft(jpegData, id: saved.id)
+        if saved.localAssetName == nil, payload.data != nil {
+            saved.localAssetName = try await mediaStore.storeDraft(payload, id: saved.id)
         }
+        saved.mediaKind = payload.kind
+        saved.mediaMimeType = payload.mimeType
+        saved.durationSeconds = payload.durationSeconds
         saved.lifecycle = .approved // Local fallback has no organizer service; preserve the production contract in Supabase.
         saved.updatedAt = .now
         items[saved.id] = saved
         persist()
         return saved
+    }
+
+    func sealKindnessMoment(
+        _ draft: KindnessMomentDraft,
+        filmLook: FilmLookID,
+        predictedPosition: Int
+    ) async throws -> KindnessMomentReceipt {
+        let moment = SharedMoment(
+            id: draft.id,
+            challengeID: draft.challengeID,
+            creatorID: draft.creatorID,
+            contributionID: draft.id,
+            filmLookID: filmLook,
+            missionID: draft.mission.id,
+            editorialCategory: draft.mission.category,
+            note: draft.caption,
+            mediaKind: draft.payload.kind,
+            mediaMimeType: draft.payload.mimeType,
+            durationSeconds: draft.payload.durationSeconds,
+            revealConsent: true,
+            exportConsent: draft.exportConsent,
+            lifecycle: .sealed
+        )
+        var sealed = try await seal(moment, payload: draft.payload)
+        sealed.lifecycle = .sealed
+        items[sealed.id] = sealed
+        persist()
+        return KindnessMomentReceipt(
+            contributionID: draft.id,
+            tilePosition: predictedPosition,
+            moment: sealed
+        )
     }
 
     func updateConsent(momentID: UUID, reveal: Bool, export: Bool) async throws -> SharedMoment {
@@ -197,15 +253,15 @@ actor LocalMomentReminderService: MomentReminderService {
         if dayBefore > now, lastActivity.map({ $0 < dayBefore }) ?? true {
             let content = UNMutableNotificationContent()
             content.title = "One more moment, if it feels right"
-            content.body = "Your shared roll for \(challenge.name) reveals tomorrow."
+            content.body = "Your memories for \(challenge.name) reveal tomorrow."
             content.sound = .default
             content.userInfo = ["url": "mosaic://camera/\(challenge.id.uuidString.lowercased())"]
             result.append(UNNotificationRequest(identifier: prefix + "last", content: content,
                                                 trigger: UNTimeIntervalNotificationTrigger(timeInterval: dayBefore.timeIntervalSince(now), repeats: false)))
         }
         let reveal = UNMutableNotificationContent()
-        reveal.title = "Your shared roll is ready"
-        reveal.body = "Open \(challenge.name) and watch your moments become a mosaic."
+        reveal.title = "Your memories are ready"
+        reveal.body = "Open \(challenge.name) and watch your memories join the Mosaic."
         reveal.sound = .default
         reveal.userInfo = ["url": "mosaic://recap/\(challenge.id.uuidString.lowercased())"]
         result.append(UNNotificationRequest(identifier: prefix + "reveal", content: reveal,

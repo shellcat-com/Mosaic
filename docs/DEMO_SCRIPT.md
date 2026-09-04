@@ -1,4 +1,6 @@
-# Reverie Hacks demo script — 3:00 target
+# Archived Reverie Hacks demo script — do not use for Shipaton
+
+This script documents the retired pre-V3 product. Use [`SHIPATON_DEMO_SCRIPT.md`](SHIPATON_DEMO_SCRIPT.md) for the current app and submission.
 
 **Deliverable:** `submission/Mosaic-Reverie-Demo.mp4`
 **Format:** 1920 × 1080 H.264/AAC, captioned, synthetic data only

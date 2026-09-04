@@ -44,7 +44,7 @@ enum AppEntryState: Equatable, Sendable {
 }
 
 struct OnboardingProgressStore {
-    static let currentVersion = 2
+    static let currentVersion = 3
     static let key = "mosaic.onboarding.completed-version"
 
     let defaults: UserDefaults
@@ -107,10 +107,10 @@ struct OnboardingScene: Identifiable {
     static let all: [OnboardingScene] = [
         OnboardingScene(
             id: 0,
-            eyebrow: "Every act belongs",
-            headlineLead: "One small act. ",
-            headlineAccent: "One equal tile.",
-            supportingCopy: "Complete a mission and your kindness becomes part of the group artwork—never bigger, never ranked.",
+            eyebrow: "Do something kind",
+            headlineLead: "Choose one act. ",
+            headlineAccent: "Make it real.",
+            supportingCopy: "Join a group and choose one small kindness act. Every act will become one equal piece of what the group makes.",
             buttonTitle: "Begin",
             artwork: ArtworkAttribution(
                 artworkID: 27992,
@@ -127,10 +127,10 @@ struct OnboardingScene: Identifiable {
         ),
         OnboardingScene(
             id: 1,
-            eyebrow: "You stay in control",
-            headlineLead: "Private by default. ",
-            headlineAccent: "Shared by choice.",
-            supportingCopy: "Evidence goes only to organizers. Memories and your name appear only when you allow them.",
+            eyebrow: "Capture one moment",
+            headlineLead: "One disposable roll. ",
+            headlineAccent: "One honest memory.",
+            supportingCopy: "Take a photo, record up to ten seconds, or write a note. The moment seals with its kindness tile.",
             buttonTitle: "Continue",
             artwork: ArtworkAttribution(
                 artworkID: 16568,
@@ -147,10 +147,10 @@ struct OnboardingScene: Identifiable {
         ),
         OnboardingScene(
             id: 2,
-            eyebrow: "Open it together",
-            headlineLead: "Reveal what you made ",
-            headlineAccent: "together.",
-            supportingCopy: "When the challenge ends, every verified tile opens into one shared artwork and recap.",
+            eyebrow: "Reveal together",
+            headlineLead: "Open what your group ",
+            headlineAccent: "made together.",
+            supportingCopy: "At reveal, the artwork, photo and video roll, and automatic recap unlock as one shared keepsake.",
             buttonTitle: "Choose how to begin",
             artwork: ArtworkAttribution(
                 artworkID: 28560,

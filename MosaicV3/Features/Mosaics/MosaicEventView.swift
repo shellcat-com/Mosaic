@@ -82,7 +82,12 @@ struct MosaicEventView: View {
                             .font(.title2).foregroundStyle(activity.participantCompleted ? MosaicTheme.sage : MosaicTheme.accentForeground)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(activity.title).font(.headline).foregroundStyle(MosaicTheme.ink)
-                            if !activity.purpose.isEmpty { Text(activity.purpose).font(.subheadline).foregroundStyle(MosaicTheme.muted).lineLimit(2) }
+                            if !activity.purpose.isEmpty {
+                                Text(activity.purpose)
+                                    .font(.subheadline)
+                                    .foregroundStyle(MosaicTheme.muted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                         Spacer(); Image(systemName: "chevron.right").foregroundStyle(MosaicTheme.muted)
                     }.porcelainCard()
@@ -181,7 +186,10 @@ struct MosaicEventView: View {
                     .font(MosaicTheme.display(25, weight: .semibold))
                     .accessibilityAddTraits(.isHeader)
                 Text("\(event.artwork.title) · \(event.artwork.artist)").font(.headline)
-                Link("Artwork source and license", destination: event.artwork.sourceURL).font(.footnote)
+                Link("Artwork source and license", destination: event.artwork.sourceURL)
+                    .font(.footnote)
+                    .frame(minHeight: 44, alignment: .leading)
+                    .contentShape(Rectangle())
                 if revealPlayback.isComplete {
                     Button("Replay Reveal", systemImage: "arrow.counterclockwise") {
                         revealPlayback.replay(event: event, reduceMotion: UIAccessibility.isReduceMotionEnabled)

@@ -18,6 +18,8 @@ final class MosaicAppModel {
     let camera: CameraStore
     let router: MosaicRouter
     let billing: BillingStore
+    let creativeDrafts: CreativeDraftStore
+    @ObservationIgnored private var activeUserID: UUID?
 
     init(configuration: MosaicSupabaseConfiguration? = .current) {
         let fallbackURL = URL(string: "https://invalid.local") ?? URL(fileURLWithPath: "/")
@@ -32,6 +34,7 @@ final class MosaicAppModel {
         self.camera = CameraStore(api: api)
         self.router = MosaicRouter()
         self.billing = BillingStore(purchases: RevenueCatBillingService(), api: api)
+        self.creativeDrafts = CreativeDraftStore()
     }
 
     init(showcaseAPI: any MosaicAPI, profile: MosaicProfile) {
@@ -49,14 +52,25 @@ final class MosaicAppModel {
         self.camera = CameraStore(api: showcaseAPI)
         self.router = MosaicRouter()
         self.billing = BillingStore(purchases: MockRevenueCatPurchasing(), api: showcaseAPI)
+        self.creativeDrafts = CreativeDraftStore()
     }
 
     func bootstrap() async {
         await session.bootstrap()
-        if session.isReady {
-            await configureAuthenticatedServices()
-            await library.refresh()
+    }
+
+    func handleIdentityChange() async {
+        guard let userID = session.userID, session.isReady else {
+            await clearPrivateContent()
+            activeUserID = nil
+            return
         }
+        if let activeUserID, activeUserID != userID {
+            await clearPrivateContent()
+        }
+        activeUserID = userID
+        await configureAuthenticatedServices()
+        await library.refresh()
     }
 
     func configureAuthenticatedServices() async {
@@ -65,17 +79,26 @@ final class MosaicAppModel {
     }
 
     func signOut() async {
-        router.resetPrivateState()
-        camera.select(nil)
+        await clearPrivateContent()
+        activeUserID = nil
         await billing.logOut()
         await session.signOut()
     }
 
     func deleteAccount() async throws {
-        router.resetPrivateState()
-        camera.select(nil)
+        await clearPrivateContent()
+        activeUserID = nil
         await billing.logOut()
         try await session.deleteAccount()
+    }
+
+    private func clearPrivateContent() async {
+        router.resetPrivateState()
+        creativeDrafts.clearPrivateState()
+        library.clearPrivateState()
+        await detail.clearPrivateState()
+        await camera.clearPrivateState()
+        await api.clearPrivateState()
     }
 
     func handle(url: URL) {

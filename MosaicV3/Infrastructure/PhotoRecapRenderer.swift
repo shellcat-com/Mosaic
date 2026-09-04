@@ -3,6 +3,18 @@ import CoreGraphics
 import Foundation
 import UIKit
 
+private final class PhotoRecapExportCancellation: @unchecked Sendable {
+    let exporter: AVAssetExportSession
+
+    init(_ exporter: AVAssetExportSession) {
+        self.exporter = exporter
+    }
+
+    func cancel() {
+        exporter.cancelExport()
+    }
+}
+
 enum PhotoRecapError: LocalizedError, Equatable {
     case invalidSelection
     case missingPhoto(UUID)
@@ -32,6 +44,7 @@ actor PhotoRecapRenderer {
     }
 
     func render(project: PhotoRecapProject, available: [EventPhoto], progress: @escaping @Sendable (Double) -> Void) async throws -> URL {
+        try Task.checkCancellation()
         let photos = try orderedPhotos(project: project, available: available)
         let silentURL = FileManager.default.temporaryDirectory.appending(path: "Mosaic-Recap-\(project.id.uuidString)-silent.mp4")
         try? FileManager.default.removeItem(at: silentURL)
@@ -54,30 +67,42 @@ actor PhotoRecapRenderer {
         guard writer.startWriting() else { throw writer.error ?? PhotoRecapError.cannotCreateWriter }
         writer.startSession(atSourceTime: .zero)
 
-        let secondsPerPhoto = project.template.secondsPerPhoto
-        let framesPerPhoto = Int(secondsPerPhoto * Double(Self.framesPerSecond))
-        var frameNumber: Int64 = 0
-        for (photoIndex, photo) in photos.enumerated() {
-            guard let url = photo.displayURL, let data = try? Data(contentsOf: url), let image = UIImage(data: data) else {
-                throw PhotoRecapError.missingPhoto(photo.id)
+        do {
+            let secondsPerPhoto = project.template.secondsPerPhoto
+            let framesPerPhoto = Int(secondsPerPhoto * Double(Self.framesPerSecond))
+            var frameNumber: Int64 = 0
+            for (photoIndex, photo) in photos.enumerated() {
+                try Task.checkCancellation()
+                guard let url = photo.displayURL, let data = try? Data(contentsOf: url), let image = UIImage(data: data) else {
+                    throw PhotoRecapError.missingPhoto(photo.id)
+                }
+                for localFrame in 0..<framesPerPhoto {
+                    try Task.checkCancellation()
+                    while !input.isReadyForMoreMediaData {
+                        try Task.checkCancellation()
+                        try await Task.sleep(for: .milliseconds(4))
+                    }
+                    guard let pool = adaptor.pixelBufferPool else { throw PhotoRecapError.renderFailed }
+                    var optionalBuffer: CVPixelBuffer?
+                    CVPixelBufferPoolCreatePixelBuffer(nil, pool, &optionalBuffer)
+                    guard let buffer = optionalBuffer else { throw PhotoRecapError.renderFailed }
+                    draw(image: image, template: project.template, progress: Double(localFrame) / Double(framesPerPhoto), into: buffer)
+                    let time = CMTime(value: frameNumber, timescale: Self.framesPerSecond)
+                    guard adaptor.append(buffer, withPresentationTime: time) else { throw writer.error ?? PhotoRecapError.renderFailed }
+                    frameNumber += 1
+                }
+                progress(Double(photoIndex + 1) / Double(photos.count))
             }
-            for localFrame in 0..<framesPerPhoto {
-                while !input.isReadyForMoreMediaData { try await Task.sleep(for: .milliseconds(4)) }
-                guard let pool = adaptor.pixelBufferPool else { throw PhotoRecapError.renderFailed }
-                var optionalBuffer: CVPixelBuffer?
-                CVPixelBufferPoolCreatePixelBuffer(nil, pool, &optionalBuffer)
-                guard let buffer = optionalBuffer else { throw PhotoRecapError.renderFailed }
-                draw(image: image, template: project.template, progress: Double(localFrame) / Double(framesPerPhoto), into: buffer)
-                let time = CMTime(value: frameNumber, timescale: Self.framesPerSecond)
-                guard adaptor.append(buffer, withPresentationTime: time) else { throw writer.error ?? PhotoRecapError.renderFailed }
-                frameNumber += 1
-            }
-            progress(Double(photoIndex + 1) / Double(photos.count))
+            input.markAsFinished()
+            await writer.finishWriting()
+            try Task.checkCancellation()
+            guard writer.status == .completed else { throw writer.error ?? PhotoRecapError.renderFailed }
+            return try await addMusic(project.music, trimOffset: project.musicTrimOffset, to: silentURL, projectID: project.id)
+        } catch {
+            if writer.status == .writing { writer.cancelWriting() }
+            try? FileManager.default.removeItem(at: silentURL)
+            throw error
         }
-        input.markAsFinished()
-        await writer.finishWriting()
-        guard writer.status == .completed else { throw writer.error ?? PhotoRecapError.renderFailed }
-        return try await addMusic(project.music, trimOffset: project.musicTrimOffset, to: silentURL, projectID: project.id)
     }
 
     private func draw(image: UIImage, template: PhotoRecapTemplate, progress: Double, into buffer: CVPixelBuffer) {
@@ -139,6 +164,7 @@ actor PhotoRecapRenderer {
     }
 
     private func addMusic(_ music: PhotoRecapMusic, trimOffset: TimeInterval, to videoURL: URL, projectID: UUID) async throws -> URL {
+        try Task.checkCancellation()
         guard let musicURL = Bundle.main.url(forResource: music.rawValue, withExtension: "mp3", subdirectory: "Music")
                 ?? Bundle.main.url(forResource: music.rawValue, withExtension: "mp3") else {
             throw PhotoRecapError.renderFailed
@@ -161,6 +187,7 @@ actor PhotoRecapRenderer {
         var sourceStart = requestedOffset < audioDuration ? requestedOffset : .zero
         var destination = CMTime.zero
         while destination < videoDuration {
+            try Task.checkCancellation()
             let available = audioDuration - sourceStart
             let needed = videoDuration - destination
             let duration = min(available, needed)
@@ -174,7 +201,13 @@ actor PhotoRecapRenderer {
         guard let exporter = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
             throw PhotoRecapError.renderFailed
         }
-        try await exporter.export(to: outputURL, as: .mp4)
+        let cancellation = PhotoRecapExportCancellation(exporter)
+        try await withTaskCancellationHandler {
+            try await exporter.export(to: outputURL, as: .mp4)
+        } onCancel: {
+            cancellation.cancel()
+        }
+        try Task.checkCancellation()
         try? FileManager.default.removeItem(at: videoURL)
         return outputURL
     }

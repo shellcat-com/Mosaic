@@ -28,9 +28,13 @@ struct ArtworkRevealCacheTests {
             nonceBase64: Data(nonce).base64EncodedString()
         )
 
-        let url = try await ArtworkRevealCache(directory: root).decrypt(material)
+        let cache = ArtworkRevealCache(directory: root)
+        let url = try await cache.decrypt(material)
         #expect(FileManager.default.fileExists(atPath: url.path()))
         #expect(UIImage(contentsOfFile: url.path()) != nil)
+
+        try await cache.clearAll()
+        #expect(!FileManager.default.fileExists(atPath: url.path()))
     }
 
     @Test

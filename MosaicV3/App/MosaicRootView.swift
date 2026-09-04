@@ -21,11 +21,8 @@ struct MosaicRootView: View {
             }
         }
         .tint(MosaicTheme.accentForeground)
-        .task(id: model.session.userID) {
-            if model.session.isReady {
-                await model.configureAuthenticatedServices()
-                await model.library.refresh()
-            }
+        .task(id: model.session.phase) {
+            await model.handleIdentityChange()
         }
     }
 }
@@ -93,7 +90,7 @@ struct MosaicTabView: View {
     }
 }
 
-private struct MosaicDestinationView: View {
+struct MosaicDestinationView: View {
     let route: MosaicRoute
     @Binding var path: [MosaicRoute]
 

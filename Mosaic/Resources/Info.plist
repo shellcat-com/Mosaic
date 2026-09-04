@@ -35,8 +35,6 @@
 	<true/>
 	<key>MosaicBillingEnabled</key>
 	<string>$(MOSAIC_BILLING_ENABLED)</string>
-	<key>MosaicSubmissionName</key>
-	<string>$(MOSAIC_SUBMISSION_NAME)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Mosaic uses the camera to capture photos for an event's sealed disposable roll.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

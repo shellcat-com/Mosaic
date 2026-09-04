@@ -1,27 +1,31 @@
 1
 00:00:00,000 --> 00:00:12,000
-Small acts of kindness often disappear. Mosaic gives each verified act one equal place in a story a community reveals together.
+Mosaic turns small acts of kindness into one artwork a group reveals together—without rankings, likes, or larger tiles for paying users.
 
 2
-00:00:12,000 --> 00:00:32,000
-An invited participant chooses an approachable mission. Evidence is private to organizers, while identity, memory inclusion, and recap consent remain separate choices.
+00:00:12,000 --> 00:00:30,000
+Participants are always free. Every contribution receives equal weight, while a free organizer can run one unrevealed Mosaic.
 
 3
-00:00:32,000 --> 00:00:48,000
-Emotion, mission, and verification shape a ceramic tile. Every tile is the same size—there are no rankings, likes, or paid visual advantages.
+00:00:30,000 --> 00:00:48,000
+Members join privately, choose an act, and share a sealed disposable roll. Attribution and reveal access never depend on payment.
 
 4
-00:00:48,000 --> 00:01:02,000
-Organizers verify outcomes without exposing proof. At the scheduled reveal, approved memories and an attributable Impact Receipt open with the shared artwork.
+00:00:48,000 --> 00:01:03,000
+Organizer Plus makes room for larger groups: up to 100 tiles, 36 shots per member, every film look, and multiple active Mosaics.
 
 5
-00:01:02,000 --> 00:01:30,000
-Participants contribute for free. Organizers fund larger community events through Organizer Plus. This is a real RevenueCat Test Store purchase, attached to the organizer’s Supabase identity.
+00:01:03,000 --> 00:01:21,000
+These localized options come from RevenueCat. Annual and monthly unlock Plus; a one-event pass grants one server-tracked PASS.
 
 6
-00:01:30,000 --> 00:01:40,000
-RevenueCat returns the entitlement, Mosaic synchronizes it server-side, and organizer capacity and creation tools unlock immediately.
+00:01:21,000 --> 00:01:34,000
+The client never authorizes itself. Supabase reconciles RevenueCat API version 2 before premium controls unlock.
 
 7
-00:01:40,000 --> 00:01:50,000
-SwiftUI, RevenueCat, and a Supabase backend keep billing authoritative and community evidence private. Mosaic: small acts, one shared story.
+00:01:34,000 --> 00:01:46,000
+The new Mosaic captures premium access permanently, so a future expiry can block new premium events without damaging this one.
+
+8
+00:01:46,000 --> 00:01:50,000
+Mosaic is student-built, open source, and ready for Next Gen.

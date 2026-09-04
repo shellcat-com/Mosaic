@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Build the synthetic, caption-ready Reverie demo cut.
+"""Archived: build the synthetic, caption-ready Reverie demo cut.
+
+Do not use this generator for the Shipaton submission. Shipaton must show the
+running Mosaic V3 app and a genuine RevenueCat Test Store purchase; its current
+recording plan lives in ``docs/SHIPATON_DEMO_SCRIPT.md``.
 
 The script intentionally stops before subtitle burning. Caption timing is produced
 from this cut's final audio by the bundled Whisper workflow, per the subtitle skill.

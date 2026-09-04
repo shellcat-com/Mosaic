@@ -6,7 +6,7 @@ The repository contains the V3 client, custom paywall, migration, Edge Functions
 
 1. Copy `Config/Local.xcconfig.example` to the ignored `Config/Local.xcconfig`.
 2. Set `REVENUECAT_TEST_STORE_PUBLIC_KEY` to the RevenueCat Test Store public SDK key.
-3. Generate the project with `xcodegen generate` and run `Mosaic Shipaton Debug`.
+3. Generate the project with `xcodegen generate` and run the normal `Mosaic` scheme.
 
 RevenueCat Purchases is configured only after Supabase authentication, using the lowercase Supabase UUID as `appUserID`. Release builds reject keys beginning with `test_`. Do not put any `sk_` key, V2 secret key, webhook secret, Supabase service-role key, or database password in an xcconfig.
 
@@ -32,6 +32,7 @@ Apply migrations in order, including `20260824235234_mosaic_v3_core_rebuild.sql`
 - `refresh-billing`
 - `create-premium-mosaic`
 - `revenuecat-webhook`
+- `delete-account`
 
 Set these hosted Edge Function secrets:
 

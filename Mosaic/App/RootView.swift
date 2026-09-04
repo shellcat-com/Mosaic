@@ -143,6 +143,10 @@ struct RootView: View {
 #if DEBUG
 enum MarketingPreviewScene: String, CaseIterable {
     case home
+    case folder
+    case add
+    case capture
+    case memory
     case mission
     case privacy
     case placement
@@ -161,6 +165,7 @@ enum MarketingPreviewScene: String, CaseIterable {
 private struct MarketingPreviewRootView: View {
     let scene: MarketingPreviewScene
     @Environment(AppStore.self) private var store
+    @State private var router = MosaicRouter()
 
     private var mission: Mission {
         store.missions.first ?? Mission(
@@ -200,6 +205,16 @@ private struct MarketingPreviewRootView: View {
         switch scene {
         case .home:
             MainTabView()
+        case .folder:
+            NavigationStack {
+                KindnessRollFolderView(summary: store.challenge.summary)
+            }
+        case .add:
+            MainTabView(initialSelection: .camera)
+        case .capture:
+            SharedRollCameraFlow(startsInViewfinder: true)
+        case .memory:
+            SharedRollCameraFlow()
         case .mission:
             NavigationStack {
                 MissionDetailView(mission: mission)
@@ -229,6 +244,7 @@ private struct MarketingPreviewRootView: View {
 
     var body: some View {
         preview
+            .environment(router)
             .transaction { transaction in
                 transaction.animation = nil
             }
@@ -238,58 +254,98 @@ private struct MarketingPreviewRootView: View {
 
 private struct MainTabView: View {
     @Environment(AppStore.self) private var store
-    @State private var selection: AppTab
-    @State private var routedSummary: ChallengeSummary?
-    @State private var showRoutedMissions = false
+    @State private var router: MosaicRouter
 
-    init() {
-        var initial: AppTab = .home
+    init(initialSelection: AppTab = .groups) {
+        let router = MosaicRouter()
+        router.selection = initialSelection
 #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-preview-mosaics") { initial = .mosaics }
-        if ProcessInfo.processInfo.arguments.contains("-preview-profile") { initial = .profile }
+        if ProcessInfo.processInfo.arguments.contains("-preview-mosaics") { router.selection = .groups }
+        if ProcessInfo.processInfo.arguments.contains("-preview-profile") { router.selection = .profile }
 #endif
-        _selection = State(initialValue: initial)
+        _router = State(initialValue: router)
     }
 
     var body: some View {
+        @Bindable var router = router
         ZStack {
-            tabLayer(.home) { NavigationStack { HomeView() } }
-            tabLayer(.mosaics) { NavigationStack { MosaicsView() } }
+            tabLayer(.groups) { NavigationStack { GroupsLibraryView() } }
+            tabLayer(.camera) { NavigationStack { KindnessCameraTabView() } }
             tabLayer(.profile) { NavigationStack { ProfileView() } }
         }
+        .environment(router)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            MosaicTabBar(
-                selection: $selection,
-                recapMode: store.challenge.revealedAt != nil || store.challenge.serverStatus == "revealed"
-            ) {
-                if store.challenge.revealedAt != nil || store.challenge.serverStatus == "revealed" {
-                    store.openRecapEditor()
-                } else {
-                    store.openSharedCamera()
-                }
-            }
+            MosaicTabBar(selection: $router.selection)
                 .padding(.horizontal, 28)
                 .padding(.top, 6)
                 .padding(.bottom, 8)
         }
-        .sheet(item: $routedSummary) { summary in
-            NavigationStack { EventDetailView(summary: summary) }
+        .sheet(item: $router.sheet) { sheet in
+            switch sheet {
+            case .event(let summary):
+                NavigationStack { EventDetailView(summary: summary) }
+                    .environment(router)
+            case .memories:
+                SealedRollView()
+                    .environment(router)
+            case .organizer(let returnChallengeID):
+                NavigationStack { OrganizerDashboardView() }
+                    .environment(router)
+                    .onDisappear {
+                        guard let returnChallengeID else { return }
+                        Task { await store.openChallenge(returnChallengeID) }
+                    }
+            }
         }
-        .fullScreenCover(isPresented: $showRoutedMissions) {
-            NavigationStack { MissionLibraryView() }
-        }
-        .fullScreenCover(isPresented: Binding(get: { store.showSharedCamera }, set: { store.showSharedCamera = $0 })) {
-            SharedRollCameraFlow()
-        }
-        .sheet(isPresented: Binding(get: { store.showSealedRoll }, set: { store.showSealedRoll = $0 })) {
-            SealedRollView()
-        }
-        .fullScreenCover(isPresented: Binding(get: { store.showRecapEditor }, set: { store.showRecapEditor = $0 })) {
-            RecapEditorView(challenge: store.challenge)
+        .fullScreenCover(item: $router.cover) { cover in
+            coverView(for: cover)
+                .environment(router)
         }
         .onChange(of: store.pendingRoute, initial: true) { _, route in
             guard route != nil else { return }
             handlePendingRoute()
+        }
+        .onChange(of: store.showSharedCamera, initial: true) { _, visible in
+            guard visible else { return }
+            store.showSharedCamera = false
+            router.showMemoryComposer()
+        }
+        .onChange(of: store.showSealedRoll, initial: true) { _, visible in
+            guard visible else { return }
+            store.showSealedRoll = false
+            router.showMemories()
+        }
+        .onChange(of: store.showRecapEditor, initial: true) { _, visible in
+            guard visible else { return }
+            store.showRecapEditor = false
+            router.showRecap()
+        }
+        .onChange(of: store.showReveal, initial: true) { _, visible in
+            guard visible else { return }
+            store.showReveal = false
+            router.showReveal()
+        }
+    }
+
+    @ViewBuilder
+    private func coverView(for cover: MosaicCover) -> some View {
+        switch cover {
+        case .missions(let challengeID):
+            ChallengeCoverLoader(challengeID: challengeID) { _ in
+                NavigationStack { MissionLibraryView() }
+            }
+        case .memory(let challengeID):
+            ChallengeCoverLoader(challengeID: challengeID) { _ in
+                SharedRollCameraFlow()
+            }
+        case .reveal(let challengeID):
+            ChallengeCoverLoader(challengeID: challengeID) { _ in
+                RevealView()
+            }
+        case .recap(let challengeID):
+            ChallengeCoverLoader(challengeID: challengeID) { challenge in
+                RecapEditorView(challenge: challenge)
+            }
         }
     }
 
@@ -299,83 +355,86 @@ private struct MainTabView: View {
         case .join(let code):
             Task { await store.resolveInvitation(code: code) }
         case .missions(let challengeID):
-            selection = .home
-            showRoutedMissions = true
-            if let challengeID { Task { await store.openChallenge(challengeID) } }
+            router.selection = .camera
+            router.showMissions(for: challengeID)
         case .challenge(let id):
-            selection = .mosaics
+            router.selection = .groups
             if let summary = store.summary(for: id) {
-                routedSummary = summary
+                router.showEvent(summary)
             } else {
                 Task {
                     await store.openChallenge(id)
-                    routedSummary = store.summary(for: id) ?? store.challenge.summary
+                    router.showEvent(store.summary(for: id) ?? store.challenge.summary)
                 }
             }
         case .recap(let id):
-            Task {
-                await store.openChallenge(id)
-                store.openRecapEditor()
-            }
+            router.selection = .groups
+            router.showRecap(for: id)
         case .camera(let challengeID):
-            Task {
-                if let challengeID { await store.openChallenge(challengeID) }
-                store.openSharedCamera()
-            }
+            router.selection = .camera
+            router.showMemoryComposer(for: challengeID)
         case .sealedRoll(let challengeID):
             Task {
                 if let challengeID { await store.openChallenge(challengeID) }
-                store.showSealedRoll = true
+                router.showMemories()
             }
         case .reveal(let id):
-            selection = .mosaics
-            Task {
-                await store.openChallenge(id)
-                store.showReveal = true
-            }
+            router.selection = .groups
+            router.showReveal(for: id)
         }
     }
 
     private func tabLayer<Content: View>(_ tab: AppTab, @ViewBuilder content: () -> Content) -> some View {
         content()
-            .opacity(selection == tab ? 1 : 0)
-            .allowsHitTesting(selection == tab)
-            .accessibilityHidden(selection != tab)
-            .zIndex(selection == tab ? 1 : 0)
+            .id("\(tab.rawValue)-\(router.navigationGeneration)")
+            .opacity(router.selection == tab ? 1 : 0)
+            .allowsHitTesting(router.selection == tab)
+            .accessibilityHidden(router.selection != tab)
+            .zIndex(router.selection == tab ? 1 : 0)
     }
 }
 
-private enum AppTab: String, CaseIterable, Hashable {
-    case home = "Home"
-    case mosaics = "Mosaics"
-    case profile = "You"
+private struct ChallengeCoverLoader<Content: View>: View {
+    let challengeID: UUID?
+    @ViewBuilder let content: (KindnessChallenge) -> Content
 
-    var icon: MosaicIcon {
-        switch self {
-        case .home: .home
-        case .mosaics: .mosaic
-        case .profile: .profile
+    @Environment(AppStore.self) private var store
+    @State private var isReady = false
+
+    var body: some View {
+        Group {
+            if isReady {
+                content(store.challenge)
+            } else {
+                ProgressView("Opening Mosaic…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(MosaicTheme.canvas)
+            }
+        }
+        .task(id: challengeID) {
+            if let challengeID, store.challenge.id != challengeID {
+                await store.openChallenge(challengeID)
+            }
+            isReady = true
         }
     }
 }
 
 private struct MosaicTabBar: View {
     @Binding var selection: AppTab
-    let recapMode: Bool
-    let primaryAction: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var isCamera: Bool { selection == .camera }
 
     var body: some View {
         HStack(spacing: 4) {
-            tabButton(.home)
-            primaryButton
-            tabButton(.mosaics)
-            tabButton(.profile)
+            ForEach(AppTab.allCases, id: \.self) { tab in
+                tabButton(tab)
+            }
         }
         .padding(5)
-        .background(MosaicTheme.paper.opacity(0.96), in: HandDrawnCapsule(inset: 0))
-        .overlay { HandDrawnCapsule(inset: 1).stroke(Color.white.opacity(0.38), lineWidth: 1) }
-        .overlay { HandDrawnCapsule(inset: 4).stroke(MosaicTheme.border.opacity(0.55), lineWidth: 0.8) }
+        .background(isCamera ? MosaicTheme.ink.opacity(0.96) : MosaicTheme.paper.opacity(0.96), in: HandDrawnCapsule(inset: 0))
+        .overlay { HandDrawnCapsule(inset: 1).stroke(Color.white.opacity(isCamera ? 0.16 : 0.38), lineWidth: 1) }
+        .overlay { HandDrawnCapsule(inset: 4).stroke(isCamera ? Color.white.opacity(0.1) : MosaicTheme.border.opacity(0.55), lineWidth: 0.8) }
         .shadow(color: Color.black.opacity(0.16), radius: 18, y: 10)
     }
 
@@ -385,39 +444,29 @@ private struct MosaicTabBar: View {
             else { withAnimation(.spring(response: 0.34, dampingFraction: 0.78)) { selection = tab } }
         } label: {
             VStack(spacing: 3) {
-                DoodleIcon(icon: tab.icon, color: selection == tab ? MosaicTheme.indigo : MosaicTheme.ink)
+                DoodleIcon(
+                    icon: tab.icon,
+                    color: isCamera
+                        ? (selection == tab ? MosaicTheme.gold : .white.opacity(0.72))
+                        : (selection == tab ? MosaicTheme.indigo : MosaicTheme.ink)
+                )
                     .frame(width: 25, height: 25)
                 Text(tab.rawValue).font(.system(size: 11, weight: .bold, design: .rounded))
             }
-            .foregroundStyle(selection == tab ? MosaicTheme.indigo : MosaicTheme.ink)
+            .foregroundStyle(isCamera
+                ? (selection == tab ? MosaicTheme.gold : .white.opacity(0.72))
+                : (selection == tab ? MosaicTheme.indigo : MosaicTheme.ink))
             .frame(maxWidth: .infinity, minHeight: 54)
             .background {
-                if selection == tab { OrganicPanelShape(variant: .softRectangle).fill(MosaicTheme.indigo.opacity(0.11)).padding(2) }
+                if selection == tab {
+                    OrganicPanelShape(variant: .softRectangle)
+                        .fill(isCamera ? Color.white.opacity(0.08) : MosaicTheme.indigo.opacity(0.11))
+                        .padding(2)
+                }
             }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(tab.rawValue)
         .accessibilityAddTraits(selection == tab ? .isSelected : [])
-    }
-
-    private var primaryButton: some View {
-        Button(action: primaryAction) {
-            VStack(spacing: 2) {
-                ZStack {
-                    Circle().fill(MosaicTheme.paper).frame(width: 58, height: 58)
-                        .overlay(Circle().stroke(recapMode ? MosaicTheme.gold : MosaicTheme.indigo, lineWidth: 5).padding(7))
-                        .shadow(color: (recapMode ? MosaicTheme.gold : Color.black).opacity(0.28), radius: 10, y: 5)
-                    Image(systemName: recapMode ? "sparkles" : "camera.fill")
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundStyle(recapMode ? MosaicTheme.gold : MosaicTheme.indigo)
-                }
-                Text(recapMode ? "Recap" : "Camera").font(.system(size: 10, weight: .bold, design: .rounded))
-            }
-            .frame(maxWidth: .infinity)
-            .offset(y: -9)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(recapMode ? "Open Golden Recap" : "Capture a moment")
-        .accessibilityHint(recapMode ? "Opens the recap editor" : "Opens the active challenge camera")
     }
 }

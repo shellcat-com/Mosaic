@@ -6,6 +6,9 @@ protocol MosaicRepository: AnyObject {
     func resolveInvitation(code: String) async throws -> InvitationPreview
     func join(code: String, displayName: String?, privacy: ParticipantPrivacy) async throws -> ChallengeRecord
     func configureChallenge(_ draft: ChallengeDraft, challengeID: UUID) async throws -> ChallengeRecord
+    func listArtworks(collection: KinderThemeCollection?, search: String?) async throws -> ArtworkCatalogResponse
+    func prefetchRevealArtwork(challengeID: UUID) async throws -> RevealArtworkPrefetch
+    func getRevealedArtwork(challengeID: UUID) async throws -> RevealedArtworkResponse
     func loadChallenge(id: UUID) async throws -> (KindnessChallenge, [Mission])
     func listChallenges() async throws -> [ChallengeSummary]
     func submit(_ draft: EvidenceDraft) async throws -> ContributionRecord
@@ -26,6 +29,15 @@ extension MosaicRepository {
         throw MosaicRepositoryCapabilityError.unsupported
     }
     func listChallenges() async throws -> [ChallengeSummary] { [] }
+    func listArtworks(collection: KinderThemeCollection?, search: String?) async throws -> ArtworkCatalogResponse {
+        ArtworkCatalogResponse(enabled: false, artworks: [])
+    }
+    func prefetchRevealArtwork(challengeID: UUID) async throws -> RevealArtworkPrefetch {
+        throw MosaicRepositoryCapabilityError.unsupported
+    }
+    func getRevealedArtwork(challengeID: UUID) async throws -> RevealedArtworkResponse {
+        throw MosaicRepositoryCapabilityError.unsupported
+    }
     func updateNotificationPreferences(challengeID: UUID, preferences: NotificationPreferences) async throws {}
     func registerDevice(token: String, environment: String) async throws {}
     func registerLiveActivityToken(token: String, challengeID: UUID, activityID: String) async throws {}

@@ -116,8 +116,7 @@ struct TileSideStory: View {
             else { horizontalStory }
         }
         .porcelainCard()
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Kindness tiles turn over at reveal to complete the artwork")
+        .accessibilityElement(children: .contain)
     }
 
     private var horizontalStory: some View {
@@ -129,6 +128,7 @@ struct TileSideStory: View {
                     Image(systemName: "rotate.3d")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(MosaicTheme.clay)
+                        .accessibilityHidden(true)
                     Text("AT REVEAL")
                         .font(.caption2.weight(.bold))
                         .tracking(0.8)
@@ -147,7 +147,9 @@ struct TileSideStory: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
                 tileFace(CeramicTileFront(position: 1, isContributed: true), label: "FRONT · KINDNESS")
-                Image(systemName: "rotate.3d").foregroundStyle(MosaicTheme.clay)
+                Image(systemName: "rotate.3d")
+                    .foregroundStyle(MosaicTheme.clay)
+                    .accessibilityHidden(true)
                 tileFace(SealedArtworkFace(), label: "BACK · ARTWORK")
             }
             Text("Every act places the kindness face. At reveal, every tile turns and the other face becomes one shared artwork.")

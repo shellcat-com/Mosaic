@@ -44,6 +44,12 @@ actor PhotoDiskStore {
         try clearPending(id: id)
     }
 
+    func clearAll() throws {
+        if FileManager.default.fileExists(atPath: directory.path()) {
+            try FileManager.default.removeItem(at: directory)
+        }
+    }
+
     private func pendingURL(id: UUID) -> URL {
         directory.appending(path: "\(id.uuidString).pending")
     }

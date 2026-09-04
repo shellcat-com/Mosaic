@@ -8,7 +8,7 @@ struct MissionLibraryView: View {
         MosaicScreen {
             VStack(alignment: .leading, spacing: 22) {
                 HStack(alignment: .top) {
-                    MosaicSectionHeader(title: "Choose a mission", eyebrow: "Small acts matter", icon: .heart)
+                    MosaicSectionHeader(title: "Choose an act", eyebrow: "Small acts matter", icon: .heart)
                     Spacer()
                     Button("Done") { dismiss() }
                         .font(MosaicTheme.body(.semibold))
@@ -45,7 +45,7 @@ struct MissionLibraryView: View {
                 }
             }
         }
-        .navigationTitle("Missions")
+        .navigationTitle("Acts")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

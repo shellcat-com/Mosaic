@@ -201,6 +201,12 @@ actor SupabaseMosaicAPI: MosaicAPI {
         )
     }
 
+    func clearPrivateState() async {
+        let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appending(path: "MosaicGallery", directoryHint: .isDirectory)
+        try? FileManager.default.removeItem(at: directory)
+    }
+
     private func normalized(_ code: String) -> String {
         code.uppercased().filter { $0.isLetter || $0.isNumber }
     }
@@ -216,14 +222,30 @@ actor SupabaseMosaicAPI: MosaicAPI {
             .appending(path: "MosaicGallery", directoryHint: .isDirectory)
             .appending(path: event.id.uuidString, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        for index in event.photos.indices {
-            guard let path = event.photos[index].storagePath else { continue }
-            let url = directory.appending(path: "\(event.photos[index].id.uuidString).jpg")
-            if !FileManager.default.fileExists(atPath: url.path()) {
-                let data = try await client.storage.from("event-photos").download(path: path)
-                try data.write(to: url, options: [.atomic, .completeFileProtection])
+        let pending = event.photos.indices.compactMap { index -> (Int, UUID, String)? in
+            guard let path = event.photos[index].storagePath else { return nil }
+            return (index, event.photos[index].id, path)
+        }
+        for batchStart in stride(from: 0, to: pending.count, by: 4) {
+            let batch = pending[batchStart..<min(batchStart + 4, pending.count)]
+            let hydrated = try await withThrowingTaskGroup(of: (Int, URL).self) { group in
+                for (index, photoID, path) in batch {
+                    group.addTask { [client] in
+                        try Task.checkCancellation()
+                        let url = directory.appending(path: "\(photoID.uuidString).jpg")
+                        if !FileManager.default.fileExists(atPath: url.path()) {
+                            let data = try await client.storage.from("event-photos").download(path: path)
+                            try Task.checkCancellation()
+                            try data.write(to: url, options: [.atomic, .completeFileProtection])
+                        }
+                        return (index, url)
+                    }
+                }
+                var results: [(Int, URL)] = []
+                for try await result in group { results.append(result) }
+                return results
             }
-            event.photos[index].localURL = url
+            for (index, url) in hydrated { event.photos[index].localURL = url }
         }
         return event
     }

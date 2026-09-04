@@ -20,6 +20,15 @@ struct ChallengeRecord: Codable, Sendable {
     let themePaletteId: KinderThemePaletteID?
     let themeSeed: Int?
     let themeRevision: Int?
+    let artworkMode: ArtworkMode?
+    let boardSide: Int?
+    let artworkCollection: KinderThemeCollection?
+    let artworkPalette: [String]?
+    let artworkCatalogRevision: Int?
+    let artworkPackageRevision: Int?
+    let artworkLockedAt: Date?
+    let experienceVersion: MosaicExperienceVersion?
+    let filmLookId: FilmLookID?
 
     init(
         id: UUID,
@@ -40,6 +49,15 @@ struct ChallengeRecord: Codable, Sendable {
         themePaletteId: KinderThemePaletteID? = nil,
         themeSeed: Int? = nil,
         themeRevision: Int? = nil,
+        artworkMode: ArtworkMode? = nil,
+        boardSide: Int? = nil,
+        artworkCollection: KinderThemeCollection? = nil,
+        artworkPalette: [String]? = nil,
+        artworkCatalogRevision: Int? = nil,
+        artworkPackageRevision: Int? = nil,
+        artworkLockedAt: Date? = nil,
+        experienceVersion: MosaicExperienceVersion? = nil,
+        filmLookId: FilmLookID? = nil,
         organizationId: UUID? = nil
     ) {
         self.id = id
@@ -61,6 +79,15 @@ struct ChallengeRecord: Codable, Sendable {
         self.themePaletteId = themePaletteId
         self.themeSeed = themeSeed
         self.themeRevision = themeRevision
+        self.artworkMode = artworkMode
+        self.boardSide = boardSide
+        self.artworkCollection = artworkCollection
+        self.artworkPalette = artworkPalette
+        self.artworkCatalogRevision = artworkCatalogRevision
+        self.artworkPackageRevision = artworkPackageRevision
+        self.artworkLockedAt = artworkLockedAt
+        self.experienceVersion = experienceVersion
+        self.filmLookId = filmLookId
     }
 
     enum CodingKeys: String, CodingKey {
@@ -79,6 +106,15 @@ struct ChallengeRecord: Codable, Sendable {
         case themePaletteId = "theme_palette_id"
         case themeSeed = "theme_seed"
         case themeRevision = "theme_revision"
+        case artworkMode = "artwork_mode"
+        case boardSide = "board_side"
+        case artworkCollection = "artwork_collection"
+        case artworkPalette = "artwork_palette"
+        case artworkCatalogRevision = "artwork_catalog_revision"
+        case artworkPackageRevision = "artwork_package_revision"
+        case artworkLockedAt = "artwork_locked_at"
+        case experienceVersion = "experience_version"
+        case filmLookId = "film_look_id"
     }
 
     var effectiveStartAt: Date {
@@ -95,6 +131,22 @@ struct ChallengeRecord: Codable, Sendable {
             revision: themeRevision ?? KinderThemeCatalog.revision
         )
     }
+
+    var effectiveArtworkMode: ArtworkMode { artworkMode ?? .legacy }
+    var effectiveExperienceVersion: MosaicExperienceVersion { experienceVersion ?? .legacy }
+    var effectiveFilmLookID: FilmLookID { filmLookId ?? .sunwashed }
+
+    var sealedArtwork: SealedArtwork? {
+        guard effectiveArtworkMode == .museum,
+              let boardSide,
+              let artworkCollection,
+              let artworkPalette else { return nil }
+        return SealedArtwork(
+            collection: artworkCollection,
+            palette: artworkPalette,
+            boardSide: boardSide
+        )
+    }
 }
 
 struct InvitationPreview: Codable, Hashable, Sendable {
@@ -107,10 +159,14 @@ struct InvitationPreview: Codable, Hashable, Sendable {
     let startAt: Date?
     let revealAt: Date
     let status: String
-    let theme: ThemeSelection
+    let artworkMode: ArtworkMode
+    let sealedArtwork: SealedArtwork?
+    let theme: ThemeSelection?
+    let experienceVersion: MosaicExperienceVersion
+    let filmLookID: FilmLookID
 
     enum CodingKeys: String, CodingKey {
-        case code, name, purpose, goal, status, theme
+        case code, name, purpose, goal, status, theme, artworkMode, sealedArtwork, experienceVersion, filmLookID
         case challengeID = "challenge_id"
         case groupName = "group_name"
         case startAt = "start_at"
@@ -127,7 +183,11 @@ struct InvitationPreview: Codable, Hashable, Sendable {
         startAt: Date?,
         revealAt: Date,
         status: String,
-        theme: ThemeSelection = .fallback
+        artworkMode: ArtworkMode = .legacy,
+        sealedArtwork: SealedArtwork? = nil,
+        theme: ThemeSelection? = .fallback,
+        experienceVersion: MosaicExperienceVersion = .legacy,
+        filmLookID: FilmLookID = .sunwashed
     ) {
         self.challengeID = challengeID
         self.code = code
@@ -138,7 +198,31 @@ struct InvitationPreview: Codable, Hashable, Sendable {
         self.startAt = startAt
         self.revealAt = revealAt
         self.status = status
+        self.artworkMode = artworkMode
+        self.sealedArtwork = sealedArtwork
         self.theme = theme
+        self.experienceVersion = experienceVersion
+        self.filmLookID = filmLookID
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        challengeID = try values.decode(UUID.self, forKey: .challengeID)
+        code = try values.decode(String.self, forKey: .code)
+        name = try values.decode(String.self, forKey: .name)
+        groupName = try values.decode(String.self, forKey: .groupName)
+        purpose = try values.decode(String.self, forKey: .purpose)
+        goal = try values.decode(Int.self, forKey: .goal)
+        startAt = try values.decodeIfPresent(Date.self, forKey: .startAt)
+        revealAt = try values.decode(Date.self, forKey: .revealAt)
+        status = try values.decode(String.self, forKey: .status)
+        artworkMode = try values.decodeIfPresent(ArtworkMode.self, forKey: .artworkMode) ?? .legacy
+        sealedArtwork = try values.decodeIfPresent(SealedArtwork.self, forKey: .sealedArtwork)
+        theme = values.contains(.theme)
+            ? try values.decodeIfPresent(ThemeSelection.self, forKey: .theme)
+            : .fallback
+        experienceVersion = try values.decodeIfPresent(MosaicExperienceVersion.self, forKey: .experienceVersion) ?? .legacy
+        filmLookID = try values.decodeIfPresent(FilmLookID.self, forKey: .filmLookID) ?? .sunwashed
     }
 }
 
@@ -149,6 +233,16 @@ struct InvitationPreviewResponse: Codable, Sendable {
 struct ContributionChallengeRecord: Decodable, Sendable {
     let challengeId: UUID
     enum CodingKeys: String, CodingKey { case challengeId = "challenge_id" }
+}
+
+struct SharedRollCountRecord: Decodable, Sendable {
+    let challengeId: UUID
+    let sealedCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case challengeId = "challenge_id"
+        case sealedCount = "sealed_count"
+    }
 }
 
 struct RecapListRecord: Decodable, Sendable {

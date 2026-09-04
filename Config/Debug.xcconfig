@@ -1,0 +1,10 @@
+// Normal local development configuration.
+// The RevenueCat Test Store SDK key is a public client identifier supplied by
+// the ignored Local.xcconfig. Never add server credentials to this file.
+
+#include? "Local.xcconfig"
+
+REVENUECAT_PUBLIC_SDK_KEY = $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
+MOSAIC_BILLING_ENABLED = YES
+MOSAIC_REMOTE_PUSH_ENABLED = NO
+ENABLE_TESTABILITY = YES

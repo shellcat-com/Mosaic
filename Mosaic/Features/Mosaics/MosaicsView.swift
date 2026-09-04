@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MosaicsView: View {
     @Environment(AppStore.self) private var store
+    @Environment(MosaicRouter.self) private var router
     @State private var filter: EventLibraryFilter = .active
     @State private var displayedMonth = Date.now
 
@@ -36,7 +37,7 @@ struct MosaicsView: View {
 
                 monthPicker
 
-                Picker("Challenge status", selection: $filter) {
+                Picker("Mosaic status", selection: $filter) {
                     ForEach(EventLibraryFilter.allCases) { item in
                         Text(item.title).tag(item)
                     }
@@ -49,9 +50,6 @@ struct MosaicsView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .fullScreenCover(isPresented: Binding(get: { store.showReveal }, set: { store.showReveal = $0 })) {
-            RevealView()
-        }
     }
 
     private var monthPicker: some View {
@@ -122,7 +120,7 @@ struct MosaicsView: View {
     private var emptyTitle: String {
         switch filter {
         case .upcoming: "No upcoming reveals this month"
-        case .active: "No active challenges this month"
+        case .active: "No active Mosaics this month"
         case .recaps: "No recaps from this month"
         }
     }
@@ -162,7 +160,7 @@ struct MosaicsView: View {
                 ProgressView(value: Double(store.challenge.contributions.count), total: Double(store.challenge.goal))
                     .tint(MosaicTheme.persimmon)
 
-                Button("Preview reveal ceremony") { store.showReveal = true }
+                Button("Open reveal") { router.showReveal(for: store.challenge.id) }
                     .buttonStyle(PrimaryButtonStyle())
             }
         }

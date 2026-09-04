@@ -34,7 +34,7 @@ export default {
       const { data: challenge, error } = await ctx.supabaseAdmin
         .from("challenges")
         .select(
-          "id,name,group_name,purpose,goal,start_at,reveal_at,status,theme_id,theme_palette_id,theme_seed,theme_revision",
+          "id,name,group_name,purpose,goal,start_at,reveal_at,status,theme_id,theme_palette_id,theme_seed,theme_revision,artwork_mode,board_side,artwork_collection,artwork_palette,experience_version,film_look_id",
         )
         .eq("invitation_code", code)
         .maybeSingle();
@@ -52,14 +52,24 @@ export default {
           start_at: challenge.start_at,
           reveal_at: challenge.reveal_at,
           status: challenge.status,
-          theme: challenge.theme_id
+          experienceVersion: challenge.experience_version ?? 1,
+          filmLookID: challenge.film_look_id ?? "sunwashed",
+          artworkMode: challenge.artwork_mode ?? "legacy",
+          sealedArtwork: challenge.artwork_mode === "museum"
+            ? {
+              collection: challenge.artwork_collection,
+              palette: challenge.artwork_palette,
+              boardSide: challenge.board_side,
+            }
+            : null,
+          theme: challenge.artwork_mode !== "museum" && challenge.theme_id
             ? {
               themeID: challenge.theme_id,
               paletteID: challenge.theme_palette_id ?? "signature",
               seed: challenge.theme_seed ?? fallbackTheme.seed,
               revision: challenge.theme_revision ?? fallbackTheme.revision,
             }
-            : fallbackTheme,
+            : null,
         },
       });
     } catch (error) {

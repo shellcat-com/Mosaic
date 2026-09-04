@@ -18,7 +18,7 @@ struct MissionDetailView: View {
                     .padding(.vertical, 12)
 
                 VStack(spacing: 10) {
-                    Label("CHOOSE A MISSION", systemImage: "sun.max.fill")
+                    Label("YOUR ACT", systemImage: "sun.max.fill")
                         .font(MosaicTheme.caption(.bold))
                         .foregroundStyle(MosaicTheme.persimmon)
                     Text(mission.title)
@@ -37,16 +37,16 @@ struct MissionDetailView: View {
                         detailRow(icon: "eye.slash", title: "Private by default", detail: "Evidence is only seen by the organizer.")
 #if DEBUG
                         if MarketingPreviewScene.current != .mission {
-                            detailRow(icon: "person.badge.clock", title: "Partner confirmation", detail: "Planned after the hackathon; not required for this mission.")
+                            detailRow(icon: "person.badge.clock", title: "Partner confirmation", detail: "Planned after the hackathon; not required for this act.")
                         }
 #else
-                        detailRow(icon: "person.badge.clock", title: "Partner confirmation", detail: "Planned after the hackathon; not required for this mission.")
+                        detailRow(icon: "person.badge.clock", title: "Partner confirmation", detail: "Planned after the hackathon; not required for this act.")
 #endif
                     }
                 }
             }
         }
-        .navigationTitle("Mission")
+        .navigationTitle("Act")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             Button("Complete this act") { begin = true }

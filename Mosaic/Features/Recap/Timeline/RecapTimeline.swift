@@ -52,7 +52,7 @@ struct RecapTimeline: Hashable, Sendable {
         let fairPool = Array(sources.prefix(24))
         let eligibleMemoryIndices = fairPool.indices.filter { index in
             switch fairPool[index].content {
-            case .photo: true
+            case .photo, .video: true
             case .reflection:
                 switch options.reflectionDensity {
                 case .fewer: index.isMultiple(of: 3)
