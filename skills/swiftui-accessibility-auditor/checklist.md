@@ -1,6 +1,6 @@
 # Mosaic v3 SwiftUI accessibility audit
 
-Audited: 2026-08-26  
+Audited: 2026-08-26
 Scope: the focused `MosaicV3` iPhone target at an iOS 18 deployment target.
 
 ## P0
