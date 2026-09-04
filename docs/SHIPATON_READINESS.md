@@ -11,7 +11,7 @@ Do not select another category unless Mosaic receives its first supported-store 
 ## Implemented locally
 
 - The shipping `MosaicV3` target links RevenueCat Purchases 5.82.0; RevenueCatUI is absent.
-- `Mosaic Shipaton Debug` uses the ignored Test Store public key through `Config/Shipaton.xcconfig`. Release validation rejects `test_` keys.
+- The normal `Mosaic` scheme uses the ignored Test Store public key through `Config/Debug.xcconfig` in Debug. Release validation rejects `test_` keys.
 - RevenueCat identity is the lowercase Supabase UUID and is cleared when the Mosaic session ends.
 - The current custom Living Kiln paywall loads annual, monthly, and Event Pass cards only from offering `organizer_plus_v1`, selects annual by default, and supports loading, retry, cancellation, pending, restore, success, and server synchronization states.
 - VoiceOver labels, Dynamic Type, 44-point targets, Reduce Motion, Reduce Transparency, and non-color selection are represented in the paywall implementation.
@@ -20,7 +20,7 @@ Do not select another category unless Mosaic receives its first supported-store 
 - Swift tests, deterministic paywall showcase fixtures, RevenueCat parser tests, webhook tests, and pgTAP billing/security coverage are included.
 - The catalog identifiers are centralized: entitlement `organizer_plus`, products `organizer_monthly`, `organizer_annual`, `mosaic_event_pass_v2`, and virtual currency `PASS`.
 - The existing icon is 1024×1024 and the repository contains a 1179×2556 frameless screenshot candidate, an MIT license, captions, and submission copy.
-- A clean iPhone 17 Pro Simulator build passes all 46 focused Swift tests across 12 suites, including account-bound private-state cleanup and Event Pass retry idempotency.
+- A clean iPhone 17 Pro Simulator build passes all 51 focused Swift tests across 12 suites, including account-bound private-state cleanup, in-flight request invalidation, newest-detail-response ordering, and Event Pass retry idempotency across unchanged and edited drafts.
 
 ## Live catalog read-only audit
 
@@ -48,7 +48,7 @@ Before any RevenueCat dashboard write, confirm in the authenticated dashboard th
 
 ```sh
 xcodegen generate
-xcodebuild -project Mosaic.xcodeproj -scheme 'Mosaic Shipaton Debug' \
+xcodebuild -project Mosaic.xcodeproj -scheme Mosaic \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 supabase start
 supabase db reset

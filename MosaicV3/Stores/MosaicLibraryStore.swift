@@ -4,7 +4,8 @@ import Observation
 @MainActor @Observable
 final class MosaicLibraryStore {
     private let api: any MosaicAPI
-    @ObservationIgnored private var pendingPremiumCreateRequestID: UUID?
+    @ObservationIgnored private var stateGeneration: UInt = 0
+    @ObservationIgnored private var pendingPremiumCreate: (draft: MosaicDraft, requestID: UUID)?
     private(set) var mosaics: [MosaicSummary] = []
     private(set) var isLoading = false
     var message: String?
@@ -17,34 +18,50 @@ final class MosaicLibraryStore {
     var completed: [MosaicSummary] { mosaics.filter { $0.phase == .revealed } }
 
     func refresh() async {
+        let generation = stateGeneration
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            if generation == stateGeneration { isLoading = false }
+        }
         do {
-            mosaics = try await api.listMosaics()
+            let loaded = try await api.listMosaics()
+            guard generation == stateGeneration else { return }
+            mosaics = loaded
             message = nil
         } catch {
+            guard generation == stateGeneration else { return }
             message = error.localizedDescription
         }
     }
 
     func create(_ draft: MosaicDraft, billingSnapshot: BillingSnapshot = .free) async throws -> MosaicEvent {
+        let generation = stateGeneration
         let event: MosaicEvent
         if draft.requiresPremiumAccess && !billingSnapshot.plusActive {
             guard billingSnapshot.passBalance > 0 else { throw MosaicAPIError.premiumRequired }
-            let requestID = pendingPremiumCreateRequestID ?? UUID()
-            pendingPremiumCreateRequestID = requestID
+            let requestID: UUID
+            if let pendingPremiumCreate, pendingPremiumCreate.draft == draft {
+                requestID = pendingPremiumCreate.requestID
+            } else {
+                requestID = UUID()
+            }
+            pendingPremiumCreate = (draft, requestID)
             event = try await api.createPremiumMosaic(draft, requestID: requestID)
-            pendingPremiumCreateRequestID = nil
+            guard generation == stateGeneration else { throw CancellationError() }
+            pendingPremiumCreate = nil
         } else {
-            pendingPremiumCreateRequestID = nil
+            pendingPremiumCreate = nil
             event = try await api.createMosaic(draft)
+            guard generation == stateGeneration else { throw CancellationError() }
         }
         replace(event.summary)
         return event
     }
 
     func join(code: String) async throws -> MosaicEvent {
+        let generation = stateGeneration
         let event = try await api.joinMosaic(code)
+        guard generation == stateGeneration else { throw CancellationError() }
         replace(event.summary)
         return event
     }
@@ -58,10 +75,11 @@ final class MosaicLibraryStore {
     }
 
     func clearPrivateState() {
+        stateGeneration &+= 1
         mosaics = []
         isLoading = false
         message = nil
-        pendingPremiumCreateRequestID = nil
+        pendingPremiumCreate = nil
     }
 
     func replace(_ summary: MosaicSummary) {

@@ -185,7 +185,10 @@ struct PhotoRecapBuilderView: View {
                     .accessibilityAddTraits(project.music == music ? .isSelected : [])
                 }
             }
-            Link("\(project.music.license) · Music source", destination: project.music.sourceURL).font(.footnote)
+            Link("\(project.music.license) · Music source", destination: project.music.sourceURL)
+                .font(.footnote)
+                .frame(minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
             Slider(value: $project.musicTrimOffset, in: 0...15, step: 0.5) { Text("Music start") }
             Text("Starts at \(project.musicTrimOffset, format: .number.precision(.fractionLength(1))) seconds").font(.footnote).foregroundStyle(MosaicTheme.muted)
             Button(musicPlayer?.isPlaying == true ? "Stop music preview" : "Preview music", systemImage: musicPlayer?.isPlaying == true ? "stop.fill" : "play.fill") {

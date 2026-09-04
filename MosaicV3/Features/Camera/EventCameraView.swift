@@ -447,7 +447,8 @@ private struct CameraFlashWindow: View {
                 .font(.system(size: 7, weight: .bold, design: .monospaced))
         }
         .foregroundStyle(MosaicTheme.ink.opacity(0.7))
-        .accessibilityHidden(true)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Flash indicator")
     }
 }
 
@@ -468,7 +469,8 @@ private struct FilmAdvanceWheel: View {
                 .font(.system(size: 8, weight: .bold, design: .monospaced))
         }
         .foregroundStyle(MosaicTheme.ink.opacity(0.7))
-        .accessibilityHidden(true)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Film advance indicator")
     }
 }
 

@@ -97,7 +97,10 @@ struct CreateMosaicView: View {
             VStack(alignment: .leading, spacing: 7) {
                 Image(systemName: preset.symbol).font(.title2)
                 Text(preset.title).font(.subheadline.weight(.semibold))
-                Text(preset.detail).font(.caption).foregroundStyle(MosaicTheme.muted).lineLimit(2)
+                Text(preset.detail)
+                    .font(.caption)
+                    .foregroundStyle(MosaicTheme.muted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(width: 142, alignment: .leading)
             .frame(minHeight: 112, alignment: .leading)

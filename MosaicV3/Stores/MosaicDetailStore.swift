@@ -5,6 +5,7 @@ import Observation
 final class MosaicDetailStore {
     private let api: any MosaicAPI
     private let artworkCache: ArtworkRevealCache
+    @ObservationIgnored private var stateGeneration: UInt = 0
     private(set) var event: MosaicEvent?
     private(set) var isLoading = false
     private(set) var placedTilePosition: Int?
@@ -25,27 +26,37 @@ final class MosaicDetailStore {
     }
 
     func load(id: UUID) async {
+        stateGeneration &+= 1
+        let generation = stateGeneration
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            if generation == stateGeneration { isLoading = false }
+        }
         do {
             let loaded = try await api.loadMosaic(id)
+            guard generation == stateGeneration else { return }
             event = loaded
             if loaded.phase == .revealed {
-                await loadReleasedArtwork(for: loaded.id)
+                await loadReleasedArtwork(for: loaded.id, generation: generation)
             } else {
                 revealedArtworkURL = nil
             }
+            guard generation == stateGeneration else { return }
             message = nil
         } catch {
+            guard generation == stateGeneration else { return }
             message = error.localizedDescription
         }
     }
 
-    private func loadReleasedArtwork(for mosaicID: UUID) async {
+    private func loadReleasedArtwork(for mosaicID: UUID, generation: UInt) async {
         do {
             guard let material = try await api.releaseArtwork(mosaicID) else { return }
-            revealedArtworkURL = try await artworkCache.decrypt(material)
+            let url = try await artworkCache.decrypt(material)
+            guard generation == stateGeneration else { return }
+            revealedArtworkURL = url
         } catch {
+            guard generation == stateGeneration else { return }
             // Bundled reviewed artwork remains a safe offline fallback.
             revealedArtworkURL = nil
         }
@@ -68,6 +79,7 @@ final class MosaicDetailStore {
     }
 
     func clearPrivateState() async {
+        stateGeneration &+= 1
         event = nil
         isLoading = false
         placedTilePosition = nil

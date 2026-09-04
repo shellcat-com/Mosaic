@@ -186,7 +186,10 @@ struct MosaicEventView: View {
                     .font(MosaicTheme.display(25, weight: .semibold))
                     .accessibilityAddTraits(.isHeader)
                 Text("\(event.artwork.title) · \(event.artwork.artist)").font(.headline)
-                Link("Artwork source and license", destination: event.artwork.sourceURL).font(.footnote)
+                Link("Artwork source and license", destination: event.artwork.sourceURL)
+                    .font(.footnote)
+                    .frame(minHeight: 44, alignment: .leading)
+                    .contentShape(Rectangle())
                 if revealPlayback.isComplete {
                     Button("Replay Reveal", systemImage: "arrow.counterclockwise") {
                         revealPlayback.replay(event: event, reduceMotion: UIAccessibility.isReduceMotionEnabled)

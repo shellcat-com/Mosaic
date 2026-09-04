@@ -16,7 +16,7 @@ Each member can build a personal 1–24-photo vertical recap. Selection order is
 | **Camera** | Event selector, viewfinder, film look, shots remaining, review/retake, and the photographer's sealed roll. |
 | **You** | Display name, joined events, support, blocked users, sign out, and account deletion. |
 
-The shipping target lives in `MosaicV3/`. The prior hackathon implementation remains in `Mosaic/` only to preserve the pre-existing dirty working tree; `project.yml` excludes it except for the reviewed design system, disposable-film processor, fonts, art, and music assets.
+The shipping target lives in `MosaicV3/`. The prior hackathon implementation remains archived in `Mosaic/`; `project.yml` excludes it except for the reviewed design system, disposable-film processor, fonts, art, and music assets.
 
 ## Architecture
 
@@ -57,7 +57,7 @@ Requirements: Xcode 26+, iOS 18+, XcodeGen, Supabase CLI, and Docker for local d
 
 ```sh
 xcodegen generate
-xcodebuild -project Mosaic.xcodeproj -scheme 'Mosaic Shipaton Debug' \
+xcodebuild -project Mosaic.xcodeproj -scheme Mosaic \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 
 supabase start

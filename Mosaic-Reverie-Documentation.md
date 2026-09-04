@@ -1,5 +1,7 @@
 # Mosaic
 
+> Archived Reverie Hacks snapshot. It documents the retired legacy target and judge setup; use `README.md` for the current Mosaic V3 build and release workflow.
+
 ## Reverie Hacks 2026 - App Development Project Documentation
 
 **Tagline:** Small acts. One shared story.

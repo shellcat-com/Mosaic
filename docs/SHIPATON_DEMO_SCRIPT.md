@@ -4,7 +4,7 @@ The uploaded public YouTube or Vimeo video must stay below two minutes. Use Engl
 
 ## Recording setup
 
-- Build `Mosaic Shipaton Debug` with an ignored RevenueCat Test Store public key.
+- Build the normal `Mosaic` scheme in Debug with an ignored RevenueCat Test Store public key from `Config/Debug.xcconfig`.
 - Use a signed-in organizer whose RevenueCat `appUserID` visibly matches the lowercase Supabase UUID in debug logs.
 - Start free with no active Mosaic and reset the chosen Test Store product so the purchase transition is genuine.
 - Record the running V3 app without a device frame or generated replacement UI.

@@ -39,7 +39,6 @@ targets:
         SupabasePublishableKey: $(SUPABASE_PUBLISHABLE_KEY)
         RevenueCatPublicSDKKey: $(REVENUECAT_PUBLIC_SDK_KEY)
         MosaicBillingEnabled: $(MOSAIC_BILLING_ENABLED)
-        MosaicSubmissionName: $(MOSAIC_SUBMISSION_NAME)
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:
@@ -75,12 +74,11 @@ targets:
         Debug:
           REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_TEST_STORE_PUBLIC_KEY)
           MOSAIC_BILLING_ENABLED: YES
-          MOSAIC_SUBMISSION_NAME: RevenueCat Shipaton 2026 Next Gen judge build
         Release:
           REVENUECAT_PUBLIC_SDK_KEY: $(REVENUECAT_APP_STORE_PUBLIC_KEY)
           MOSAIC_BILLING_ENABLED: YES
     configFiles:
-      Debug: Config/Shipaton.xcconfig
+      Debug: Config/Debug.xcconfig
       Release: Config/AppStore.xcconfig
     attributes:
       SystemCapabilities:
@@ -117,21 +115,3 @@ targets:
         CODE_SIGN_STYLE: Automatic
     dependencies:
       - target: Mosaic
-schemes:
-  Mosaic Shipaton Debug:
-    build:
-      targets:
-        Mosaic: all
-    run:
-      config: Debug
-    test:
-      config: Debug
-      targets:
-        - MosaicTests
-        - MosaicUITests
-    profile:
-      config: Debug
-    analyze:
-      config: Debug
-    archive:
-      config: Debug

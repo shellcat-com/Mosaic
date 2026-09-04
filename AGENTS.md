@@ -28,3 +28,17 @@ History uses short, imperative subjects such as `Make release tests deterministi
 ## Security & Configuration
 
 Copy `Config/Local.xcconfig.example` to the ignored local file. Only public client keys belong in app configuration; keep service-role and RevenueCat secret keys in Supabase secrets. Review `SECURITY.md` before changing authentication, storage policies, billing, or invitation access.
+
+## Supabase Plan and Project Placement
+
+Mosaic must ship entirely from the Supabase Free-plan organization `Mosaic` (`rqnuhvhvdezqlgdrxzeq`). Its production project is `lmemddtpwfbkawlkwthf`; preserve that project reference, Auth tenant, database, Storage objects, Realtime configuration, Cron jobs, Edge Functions, secrets, URL, and publishable key together. Do not create, copy, deploy, or leave any Mosaic database, branch, function, Storage bucket, compute add-on, backup add-on, custom domain, or other Mosaic workload in the Pro organization.
+
+The Pro organization `bswxyz's Org` (`rhmqqeecuglbrrapbylh`) is reserved for Hatch only. The Hatch project is `sdylytljkcqkfqabwvgs`; no Mosaic resource may share its paid organization or consume its paid compute. Any action that starts or increases paid Supabase billing requires the user's explicit confirmation immediately before the billing-affecting action.
+
+Before every hosted Supabase deployment or release:
+
+- Confirm `lmemddtpwfbkawlkwthf` belongs to `rqnuhvhvdezqlgdrxzeq` and that the organization plan is `free`.
+- Confirm no Mosaic project or Mosaic-named workload exists in `rhmqqeecuglbrrapbylh`.
+- Confirm app builds reference only `https://lmemddtpwfbkawlkwthf.supabase.co` and its public publishable key; never place secret or service-role keys in the app.
+- Keep RevenueCat enabled, but store its server credentials only as secrets on the Free Mosaic project.
+- If Mosaic would exceed a Free-plan limit or require a Pro-only feature, stop and report the constraint instead of silently enabling paid compute or moving Mosaic to Pro.

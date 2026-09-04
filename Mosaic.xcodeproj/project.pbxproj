@@ -103,7 +103,6 @@
 		04AA5F76989ACF7DF2775E56 /* MosaicFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicFlowUITests.swift; sourceTree = "<group>"; };
 		0A07638BD81BA5633A7D5CB3 /* AppleNonce.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleNonce.swift; sourceTree = "<group>"; };
 		0E11E0119B3AC03BB2DCB687 /* YouView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YouView.swift; sourceTree = "<group>"; };
-		0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shipaton.xcconfig; sourceTree = "<group>"; };
 		0F0C19DBD5ABDAC52556F149 /* EditMosaicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditMosaicView.swift; sourceTree = "<group>"; };
 		0F360DA9461B3B31E038D3D6 /* MosaicDetailStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicDetailStore.swift; sourceTree = "<group>"; };
 		11E6117DE84F0A8A732F0EBA /* DisposableCameraFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisposableCameraFilter.swift; sourceTree = "<group>"; };
@@ -151,6 +150,7 @@
 		99FB8F456F7DF48E51EBF06D /* rise.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = rise.mp3; sourceTree = "<group>"; };
 		9DD380D7236D7175340D9CFE /* SensitivePhotoAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitivePhotoAnalyzer.swift; sourceTree = "<group>"; };
 		AA13C4ADDBE2C7601347CA6F /* fresh.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = fresh.mp3; sourceTree = "<group>"; };
+		AA58E9B4420E93D48976587F /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		B2A5B08AC112FFDABEECE5C7 /* PhotoRecapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoRecapTests.swift; sourceTree = "<group>"; };
 		B5CC74777F43E9D8F17C1D49 /* MosaicFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MosaicFeedback.swift; sourceTree = "<group>"; };
 		B8C2C3A81B96E02AB01EBAE8 /* ArtworkRevealCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkRevealCacheTests.swift; sourceTree = "<group>"; };
@@ -255,7 +255,7 @@
 			isa = PBXGroup;
 			children = (
 				4852A50D45AD5D04B5868E9A /* AppStore.xcconfig */,
-				0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */,
+				AA58E9B4420E93D48976587F /* Debug.xcconfig */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -905,7 +905,7 @@
 		};
 		CB28C99CFF75D1AD991C04E3 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0ED7C325BE77B5334DF90A35 /* Shipaton.xcconfig */;
+			baseConfigurationReference = AA58E9B4420E93D48976587F /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -918,7 +918,6 @@
 					"@executable_path/Frameworks",
 				);
 				MOSAIC_BILLING_ENABLED = YES;
-				MOSAIC_SUBMISSION_NAME = "RevenueCat Shipaton 2026 Next Gen judge build";
 				PRODUCT_BUNDLE_IDENTIFIER = com.biswaskhatiwada.mosaicapp;
 				REVENUECAT_PUBLIC_SDK_KEY = "$(REVENUECAT_TEST_STORE_PUBLIC_KEY)";
 				SDKROOT = iphoneos;
